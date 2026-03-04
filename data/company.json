@@ -1,0 +1,14 @@
+{
+  "name": "Acme Product Studio",
+  "industry": "B2B SaaS",
+  "preferredStack": ["Next.js", "TypeScript", "Tailwind"],
+  "values": [
+    "Fast iteration",
+    "Simple MVP scope",
+    "Clear ownership"
+  ],
+  "constraints": [
+    "Small engineering team",
+    "Prototype timeline within 6-8 weeks"
+  ]
+}

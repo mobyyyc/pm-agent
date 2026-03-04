@@ -1,0 +1,57 @@
+[
+  {
+    "id": "task_b8c9cea9-ef52-4639-ba01-adbb720993ca",
+    "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
+    "title": "Define Knowledge Base Source",
+    "description": "Identify and curate the primary company documentation to be ingested by the chatbot.",
+    "deadline": "2026-03-10",
+    "suggestedAssignee": "Product Manager",
+    "status": "todo",
+    "createdAt": "2026-03-04T23:47:16.517Z",
+    "updatedAt": "2026-03-04T23:49:08.347Z"
+  },
+  {
+    "id": "task_3e16ddc7-56f0-4c57-9d97-85b767f2ac03",
+    "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
+    "title": "Setup Next.js Project Architecture",
+    "description": "Initialize the codebase using Next.js and TypeScript, applying Tailwind for styling.",
+    "deadline": "2026-03-17",
+    "suggestedAssignee": "Lead Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-04T23:47:16.517Z",
+    "updatedAt": "2026-03-04T23:47:16.517Z"
+  },
+  {
+    "id": "task_fd61cda1-4624-470e-9a3f-47811ff10f14",
+    "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
+    "title": "Build Frontend Chat Interface",
+    "description": "Develop the primary UI for new hires to query the company bot.",
+    "deadline": "2026-03-31",
+    "suggestedAssignee": "Frontend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-04T23:47:16.517Z",
+    "updatedAt": "2026-03-04T23:47:16.517Z"
+  },
+  {
+    "id": "task_88763a65-6617-4e40-a5d9-5f1712ed8582",
+    "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
+    "title": "Implement RAG Pipeline",
+    "description": "Connect the chatbot to the knowledge base using Retrieval-Augmented Generation.",
+    "deadline": "2026-04-14",
+    "suggestedAssignee": "Backend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-04T23:47:16.517Z",
+    "updatedAt": "2026-03-04T23:47:16.517Z"
+  },
+  {
+    "id": "task_ea32f5a9-52d8-4516-b874-1964bbd99333",
+    "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
+    "title": "Internal MVP Launch",
+    "description": "Deploy to staging environment for feedback from HR and onboarding teams.",
+    "deadline": "2026-04-24",
+    "suggestedAssignee": "Product Manager",
+    "status": "todo",
+    "createdAt": "2026-03-04T23:47:16.517Z",
+    "updatedAt": "2026-03-04T23:47:16.517Z"
+  }
+]

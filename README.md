@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI PM Prototype (Gemini + Next.js)
 
-## Getting Started
+Simple prototype for AI-assisted project planning.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js App Router
+- Tailwind
+- Next.js API routes
+- JSON files for storage (`data/*.json`)
+- Gemini API
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. Add env var in `.env.local`:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   GEMINI_API_KEY=your_api_key_here
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Run dev server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. Open `http://localhost:3000`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Workflow
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Enter project idea on `/`.
+2. Backend reads `data/company.json`.
+3. Backend sends idea + company knowledge to Gemini.
+4. Gemini returns structured JSON (`guideline`, `timeline`, `tasks`).
+5. Backend validates output with Zod.
+6. Backend saves project + tasks in `data/projects.json` and `data/tasks.json`.
+7. UI shows:
+   - `My Projects` at `/projects`
+   - Project dashboard at `/projects/[id]`
+   - Task status updates on dashboard
+8. Reminder endpoint checks near-due tasks.
+
+## API Routes
+
+- `GET /api/projects` - list projects
+- `POST /api/projects` - create project from idea using Gemini
+- `GET /api/projects/:id` - get single project + tasks
+- `PATCH /api/tasks/:taskId/status` - update task status
+- `GET /api/reminders?days=3` - near-due + overdue tasks
+
+## Notes
+
+- This is an MVP prototype only.
+- No auth, no multi-tenant isolation, no production persistence.

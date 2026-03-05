@@ -1,1 +1,90 @@
-[]
+[
+  {
+    "id": "task_ae2639c2-6e94-45a8-a82c-46670432994e",
+    "projectId": "project_6ed47939-35a7-432c-a9b1-75be28e22623",
+    "title": "Setup Next.js Project",
+    "description": "Initialize the repository with TypeScript and Tailwind CSS configured.",
+    "deadline": "2026-03-08",
+    "suggestedAssignee": "Lead Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:26:15.376Z",
+    "updatedAt": "2026-03-05T04:26:15.376Z"
+  },
+  {
+    "id": "task_dc060672-4b10-45d3-9e12-6dae52bfad95",
+    "projectId": "project_6ed47939-35a7-432c-a9b1-75be28e22623",
+    "title": "Dashboard UI Implementation",
+    "description": "Build the centralized task management dashboard interface.",
+    "deadline": "2026-03-25",
+    "suggestedAssignee": "Frontend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:26:15.376Z",
+    "updatedAt": "2026-03-05T04:26:15.376Z"
+  },
+  {
+    "id": "task_992d86bc-a314-4a8a-989d-20fc09081c69",
+    "projectId": "project_6ed47939-35a7-432c-a9b1-75be28e22623",
+    "title": "Scheduling Engine Logic",
+    "description": "Develop the backend logic for task scheduling and automated reminders.",
+    "deadline": "2026-04-05",
+    "suggestedAssignee": "Backend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:26:15.376Z",
+    "updatedAt": "2026-03-05T04:26:15.376Z"
+  },
+  {
+    "id": "task_340f0080-fe93-4b94-b4e4-9d2b19e9e91b",
+    "projectId": "project_6ed47939-35a7-432c-a9b1-75be28e22623",
+    "title": "MVP QA Testing",
+    "description": "Perform end-to-end testing of scheduling and notification flows.",
+    "deadline": "2026-04-20",
+    "suggestedAssignee": "Product Owner",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:26:15.376Z",
+    "updatedAt": "2026-03-05T04:26:15.376Z"
+  },
+  {
+    "id": "task_b89294e7-cd3a-44ed-82db-c3fe690e4fe1",
+    "projectId": "project_eba5a810-7ef6-4be3-b4ad-2640e98e82a5",
+    "title": "Define Intent Categories",
+    "description": "Categorize common customer inquiries to train the routing logic.",
+    "deadline": "2026-03-13",
+    "suggestedAssignee": "Product Manager",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:22:01.069Z",
+    "updatedAt": "2026-03-05T04:22:01.069Z"
+  },
+  {
+    "id": "task_ec8b21e5-4a68-4beb-b37d-355aa55ee2c7",
+    "projectId": "project_eba5a810-7ef6-4be3-b4ad-2640e98e82a5",
+    "title": "Setup Next.js Project Structure",
+    "description": "Initialize repository with TypeScript and Tailwind CSS configuration.",
+    "deadline": "2026-03-25",
+    "suggestedAssignee": "Lead Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:22:01.069Z",
+    "updatedAt": "2026-03-05T04:22:01.069Z"
+  },
+  {
+    "id": "task_6974eafd-807f-4f4c-bc9d-78db8561d9ef",
+    "projectId": "project_eba5a810-7ef6-4be3-b4ad-2640e98e82a5",
+    "title": "Develop Support Integration Hook",
+    "description": "Create the API connection to route tickets to the existing support software.",
+    "deadline": "2026-04-10",
+    "suggestedAssignee": "Backend Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:22:01.069Z",
+    "updatedAt": "2026-03-05T04:22:01.069Z"
+  },
+  {
+    "id": "task_78d99086-835f-432d-bada-5f46cc0918a0",
+    "projectId": "project_eba5a810-7ef6-4be3-b4ad-2640e98e82a5",
+    "title": "Final QA and Bug Fixes",
+    "description": "Perform full system tests and resolve critical bugs prior to deployment.",
+    "deadline": "2026-04-30",
+    "suggestedAssignee": "Full Stack Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T04:22:01.069Z",
+    "updatedAt": "2026-03-05T04:22:01.069Z"
+  }
+]

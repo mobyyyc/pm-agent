@@ -132,10 +132,10 @@ export default function CreateProjectPage() {
         {/* --- Initial View --- */}
         {isInitial && (
           <div className="w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
-            <h1 className="mb-4 bg-linear-to-b from-white to-white/60 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
+            <h1 className="mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
               New Project
             </h1>
-            <p className="mb-8 text-xl font-light text-white/60">
+            <p className="mb-8 bg-transparent text-xl font-light text-white/60">
               Tell me what you want to build. I'll help you plan it.
             </p>
             
@@ -164,7 +164,7 @@ export default function CreateProjectPage() {
         {/* --- Interview Question View --- */}
         {isAsking && currentAnalysis && (
            <div className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
-              <h2 className="text-2xl md:text-3xl font-medium text-white leading-tight">
+              <h2 className="text-2xl font-medium leading-tight text-white md:text-3xl">
                 {currentAnalysis.question}
               </h2>
               
@@ -230,7 +230,7 @@ export default function CreateProjectPage() {
                     <CheckCircle2 className="h-8 w-8 text-green-400 relative z-10" />
                 </div>
                 
-                <h2 className="text-3xl font-bold text-white mb-4">You're all set!</h2>
+                <h2 className="mb-4 text-3xl font-bold text-white">You're all set!</h2>
                 <p className="text-xl text-white/70 mb-8 leading-relaxed">
                     {currentAnalysis.summary}
                 </p>

@@ -136,7 +136,7 @@ export async function analyzeProjectRequest(input: {
   }
 
   const systemInstruction = `
-You are an expert Project Manager. You help users clarify their project ideas.
+You are an expert product manager. You help users clarify their project ideas.
 Your goal is to gather enough information to generate a detailed project plan.
 - Ask ONE clarifying question at a time if the user's idea is vague.
 - Suggest 2-3 short options for the user to pick if helpful.

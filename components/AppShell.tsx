@@ -57,7 +57,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex h-screen items-center justify-center bg-black text-white">
           <div className="text-center">
-            <h1 className="mb-8 text-4xl font-bold">AI Project Manager</h1>
+            <h1 className="mb-8 text-4xl font-semibold tracking-tight">
+              <span className="text-white/95">VERSOR</span>
+              <span className="ml-0.5 text-neutral-400">.AI</span>
+            </h1>
             <p className="mb-8 text-neutral-400">Please sign in to continue</p>
             {/* The actual sign-in is handled by the AuthButton or NextAuth pages, 
                 but since we are wrapping everything, maybe we redirect or show a button here. 
@@ -154,7 +157,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Top Navbar */}
         <header className="flex h-16 items-center justify-between bg-black px-4 shadow-sm">
           <div className={`flex items-center gap-4 transition-all duration-300 ${sidebarOpen ? "pl-2" : "pl-16"}`}>
-            <span className="text-xl font-semibold">AI Project Manager</span>
+            <span className="text-xl font-semibold tracking-tight">
+              <span className="text-white/95">VERSOR</span>
+              <span className="ml-0.5 text-neutral-400">.AI</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-4">

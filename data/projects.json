@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "id": "project_6ed47939-35a7-432c-a9b1-75be28e22623",
+    "userId": "aly.moby@gmail.com",
+    "name": "Acme Personal Productivity Assistant",
+    "idea": "Development of a web-based personal productivity assistant. Key features include a scheduling engine, automated reminder system, and a centralized dashboard UI. The project will prioritize a clean user interface for task management and notification handling via the web platform.",
+    "guideline": "Adhere to the Acme Product Studio values of fast iteration and simple MVP scope using the Next.js, TypeScript, and Tailwind stack.",
+    "timeline": [
+      {
+        "phase": "Requirements & Design",
+        "startDate": "2026-03-06",
+        "endDate": "2026-03-13",
+        "deliverable": "UI/UX wireframes and feature specification"
+      },
+      {
+        "phase": "Core Development",
+        "startDate": "2026-03-14",
+        "endDate": "2026-04-10",
+        "deliverable": "Functional dashboard and scheduling engine"
+      },
+      {
+        "phase": "Refinement & Testing",
+        "startDate": "2026-04-11",
+        "endDate": "2026-04-24",
+        "deliverable": "Automated notification system and bug fixes"
+      }
+    ],
+    "taskIds": [
+      "task_ae2639c2-6e94-45a8-a82c-46670432994e",
+      "task_dc060672-4b10-45d3-9e12-6dae52bfad95",
+      "task_992d86bc-a314-4a8a-989d-20fc09081c69",
+      "task_340f0080-fe93-4b94-b4e4-9d2b19e9e91b"
+    ],
+    "createdAt": "2026-03-05T04:26:15.376Z",
+    "updatedAt": "2026-03-05T04:26:15.376Z"
+  },
+  {
+    "id": "project_eba5a810-7ef6-4be3-b4ad-2640e98e82a5",
+    "userId": "aly.moby@gmail.com",
+    "name": "Automated Customer Support Chatbot",
+    "idea": "Development of an automated customer support chatbot focused on intelligent ticket routing. The system will ingest user inquiries, identify intent, and escalate complex issues to human agents via integration with existing support software. Timeline estimate: 8-10 weeks.",
+    "guideline": "Adhere to the Acme Product Studio values of fast iteration and simple MVP scope. The development must utilize Next.js, TypeScript, and Tailwind, ensuring the prototype is delivered within the 6-8 week constraint.",
+    "timeline": [
+      {
+        "phase": "Requirement Analysis and Architecture",
+        "startDate": "2026-03-09",
+        "endDate": "2026-03-20",
+        "deliverable": "Technical architecture document and API integration plan"
+      },
+      {
+        "phase": "Core Development",
+        "startDate": "2026-03-23",
+        "endDate": "2026-04-17",
+        "deliverable": "Chatbot interface and intent identification engine"
+      },
+      {
+        "phase": "Integration and Testing",
+        "startDate": "2026-04-20",
+        "endDate": "2026-05-01",
+        "deliverable": "End-to-end integration with support software and QA report"
+      }
+    ],
+    "taskIds": [
+      "task_b89294e7-cd3a-44ed-82db-c3fe690e4fe1",
+      "task_ec8b21e5-4a68-4beb-b37d-355aa55ee2c7",
+      "task_6974eafd-807f-4f4c-bc9d-78db8561d9ef",
+      "task_78d99086-835f-432d-bada-5f46cc0918a0"
+    ],
+    "createdAt": "2026-03-05T04:22:01.069Z",
+    "updatedAt": "2026-03-05T04:22:01.069Z"
+  }
+]

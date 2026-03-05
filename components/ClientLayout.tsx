@@ -27,7 +27,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   if (!session) {
       return (
         <div className="flex h-screen flex-col items-center justify-center gap-6 bg-black p-4 text-white">
-            <h1 className="text-4xl font-bold tracking-tight">AI Project Manager</h1>
+            <h1 className="text-4xl font-semibold tracking-tight">
+              <span className="text-white/95">VERSOR</span>
+              <span className="ml-0.5 text-neutral-400">.AI</span>
+            </h1>
             <p className="text-white/60">Please sign in to access your projects.</p>
             <button
                 onClick={() => signIn("google")}

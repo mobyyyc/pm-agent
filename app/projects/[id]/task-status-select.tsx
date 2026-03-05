@@ -44,7 +44,7 @@ export function TaskStatusSelect({ taskId, initialStatus }: { taskId: string; in
         value={status}
         disabled={isPending}
         onChange={(event) => onChange(event.target.value as TaskStatus)}
-        className="rounded-md border border-white/20 bg-white/5 px-2 py-1 text-sm text-white"
+        className="rounded-md bg-white/5 px-2 py-1 text-sm text-white"
       >
         {statusOptions.map((option) => (
           <option key={option.value} value={option.value}>

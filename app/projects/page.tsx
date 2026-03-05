@@ -10,14 +10,14 @@ export default async function ProjectsPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
       <header className="flex items-center justify-between">
-        <h1 className="bg-linear-to-b from-white to-transparent bg-clip-text text-3xl font-bold tracking-tight text-transparent">My Projects</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">My Projects</h1>
         <Link href="/" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 transition-all">
           New Project
         </Link>
       </header>
 
       <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 className="mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-xl font-semibold tracking-tight text-transparent">Deadline Reminders</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Deadline Reminders</h2>
         {reminders.length === 0 ? (
           <p className="text-sm text-neutral-400">No near-due tasks right now.</p>
         ) : (
@@ -47,7 +47,7 @@ export default async function ProjectsPage() {
         ) : (
           projects.map((project) => (
             <article key={project.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:border-white/20 hover:bg-white/10">
-              <h3 className="bg-linear-to-b from-white to-transparent bg-clip-text text-lg font-medium text-transparent">{project.idea}</h3>
+              <h3 className="text-lg font-medium text-white">{project.idea}</h3>
               <p className="mt-2 text-sm text-neutral-400">{project.guideline}</p>
               <div className="mt-4">
                 <Link href={`/projects/${project.id}`} className="text-sm font-medium text-blue-400 hover:text-blue-300">

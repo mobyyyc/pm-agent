@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
+import CodeRainBackground from "@/components/CodeRainBackground";
 
 // Use local type for brevity if imports are tricky, but prefer importing
 import type { AIAnalysis } from "@/types/models";
@@ -114,9 +115,9 @@ export default function CreateProjectPage() {
   const isReady = !isAnalyzing && currentAnalysis?.status === "ready";
 
   return (
-    <div className="flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center p-8 transition-colors duration-500">
-      
-      <div className="w-full max-w-3xl flex flex-col items-center text-center space-y-8 justify-center">
+    <div className="flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center p-8 transition-colors duration-500 relative overflow-hidden isolate">
+      <CodeRainBackground />
+      <div className="w-full max-w-5xl flex flex-col items-center text-center space-y-8 justify-center relative z-10">
 
         {/* --- Loading View --- */}
         {isAnalyzing && (
@@ -163,7 +164,7 @@ export default function CreateProjectPage() {
 
         {/* --- Interview Question View --- */}
         {isAsking && currentAnalysis && (
-           <div className="w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
+           <div className="w-full max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
               <h2 className="text-2xl font-medium leading-tight text-white md:text-3xl">
                 {currentAnalysis.question}
               </h2>

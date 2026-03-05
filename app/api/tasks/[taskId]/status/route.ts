@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 
-import { getTasks, saveTasks } from "@/lib/storage";
+import { authOptions } from "@/lib/auth";
+import { getProjects, getTasks, saveTasks } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { updateTaskStatusRequestSchema, validateTask } from "@/lib/validators";
 
@@ -11,19 +13,31 @@ type RouteContext = {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { taskId } = await context.params;
     const body = await request.json();
     const parsed = updateTaskStatusRequestSchema.parse(body);
 
-    const tasks = await getTasks();
+    const [tasks, projects] = await Promise.all([getTasks(), getProjects()]);
     const taskIndex = tasks.findIndex((task) => task.id === taskId);
 
     if (taskIndex < 0) {
       return NextResponse.json({ error: "Task not found." }, { status: 404 });
     }
 
+    const task = tasks[taskIndex];
+    const project = projects.find((p) => p.id === task.projectId);
+
+    if (!project || project.userId !== session.user.email) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const updatedTask = validateTask({
-      ...tasks[taskIndex],
+      ...task,
       status: parsed.status,
       updatedAt: isoNow(),
     });

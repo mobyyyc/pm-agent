@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { authOptions } from "@/lib/auth";
 import { generateProjectPlanWithGemini } from "@/lib/gemini";
 import { getProjects, getTasks, readCompanyKnowledge, saveProjects, saveTasks } from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
@@ -9,8 +11,16 @@ import type { Project, Task } from "@/types/models";
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const projects = await getProjects();
-    return NextResponse.json({ projects });
+    const userProjects = projects.filter((p) => p.userId === session.user?.email);
+    
+    return NextResponse.json({ projects: userProjects });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch projects.", detail: error instanceof Error ? error.message : "Unknown error" },
@@ -21,6 +31,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
 
@@ -55,7 +71,7 @@ export async function POST(request: Request) {
 
     const project: Project = validateProject({
       id: projectId,
-      idea: parsed.idea,
+      userId: session.user.email,      name: aiPlan.name,      idea: parsed.idea,
       guideline: aiPlan.guideline,
       timeline: aiPlan.timeline,
       taskIds: tasks.map((task) => task.id),

@@ -17,6 +17,7 @@ export const aiTaskSchema = z.object({
 });
 
 export const aiPlanSchema = z.object({
+  name: z.string().min(1),
   guideline: z.string().min(1),
   timeline: z.array(timelineItemSchema).min(1),
   tasks: z.array(aiTaskSchema).min(1),
@@ -28,6 +29,8 @@ export type AIPlan = z.infer<typeof aiPlanSchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),
+  userId: z.string().min(1),
+  name: z.string().min(1),
   idea: z.string().min(1),
   guideline: z.string().min(1),
   timeline: z.array(timelineItemSchema),

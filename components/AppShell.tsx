@@ -9,6 +9,7 @@ import { Bars3Icon, PlusIcon, XMarkIcon, TrashIcon } from "@heroicons/react/24/o
 
 type Project = {
   id: string;
+  name?: string;
   idea: string;
 };
 
@@ -130,7 +131,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         title={project.idea}
                     >
                         {/* Truncate idea to be title-like */}
-                        {project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea}
+                        {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
                     </Link>
                     <button
                         onClick={(e) => deleteProject(e, project.id)}

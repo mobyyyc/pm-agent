@@ -25,8 +25,8 @@ export default async function ProjectDashboardPage({ params }: PageProps) {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-6 py-10">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Project Dashboard</h1>
-          <p className="mt-1 text-sm text-white/75">{project.idea}</p>
+          <h1 className="text-2xl font-semibold">{project.name || "Project Dashboard"}</h1>
+          <p className="mt-1 text-sm text-neutral-400">{project.idea}</p>
         </div>
         <Link href="/" className="rounded-md bg-white/10 px-3 py-2 text-sm hover:bg-white/20">
           Back to Projects

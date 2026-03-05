@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "id": "task_cba0d75b-c1e6-41c5-b0b4-a813893f3013",
+    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
+    "title": "Knowledge Base Compilation",
+    "description": "Gather existing employee handbook and onboarding documentation to seed the chatbot model.",
+    "deadline": "2026-03-14",
+    "suggestedAssignee": "HR Operations Lead",
+    "status": "todo",
+    "createdAt": "2026-03-05T01:24:45.505Z",
+    "updatedAt": "2026-03-05T01:24:45.505Z"
+  },
+  {
+    "id": "task_c717355a-53d8-477c-b593-5d15f19b12a7",
+    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
+    "title": "Chatbot Prototype Architecture",
+    "description": "Setup Next.js environment and integrate basic LLM API endpoint.",
+    "deadline": "2026-03-22",
+    "suggestedAssignee": "Senior Frontend Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T01:24:45.505Z",
+    "updatedAt": "2026-03-05T01:24:45.505Z"
+  },
+  {
+    "id": "task_46396227-302b-493d-ac4b-dec75d45bc91",
+    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
+    "title": "UI Component Development",
+    "description": "Build chat interface components using Tailwind CSS.",
+    "deadline": "2026-04-05",
+    "suggestedAssignee": "Frontend Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T01:24:45.505Z",
+    "updatedAt": "2026-03-05T01:24:45.505Z"
+  },
+  {
+    "id": "task_8a58494f-dc36-44dc-a991-c17857504cd0",
+    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
+    "title": "UAT Deployment",
+    "description": "Deploy to internal staging environment for initial testing by HR and engineering team.",
+    "deadline": "2026-04-19",
+    "suggestedAssignee": "DevOps Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T01:24:45.505Z",
+    "updatedAt": "2026-03-05T01:24:45.505Z"
+  }
+]

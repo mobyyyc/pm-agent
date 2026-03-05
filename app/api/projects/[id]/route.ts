@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/lib/auth";
 import { getProjects, getTasks, saveProjects, saveTasks } from "@/lib/storage";
 
 type RouteContext = {
@@ -8,6 +10,11 @@ type RouteContext = {
 
 export async function GET(_request: Request, context: RouteContext) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
     const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
 
@@ -15,6 +22,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
     if (!project) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    if (project.userId !== session.user.email) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const projectTasks = tasks.filter((task) => task.projectId === id);
@@ -30,12 +41,21 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
     const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
 
     const existingProjectIndex = projects.findIndex((p) => p.id === id);
     if (existingProjectIndex === -1) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    if (projects[existingProjectIndex].userId !== session.user.email) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const newProjects = projects.filter((p) => p.id !== id);

@@ -7,6 +7,7 @@ const GEMINI_URL =
 const responseJsonSchema = {
   type: "OBJECT",
   properties: {
+    name: { type: "STRING" },
     guideline: { type: "STRING" },
     timeline: {
       type: "ARRAY",
@@ -35,7 +36,7 @@ const responseJsonSchema = {
       },
     },
   },
-  required: ["guideline", "timeline", "tasks"],
+  required: ["name", "guideline", "timeline", "tasks"],
 };
 
 type GeminiResponse = {

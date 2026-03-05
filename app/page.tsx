@@ -1,24 +1,31 @@
-
 "use client";
 
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
-      <h1 className="mb-4 text-4xl font-bold tracking-tight text-white sm:text-6xl">
-        Welcome Home
+    <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl">
+        This page is under development...
       </h1>
-      <p className="mb-8 max-w-lg text-lg text-white/60">
-        This is your dashboard. Select a project from the sidebar to view details, or start planning a new project.
+      <p className="max-w-lg text-xl text-neutral-400">
+        The dashboard is currently being built. Please check back later for updates.
       </p>
-      <Link
-        href="/projects/new"
-        className="rounded-md bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm hover:bg-gray-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white"
-      >
-        Plan New Project
-      </Link>
+      
+      <div className="flex gap-4">
+        <Link
+          href="/projects"
+          className="rounded-lg bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all border border-white/10"
+        >
+          View Projects
+        </Link>
+        <Link
+          href="/projects/new"
+          className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-black hover:bg-gray-200 transition-all shadow-lg"
+        >
+          Create New Project
+        </Link>
+      </div>
     </div>
   );
 }
-

@@ -7,15 +7,28 @@ import {
   type AIPlan,
   type Project,
   type Task,
+  aiAnalysisSchema,
 } from "@/types/models";
 
 export const createProjectRequestSchema = z.object({
   idea: z.string().min(5, "Project idea must be at least 5 characters."),
 });
 
+export const analyzeProjectRequestSchema = z.object({
+  message: z.string().min(1, "Message is required."),
+  history: z.array(z.object({
+    role: z.enum(["user", "model"]),
+    content: z.string(),
+  })).optional(),
+});
+
 export const updateTaskStatusRequestSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
 });
+
+export function validateAndNormalizeAIAnalysis(data: unknown) {
+  return aiAnalysisSchema.parse(data);
+}
 
 function isValidDateString(dateString: string): boolean {
   const date = new Date(dateString);

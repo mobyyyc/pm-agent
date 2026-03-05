@@ -78,7 +78,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-6 top-5 z-[60] text-neutral-400 hover:text-white"
+        className="fixed left-6 top-5 z-60 text-neutral-400 hover:text-white"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />

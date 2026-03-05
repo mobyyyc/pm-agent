@@ -27,6 +27,15 @@ export type TimelineItem = z.infer<typeof timelineItemSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
 export type AIPlan = z.infer<typeof aiPlanSchema>;
 
+export const aiAnalysisSchema = z.object({
+  status: z.enum(["asking", "ready"]),
+  question: z.string().optional(),
+  options: z.array(z.string()).optional(),
+  summary: z.string().optional(),
+});
+
+export type AIAnalysis = z.infer<typeof aiAnalysisSchema>;
+
 export const projectSchema = z.object({
   id: z.string().min(1),
   userId: z.string().min(1),

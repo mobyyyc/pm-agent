@@ -1,43 +1,37 @@
 [
   {
-    "id": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
+    "id": "project_9db5e5d5-b8f5-4aa6-9150-b8efd2bef45b",
     "userId": "aly.moby@gmail.com",
-    "name": "Acme Employee Onboarding Chatbot",
-    "idea": "create a chatbot for employee to learn company",
-    "guideline": "Develop a lightweight, high-impact MVP leveraging our standard Next.js stack, focusing on immediate value for new hires while adhering to the 8-week delivery constraint through modular component design.",
+    "name": "Professional Portfolio Website MVP",
+    "idea": "Development of a professional portfolio website featuring a clean landing page layout. Key components include an 'About Me' section (bio), a project showcase area, and a functional contact form. The project scope is focused on simplicity and professional presentation.",
+    "guideline": "Adhere to Acme Product Studio values by prioritizing fast iteration and a clean, simple MVP scope using the preferred Next.js, TypeScript, and Tailwind stack.",
     "timeline": [
       {
-        "phase": "Discovery and Requirements",
-        "startDate": "2026-03-09",
-        "endDate": "2026-03-15",
-        "deliverable": "Functional requirements document and data source inventory"
+        "phase": "Planning and Design",
+        "startDate": "2026-03-05",
+        "endDate": "2026-03-12",
+        "deliverable": "Wireframes and design specifications"
       },
       {
         "phase": "Core Development",
-        "startDate": "2026-03-16",
-        "endDate": "2026-04-12",
-        "deliverable": "MVP chatbot prototype with core Q&A functionality"
+        "startDate": "2026-03-13",
+        "endDate": "2026-04-10",
+        "deliverable": "Functional landing page with About, Projects, and Contact form"
       },
       {
-        "phase": "Testing and Refinement",
-        "startDate": "2026-04-13",
-        "endDate": "2026-04-26",
-        "deliverable": "Internal beta feedback report and UI adjustments"
-      },
-      {
-        "phase": "Final Delivery",
-        "startDate": "2026-04-27",
-        "endDate": "2026-05-03",
-        "deliverable": "Production-ready chatbot deployment"
+        "phase": "Testing and Deployment",
+        "startDate": "2026-04-11",
+        "endDate": "2026-04-22",
+        "deliverable": "Final polished production build"
       }
     ],
     "taskIds": [
-      "task_cba0d75b-c1e6-41c5-b0b4-a813893f3013",
-      "task_c717355a-53d8-477c-b593-5d15f19b12a7",
-      "task_46396227-302b-493d-ac4b-dec75d45bc91",
-      "task_8a58494f-dc36-44dc-a991-c17857504cd0"
+      "task_77f27527-fd0d-43b1-991c-30a192399502",
+      "task_2647a3d8-8237-4179-be43-c7d0068ffa9d",
+      "task_3590ddc0-72d5-478d-a527-cb3616cfdd6a",
+      "task_d9c39afc-d515-4daf-bf25-33977e0b5345"
     ],
-    "createdAt": "2026-03-05T01:24:45.505Z",
-    "updatedAt": "2026-03-05T01:24:45.505Z"
+    "createdAt": "2026-03-05T02:44:50.641Z",
+    "updatedAt": "2026-03-05T02:44:50.641Z"
   }
 ]

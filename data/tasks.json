@@ -1,46 +1,46 @@
 [
   {
-    "id": "task_cba0d75b-c1e6-41c5-b0b4-a813893f3013",
-    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
-    "title": "Knowledge Base Compilation",
-    "description": "Gather existing employee handbook and onboarding documentation to seed the chatbot model.",
-    "deadline": "2026-03-14",
-    "suggestedAssignee": "HR Operations Lead",
-    "status": "todo",
-    "createdAt": "2026-03-05T01:24:45.505Z",
-    "updatedAt": "2026-03-05T01:24:45.505Z"
-  },
-  {
-    "id": "task_c717355a-53d8-477c-b593-5d15f19b12a7",
-    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
-    "title": "Chatbot Prototype Architecture",
-    "description": "Setup Next.js environment and integrate basic LLM API endpoint.",
-    "deadline": "2026-03-22",
-    "suggestedAssignee": "Senior Frontend Engineer",
-    "status": "todo",
-    "createdAt": "2026-03-05T01:24:45.505Z",
-    "updatedAt": "2026-03-05T01:24:45.505Z"
-  },
-  {
-    "id": "task_46396227-302b-493d-ac4b-dec75d45bc91",
-    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
-    "title": "UI Component Development",
-    "description": "Build chat interface components using Tailwind CSS.",
-    "deadline": "2026-04-05",
+    "id": "task_77f27527-fd0d-43b1-991c-30a192399502",
+    "projectId": "project_9db5e5d5-b8f5-4aa6-9150-b8efd2bef45b",
+    "title": "Setup Next.js Project",
+    "description": "Initialize repository using TypeScript and Tailwind configuration.",
+    "deadline": "2026-03-07",
     "suggestedAssignee": "Frontend Engineer",
     "status": "todo",
-    "createdAt": "2026-03-05T01:24:45.505Z",
-    "updatedAt": "2026-03-05T01:24:45.505Z"
+    "createdAt": "2026-03-05T02:44:50.641Z",
+    "updatedAt": "2026-03-05T02:44:50.641Z"
   },
   {
-    "id": "task_8a58494f-dc36-44dc-a991-c17857504cd0",
-    "projectId": "project_7c21fc2f-f91c-4159-9e89-54216badcef4",
-    "title": "UAT Deployment",
-    "description": "Deploy to internal staging environment for initial testing by HR and engineering team.",
-    "deadline": "2026-04-19",
-    "suggestedAssignee": "DevOps Engineer",
+    "id": "task_2647a3d8-8237-4179-be43-c7d0068ffa9d",
+    "projectId": "project_9db5e5d5-b8f5-4aa6-9150-b8efd2bef45b",
+    "title": "Develop Sections",
+    "description": "Build responsive 'About Me' and 'Project Showcase' components.",
+    "deadline": "2026-03-25",
+    "suggestedAssignee": "Frontend Engineer",
     "status": "todo",
-    "createdAt": "2026-03-05T01:24:45.505Z",
-    "updatedAt": "2026-03-05T01:24:45.505Z"
+    "createdAt": "2026-03-05T02:44:50.641Z",
+    "updatedAt": "2026-03-05T02:44:50.641Z"
+  },
+  {
+    "id": "task_3590ddc0-72d5-478d-a527-cb3616cfdd6a",
+    "projectId": "project_9db5e5d5-b8f5-4aa6-9150-b8efd2bef45b",
+    "title": "Implement Contact Form",
+    "description": "Develop functional contact form with validation and email forwarding.",
+    "deadline": "2026-04-05",
+    "suggestedAssignee": "Backend/Fullstack Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T02:44:50.641Z",
+    "updatedAt": "2026-03-05T02:44:50.641Z"
+  },
+  {
+    "id": "task_d9c39afc-d515-4daf-bf25-33977e0b5345",
+    "projectId": "project_9db5e5d5-b8f5-4aa6-9150-b8efd2bef45b",
+    "title": "QA and Launch",
+    "description": "Perform cross-browser testing and final production deployment.",
+    "deadline": "2026-04-20",
+    "suggestedAssignee": "Lead Developer",
+    "status": "todo",
+    "createdAt": "2026-03-05T02:44:50.641Z",
+    "updatedAt": "2026-03-05T02:44:50.641Z"
   }
 ]

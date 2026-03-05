@@ -1,8 +1,19 @@
-import { validateAndNormalizeAIPlan } from "@/lib/validators";
-import type { AIPlan } from "@/types/models";
+import { validateAndNormalizeAIPlan, validateAndNormalizeAIAnalysis } from "@/lib/validators";
+import type { AIPlan, AIAnalysis } from "@/types/models";
 
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent";
+
+const analysisJsonSchema = {
+  type: "OBJECT",
+  properties: {
+    status: { type: "STRING", enum: ["asking", "ready"] },
+    question: { type: "STRING" },
+    options: { type: "ARRAY", items: { type: "STRING" } },
+    summary: { type: "STRING" },
+  },
+  required: ["status"],
+};
 
 const responseJsonSchema = {
   type: "OBJECT",
@@ -113,3 +124,66 @@ export async function generateProjectPlanWithGemini(input: {
 
   return validateAndNormalizeAIPlan(parsed);
 }
+
+export async function analyzeProjectRequest(input: {
+  message: string;
+  history: { role: "user" | "model"; content: string }[];
+}): Promise<AIAnalysis> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not set.");
+  }
+
+  const systemInstruction = `
+You are an expert Project Manager. You help users clarify their project ideas.
+Your goal is to gather enough information to generate a detailed project plan.
+- Ask ONE clarifying question at a time if the user's idea is vague.
+- Suggest 2-3 short options for the user to pick if helpful.
+- Once you have enough information (scope, timeline, main features), set status to "ready" and summarize the plan.
+- If the user asks specifically to generate the plan, set status to "ready".
+`.trim();
+
+  const contents = input.history.map((msg) => ({
+    role: msg.role === "user" ? "user" : "model",
+    parts: [{ text: msg.content }],
+  }));
+
+  contents.push({
+    role: "user",
+    parts: [{ text: input.message }],
+  });
+
+  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      contents,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: analysisJsonSchema,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini analyze request failed: ${response.status} ${errorText}`);
+  }
+
+  const json = (await response.json()) as GeminiResponse;
+  const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!rawText) throw new Error("Gemini returned empty analysis.");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error("Gemini returned invalid analysis JSON.");
+  }
+
+  return validateAndNormalizeAIAnalysis(parsed);
+}
+

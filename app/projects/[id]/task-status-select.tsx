@@ -40,18 +40,23 @@ export function TaskStatusSelect({ taskId, initialStatus }: { taskId: string; in
 
   return (
     <div className="flex flex-col gap-1">
-      <select
-        value={status}
-        disabled={isPending}
-        onChange={(event) => onChange(event.target.value as TaskStatus)}
-        className="rounded-md bg-white/5 px-2 py-1 text-sm text-white"
-      >
-        {statusOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select
+          value={status}
+          disabled={isPending}
+          onChange={(event) => onChange(event.target.value as TaskStatus)}
+          className="w-full appearance-none rounded-md border border-neutral-300 bg-white px-3 py-1.5 pr-8 text-sm text-neutral-900 shadow-sm outline-none transition focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus-visible:border-indigo-400 dark:focus-visible:ring-indigo-400/30 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-400"
+        >
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500 dark:text-neutral-400" aria-hidden="true">
+          ▾
+        </span>
+      </div>
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>
   );

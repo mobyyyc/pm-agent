@@ -64,7 +64,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 Let's reuse the AuthButton logic but simpler here. */}
                 <button
                     onClick={() => window.location.href = "/api/auth/signin"}
-                    className="rounded-md bg-white px-6 py-3 text-lg font-semibold text-black shadow-sm hover:bg-neutral-200"
+                  className="rounded-full bg-white px-6 py-3 text-lg font-semibold text-black shadow-sm hover:bg-neutral-200"
                 >
                     Sign in with Google
                 </button>
@@ -78,7 +78,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-6 top-5 z-60 text-neutral-400 hover:text-white"
+        className="fixed left-6 top-3 z-60 rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />
@@ -98,7 +98,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/"
             onClick={() => setSidebarOpen(false)}
-            className={`block rounded-md px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+            className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
               pathname === "/" ? "bg-white/10 text-white" : "text-neutral-400"
             }`}
           >
@@ -107,7 +107,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link
             href="/projects/new"
             onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
               pathname === "/projects/new" ? "bg-white/10 text-white" : "text-neutral-400"
             }`}
           >
@@ -121,7 +121,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           
           <div className="space-y-1">
             {projects.map((project) => (
-                <div key={project.id} className="group flex items-center justify-between rounded-md hover:bg-white/10 pr-2">
+              <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
                     <Link
                         href={`/projects/${project.id}`}
                         onClick={() => setSidebarOpen(false)}
@@ -135,7 +135,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                     <button
                         onClick={(e) => deleteProject(e, project.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-white transition-opacity"
+                      className="rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
                         title="Delete Project"
                     >
                         <XMarkIcon className="h-4 w-4" />
@@ -163,7 +163,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <button
               onClick={() => signOut()}
-              className="rounded-md bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+              className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
             >
               Sign out
             </button>

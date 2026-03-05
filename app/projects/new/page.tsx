@@ -114,7 +114,7 @@ export default function CreateProjectPage() {
   const isReady = !isAnalyzing && currentAnalysis?.status === "ready";
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center w-full min-h-[80vh] p-8 transition-colors duration-500">
+    <div className="flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center p-8 transition-colors duration-500">
       
       <div className="w-full max-w-3xl flex flex-col items-center text-center space-y-8 justify-center">
 
@@ -131,15 +131,15 @@ export default function CreateProjectPage() {
 
         {/* --- Initial View --- */}
         {isInitial && (
-          <div className="w-full max-w-2xl space-y-8 animate-in slide-in-from-bottom-4 fade-in duration-700">
-            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-linear-to-b from-white to-white/60 tracking-tight pb-2">
+          <div className="w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
+            <h1 className="mb-4 bg-linear-to-b from-white to-white/60 bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
               New Project
             </h1>
-            <p className="text-xl text-white/60 font-light">
+            <p className="mb-8 text-xl font-light text-white/60">
               Tell me what you want to build. I'll help you plan it.
             </p>
             
-            <div className="relative group w-full mt-8">
+            <div className="relative group w-full">
                 <input
                     ref={inputRef}
                     type="text"
@@ -175,7 +175,7 @@ export default function CreateProjectPage() {
                           <button
                             key={i}
                             onClick={() => handleSend(opt)}
-                            className="px-5 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all text-base cursor-pointer"
+                            className="rounded-full bg-white/5 px-5 py-2 text-base text-white/90 transition-all hover:bg-white/10 hover:text-white cursor-pointer"
                           >
                             {opt}
                           </button>
@@ -202,7 +202,7 @@ export default function CreateProjectPage() {
                           setCurrentAnalysis(null);
                           setInputValue("");
                       }}
-                      className="px-6 py-3 rounded-full border border-white/10 hover:bg-white/5 text-white/60 hover:text-white transition-all text-base cursor-pointer"
+                      className="rounded-full bg-white/5 px-6 py-3 text-base text-white/60 transition-all hover:bg-white/10 hover:text-white cursor-pointer"
                   >
                       Cancel
                   </button>
@@ -238,7 +238,7 @@ export default function CreateProjectPage() {
                 <button
                     onClick={handleCreateProject}
                     disabled={isGenerating}
-                    className="w-full py-5 bg-white text-black rounded-2xl font-bold text-xl hover:bg-white/90 transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer"
+                  className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-5 text-xl font-bold text-black shadow-lg transition-all hover:bg-white/90 hover:shadow-xl active:scale-[0.98] cursor-pointer"
                 >
                     {isGenerating ? (
                         <>

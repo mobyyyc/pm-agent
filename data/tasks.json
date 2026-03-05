@@ -1,5 +1,38 @@
 [
   {
+    "id": "task_fa1b7082-e44d-40bf-af7d-cd0f0ff8aa01",
+    "projectId": "project_6205135b-3eea-483f-a448-33a05ab51d7b",
+    "title": "Tech Stack Setup",
+    "description": "Initialize Next.js repository with TypeScript and Tailwind configuration",
+    "deadline": "2026-03-13",
+    "suggestedAssignee": "Lead Engineer",
+    "status": "todo",
+    "createdAt": "2026-03-05T00:05:50.950Z",
+    "updatedAt": "2026-03-05T00:05:50.950Z"
+  },
+  {
+    "id": "task_ec6f22ae-e2b2-447b-ac3d-51eb0c364dc3",
+    "projectId": "project_6205135b-3eea-483f-a448-33a05ab51d7b",
+    "title": "Chat API Integration",
+    "description": "Integrate LLM API endpoint with standard prompt handling",
+    "deadline": "2026-04-10",
+    "suggestedAssignee": "Backend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-05T00:05:50.950Z",
+    "updatedAt": "2026-03-05T00:05:50.950Z"
+  },
+  {
+    "id": "task_ee89a06c-da5f-4ab1-9378-576136b29e7d",
+    "projectId": "project_6205135b-3eea-483f-a448-33a05ab51d7b",
+    "title": "Frontend UI Implementation",
+    "description": "Build chat interface components matching design specifications",
+    "deadline": "2026-04-17",
+    "suggestedAssignee": "Frontend Developer",
+    "status": "todo",
+    "createdAt": "2026-03-05T00:05:50.950Z",
+    "updatedAt": "2026-03-05T00:05:50.950Z"
+  },
+  {
     "id": "task_b8c9cea9-ef52-4639-ba01-adbb720993ca",
     "projectId": "project_0c552efc-0cf0-41ce-a566-412407141459",
     "title": "Define Knowledge Base Source",

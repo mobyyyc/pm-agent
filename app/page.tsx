@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import AuthButton from "@/components/AuthButton";
 
 type CreateProjectResponse = {
   project?: { id: string };
@@ -47,9 +48,12 @@ export default function HomePage() {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">AI PM Prototype</h1>
-        <Link href="/projects" className="rounded-md border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
-          My Projects
-        </Link>
+        <div className="flex gap-4 items-center">
+          <Link href="/projects" className="rounded-md border border-white/20 px-3 py-2 text-sm hover:bg-white/10">
+            My Projects
+          </Link>
+          <AuthButton />
+        </div>
       </header>
 
       <section className="rounded-lg border border-white/20 bg-white/5 p-4">

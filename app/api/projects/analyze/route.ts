@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeProjectRequest } from "@/lib/gemini";
+import { readCompanyKnowledge } from "@/lib/storage";
 import { analyzeProjectRequestSchema } from "@/lib/validators";
 
 export async function POST(req: NextRequest) {
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, history } = result.data;
-    const analysis = await analyzeProjectRequest({ message, history: history || [] });
+    const companyKnowledge = await readCompanyKnowledge();
+    const analysis = await analyzeProjectRequest({ message, history: history || [], companyKnowledge });
 
     return NextResponse.json(analysis);
   } catch (error) {

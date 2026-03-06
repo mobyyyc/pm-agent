@@ -71,16 +71,32 @@ export async function generateProjectPlanWithGemini(input: {
     throw new Error("GEMINI_API_KEY is not set.");
   }
 
+  const companyKnowledge = input.companyKnowledge as Record<string, unknown>;
+
   const prompt = [
-    "You are a product management assistant.",
+    `You are a product management assistant for ${companyKnowledge.name || "the company"}.`,
     "Return only valid JSON matching the required schema.",
     "Do not include markdown, comments, explanations, or extra keys.",
     "Deadlines and timeline dates must be in YYYY-MM-DD format.",
-    "Use the provided company knowledge and project idea.",
+    "",
+    "=== COMPANY CONTEXT (use this to tailor every part of the plan) ===",
+    `Company: ${companyKnowledge.name}`,
+    `Industry: ${companyKnowledge.industry || "N/A"}`,
+    `Preferred Tech Stack: ${JSON.stringify(companyKnowledge.preferredStack || [])}`,
+    `Core Values: ${JSON.stringify(companyKnowledge.values || [])}`,
+    `Constraints: ${JSON.stringify(companyKnowledge.constraints || [])}`,
+    `Target Audience: ${JSON.stringify(companyKnowledge.targetAudience || [])}`,
+    `Design System: ${JSON.stringify(companyKnowledge.designSystem || [])}`,
+    "",
+    "=== INSTRUCTIONS ===",
+    "- The guideline MUST reference the company's values, constraints, and preferred stack.",
+    "- Timeline phases should respect the company's delivery constraints (e.g. MVP timelines).",
+    "- Task descriptions should mention specific technologies from the preferred stack where relevant.",
+    "- Suggested assignees should reflect the lean team size mentioned in constraints.",
+    "- Design-related tasks should follow the company's design system guidelines.",
     "",
     `Today: ${input.today}`,
     `Project idea: ${input.projectIdea}`,
-    `Company knowledge: ${JSON.stringify(input.companyKnowledge)}`,
   ].join("\n");
 
   const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
@@ -128,6 +144,7 @@ export async function generateProjectPlanWithGemini(input: {
 export async function analyzeProjectRequest(input: {
   message: string;
   history: { role: "user" | "model"; content: string }[];
+  companyKnowledge?: unknown;
 }): Promise<AIAnalysis> {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -135,13 +152,29 @@ export async function analyzeProjectRequest(input: {
     throw new Error("GEMINI_API_KEY is not set.");
   }
 
+  const ck = (input.companyKnowledge || {}) as Record<string, unknown>;
+  const companyName = (ck.name as string) || "the company";
+
   const systemInstruction = `
-You are an expert product manager. You help users clarify their project ideas.
-Your goal is to gather enough information to generate a detailed project plan.
+You are an expert product manager at ${companyName}.
+You help users clarify their project ideas in the context of this company.
+
+=== COMPANY CONTEXT ===
+Company: ${companyName}
+Industry: ${ck.industry || "N/A"}
+Preferred Tech Stack: ${JSON.stringify(ck.preferredStack || [])}
+Core Values: ${JSON.stringify(ck.values || [])}
+Constraints: ${JSON.stringify(ck.constraints || [])}
+Target Audience: ${JSON.stringify(ck.targetAudience || [])}
+Design System: ${JSON.stringify(ck.designSystem || [])}
+
+=== BEHAVIOR ===
 - Ask ONE clarifying question at a time if the user's idea is vague.
 - Suggest 2-3 short options for the user to pick if helpful.
+- Frame your questions and suggestions around the company's capabilities, stack, constraints, and audience.
 - Once you have enough information (scope, timeline, main features), set status to "ready" and summarize the plan.
 - If the user asks specifically to generate the plan, set status to "ready".
+- In your summary, reference the company's preferred stack and constraints.
 `.trim();
 
   const contents = input.history.map((msg) => ({

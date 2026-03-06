@@ -1,18 +1,13 @@
 import { sql } from "@/lib/db";
 import { projectSchema, taskSchema, type Project, type Task } from "@/types/models";
+import companyData from "@/data/company.json";
 
 // ---------------------------------------------------------------------------
-// Company knowledge (static – no longer stored on filesystem)
+// Company knowledge (loaded from data/company.json at build time)
 // ---------------------------------------------------------------------------
-
-const DEFAULT_COMPANY_KNOWLEDGE = {
-  name: "Demo Company",
-  values: [],
-  constraints: [],
-};
 
 export async function readCompanyKnowledge(): Promise<unknown> {
-  return DEFAULT_COMPANY_KNOWLEDGE;
+  return companyData;
 }
 
 // ---------------------------------------------------------------------------

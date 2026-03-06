@@ -1,11 +1,12 @@
 
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Bars3Icon, PlusIcon, XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useGuest } from "@/components/GuestContext";
 
 type Project = {
   id: string;
@@ -15,10 +16,13 @@ type Project = {
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
+  const { isGuest, exitGuestMode, guestProjects, removeGuestProject } = useGuest();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const pathname = usePathname();
 
+  // Fetch projects for authenticated users
   useEffect(() => {
     if (session) {
       fetchProjects();
@@ -37,44 +41,44 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Combine: use DB projects for authed users, context projects for guests
+  const displayProjects: Project[] = isGuest
+    ? guestProjects.map((gp) => ({ id: gp.project.id, name: gp.project.name, idea: gp.project.idea }))
+    : projects;
+
   const deleteProject = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
     if (!confirm("Are you sure you want to delete this project?")) return;
 
+    if (isGuest) {
+      removeGuestProject(id);
+      if (pathname === `/projects/${id}`) {
+        router.push("/");
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
       if (res.ok) {
         setProjects((prev) => prev.filter((p) => p.id !== id));
-        // Redirect if on that project page? simpler to let user navigate
       }
     } catch (error) {
       console.error("Failed to delete project:", error);
     }
   };
 
-  if (!session) {
-    return (
-        <div className="flex h-screen items-center justify-center bg-black text-white">
-          <div className="text-center">
-            <h1 className="mb-8 text-4xl font-semibold tracking-tight">
-              <span className="text-white/95">VERSOR</span>
-              <span className="ml-0.5 text-neutral-400">.AI</span>
-            </h1>
-            <p className="mb-8 text-neutral-400">Please sign in to continue</p>
-            {/* The actual sign-in is handled by the AuthButton or NextAuth pages, 
-                but since we are wrapping everything, maybe we redirect or show a button here. 
-                Let's reuse the AuthButton logic but simpler here. */}
-                <button
-                    onClick={() => window.location.href = "/api/auth/signin"}
-                  className="rounded-full bg-white px-6 py-3 text-lg font-semibold text-black shadow-sm hover:bg-neutral-200"
-                >
-                    Sign in with Google
-                </button>
-          </div>
-        </div>
-    );
-  }
+  const handleSignOut = () => {
+    if (isGuest) {
+      exitGuestMode();
+      router.push("/");
+    } else {
+      signOut({ callbackUrl: "/" });
+    }
+  };
+
+  const displayName = isGuest ? "Guest" : session?.user?.name || "User";
 
   return (
     <div className="flex h-screen w-full bg-black text-white overflow-hidden">
@@ -123,7 +127,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           
           <div className="space-y-1">
-            {projects.map((project) => (
+            {displayProjects.map((project) => (
               <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
                     <Link
                         href={`/projects/${project.id}`}
@@ -133,7 +137,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         }`}
                         title={project.idea}
                     >
-                        {/* Truncate idea to be title-like */}
                         {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
                     </Link>
                     <button
@@ -145,10 +148,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </button>
                 </div>
             ))}
-            {projects.length === 0 && (
+            {displayProjects.length === 0 && (
                 <p className="px-3 text-xs text-neutral-600">No projects yet.</p>
             )}
           </div>
+
+          {/* Guest mode: offer sign-in link at bottom of sidebar */}
+          {isGuest && (
+            <div className="mt-auto pt-4 border-t border-white/10">
+              <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
+              <button
+                onClick={() => signIn("google", { callbackUrl: "/" })}
+                className="w-full rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 transition-all cursor-pointer"
+              >
+                Sign in to save projects
+              </button>
+            </div>
+          )}
         </nav>
       </aside>
 
@@ -165,20 +181,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-4">
             <div className="text-sm text-right">
-                <p className="text-white font-medium">{session.user?.name || "User"}</p>
+                <p className="text-white font-medium">{displayName}</p>
+                {isGuest && <p className="text-xs text-neutral-500">Temporary session</p>}
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={handleSignOut}
               className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
             >
-              Sign out
+              {isGuest ? "Exit" : "Sign out"}
             </button>
           </div>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto bg-black p-6 relative">
-             {/* Overlay for mobile/sidebar open state if needed, handled by transform mostly */}
             {children}
         </main>
       </div>

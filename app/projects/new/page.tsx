@@ -4,12 +4,16 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import CodeRainBackground from "@/components/CodeRainBackground";
+import { useGuest } from "@/components/GuestContext";
+import { useSession } from "next-auth/react";
 
 // Use local type for brevity if imports are tricky, but prefer importing
 import type { AIAnalysis } from "@/types/models";
 
 export default function CreateProjectPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const { isGuest, addGuestProject } = useGuest();
   
   // State
   const [inputValue, setInputValue] = useState("");
@@ -88,14 +92,18 @@ export default function CreateProjectPage() {
         const errorBody = await res.json().catch(() => ({}));
         const detail = errorBody?.detail || errorBody?.error || res.statusText;
         console.error("Create project failed:", res.status, detail);
-        throw new Error(
-          res.status === 401
-            ? "You must be signed in to create a project."
-            : `Failed to create project: ${detail}`
-        );
+        throw new Error(`Failed to create project: ${detail}`);
       }
       
       const data = await res.json();
+
+      // Guest mode: store in context, navigate to guest project view
+      if (isGuest && data.project && data.tasks) {
+        addGuestProject(data.project, data.tasks);
+        router.push(`/projects/${data.project.id}`);
+        return;
+      }
+
       if (data.project?.id) {
         window.location.href = `/projects/${data.project.id}`;
       } else {

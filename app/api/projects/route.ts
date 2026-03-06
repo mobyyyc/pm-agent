@@ -31,10 +31,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
+    const isGuest = !session?.user?.email;
 
-    if (!session || !session.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    // Allow both authenticated users and guests
+    const userId = session?.user?.email || `guest:${crypto.randomUUID()}`;
 
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
     const project: Project = validateProject({
       id: projectId,
-      userId: session.user.email,
+      userId,
       name: aiPlan.name,
       idea: parsed.idea,
       guideline: aiPlan.guideline,
@@ -75,6 +75,11 @@ export async function POST(request: Request) {
       createdAt: timestamp,
       updatedAt: timestamp,
     });
+
+    // For guests, don't persist to DB — return data for client-side storage
+    if (isGuest) {
+      return NextResponse.json({ project, tasks, guest: true }, { status: 201 });
+    }
 
     await insertProject(project);
     await insertTasks(tasks);

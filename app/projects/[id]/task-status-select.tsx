@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useGuest } from "@/components/GuestContext";
 
 type TaskStatus = "todo" | "in_progress" | "done";
 
@@ -11,15 +12,21 @@ const statusOptions: Array<{ value: TaskStatus; label: string }> = [
   { value: "done", label: "Done" },
 ];
 
-export function TaskStatusSelect({ taskId, initialStatus }: { taskId: string; initialStatus: TaskStatus }) {
+export function TaskStatusSelect({ taskId, initialStatus, isGuest }: { taskId: string; initialStatus: TaskStatus; isGuest?: boolean }) {
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { updateGuestTaskStatus } = useGuest();
 
   const onChange = (nextStatus: TaskStatus) => {
     setStatus(nextStatus);
     setError(null);
+
+    if (isGuest) {
+      updateGuestTaskStatus(taskId, nextStatus);
+      return;
+    }
 
     startTransition(async () => {
       const response = await fetch(`/api/tasks/${taskId}/status`, {

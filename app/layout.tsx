@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import ClientLayout from "@/components/ClientLayout";
+import { GuestProvider } from "@/components/GuestContext";
 
 export const metadata: Metadata = {
   title: "VERSOR",
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <SessionProvider>
+          <GuestProvider>
             <ClientLayout>{children}</ClientLayout>
+          </GuestProvider>
         </SessionProvider>
       </body>
     </html>

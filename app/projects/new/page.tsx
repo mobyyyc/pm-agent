@@ -33,22 +33,19 @@ export default function CreateProjectPage() {
   const handleSend = async (content: string = inputValue) => {
     if (!content.trim() || isAnalyzing) return;
 
-    // 1. Update history state (hidden)
-    const newHistory = [...conversationHistory, { role: "user" as const, content }];
-    setConversationHistory(newHistory);
-    
-    // 2. Set UI to "Analyzing" mode (clears previous question)
+    // 1. Set UI to "Analyzing" mode (clears previous question)
     setIsAnalyzing(true);
     setInputValue("");
     setCurrentAnalysis(null); // Clear displayed question to show loader
 
     try {
+      // Send current history (without the new message) — the server appends it
       const res = await fetch("/api/projects/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
-          history: newHistory, // Send the updated history
+          history: conversationHistory,
         }),
       });
 
@@ -58,13 +55,15 @@ export default function CreateProjectPage() {
 
       const data = (await res.json()) as AIAnalysis;
       
-      // 3. Update with new question/status
+      // 2. Update with new question/status
       setCurrentAnalysis(data);
       
-      // Update history with AI's question for next turn
+      // Update history with user message + AI's question for next turn
+      const updatedHistory = [...conversationHistory, { role: "user" as const, content }];
       if (data.question) {
-        setConversationHistory([...newHistory, { role: "model" as const, content: data.question }]);
+        updatedHistory.push({ role: "model" as const, content: data.question });
       }
+      setConversationHistory(updatedHistory);
       
     } catch (error) {
       console.error(error);

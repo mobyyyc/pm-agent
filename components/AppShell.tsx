@@ -81,7 +81,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-6 top-3 z-60 rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+        className="fixed left-6 top-3 z-60 cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />
@@ -138,7 +138,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     </Link>
                     <button
                         onClick={(e) => deleteProject(e, project.id)}
-                      className="rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
+                      className="cursor-pointer rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
                         title="Delete Project"
                     >
                         <XMarkIcon className="h-4 w-4" />
@@ -169,7 +169,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <button
               onClick={() => signOut()}
-              className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+              className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
             >
               Sign out
             </button>

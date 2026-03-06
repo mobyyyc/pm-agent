@@ -28,7 +28,7 @@ export default async function ProjectsPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight text-white">My Projects</h1>
-        <Link href="/" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 transition-all">
+        <Link href="/projects/new" className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 transition-all">
           New Project
         </Link>
       </header>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
-import { getProjects, getTasks, saveProjects, saveTasks } from "@/lib/storage";
+import { getProjectById, getTasksByProjectId, deleteProject } from "@/lib/storage";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -16,9 +16,7 @@ export async function GET(_request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
-
-    const project = projects.find((item) => item.id === id);
+    const project = await getProjectById(id);
 
     if (!project) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
@@ -28,7 +26,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const projectTasks = tasks.filter((task) => task.projectId === id);
+    const projectTasks = await getTasksByProjectId(id);
 
     return NextResponse.json({ project, tasks: projectTasks });
   } catch (error) {
@@ -47,21 +45,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
+    const project = await getProjectById(id);
 
-    const existingProjectIndex = projects.findIndex((p) => p.id === id);
-    if (existingProjectIndex === -1) {
+    if (!project) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
     }
 
-    if (projects[existingProjectIndex].userId !== session.user.email) {
+    if (project.userId !== session.user.email) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const newProjects = projects.filter((p) => p.id !== id);
-    const newTasks = tasks.filter((t) => t.projectId !== id);
-
-    await Promise.all([saveProjects(newProjects), saveTasks(newTasks)]);
+    await deleteProject(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

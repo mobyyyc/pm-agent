@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { generateProjectPlanWithGemini } from "@/lib/gemini";
-import { getProjects, getTasks, readCompanyKnowledge, saveProjects, saveTasks } from "@/lib/storage";
+import { getProjectsByUserId, readCompanyKnowledge, insertProject, insertTasks } from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createProjectRequestSchema, validateProject, validateTask } from "@/lib/validators";
 import type { Project, Task } from "@/types/models";
@@ -17,8 +17,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const projects = await getProjects();
-    const userProjects = projects.filter((p) => p.userId === session.user?.email);
+    const userProjects = await getProjectsByUserId(session.user.email);
     
     return NextResponse.json({ projects: userProjects });
   } catch (error) {
@@ -40,11 +39,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
 
-    const [companyKnowledge, existingProjects, existingTasks] = await Promise.all([
-      readCompanyKnowledge(),
-      getProjects(),
-      getTasks(),
-    ]);
+    const companyKnowledge = await readCompanyKnowledge();
 
     const aiPlan = await generateProjectPlanWithGemini({
       projectIdea: parsed.idea,
@@ -71,7 +66,9 @@ export async function POST(request: Request) {
 
     const project: Project = validateProject({
       id: projectId,
-      userId: session.user.email,      name: aiPlan.name,      idea: parsed.idea,
+      userId: session.user.email,
+      name: aiPlan.name,
+      idea: parsed.idea,
       guideline: aiPlan.guideline,
       timeline: aiPlan.timeline,
       taskIds: tasks.map((task) => task.id),
@@ -79,7 +76,8 @@ export async function POST(request: Request) {
       updatedAt: timestamp,
     });
 
-    await Promise.all([saveProjects([project, ...existingProjects]), saveTasks([...tasks, ...existingTasks])]);
+    await insertProject(project);
+    await insertTasks(tasks);
 
     return NextResponse.json({ project, tasks }, { status: 201 });
   } catch (error) {
@@ -89,6 +87,8 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
+
+    console.error("[POST /api/projects] Error:", error);
 
     return NextResponse.json(
       {

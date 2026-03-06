@@ -85,7 +85,16 @@ export default function CreateProjectPage() {
         body: JSON.stringify({ idea: currentAnalysis.summary }),
       });
 
-      if (!res.ok) throw new Error("Failed to create project");
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        const detail = errorBody?.detail || errorBody?.error || res.statusText;
+        console.error("Create project failed:", res.status, detail);
+        throw new Error(
+          res.status === 401
+            ? "You must be signed in to create a project."
+            : `Failed to create project: ${detail}`
+        );
+      }
       
       const data = await res.json();
       if (data.project?.id) {
@@ -95,7 +104,7 @@ export default function CreateProjectPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to generate project.");
+      alert(error instanceof Error ? error.message : "Failed to generate project.");
       setIsGenerating(false);
     }
   };

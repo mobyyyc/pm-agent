@@ -3,6 +3,8 @@ import Link from "next/link";
 import { getTaskReminders } from "@/lib/reminders";
 import { getProjects, getTasks } from "@/lib/storage";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProjectsPage() {
   const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
   const reminders = getTaskReminders(tasks, 3);

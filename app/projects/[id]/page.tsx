@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getProjects, getTasks } from "@/lib/storage";
+import { getProjectById, getTasksByProjectId } from "@/lib/storage";
 
 import { TaskStatusSelect } from "./task-status-select";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -11,15 +13,14 @@ type PageProps = {
 
 export default async function ProjectDashboardPage({ params }: PageProps) {
   const { id } = await params;
-  const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
 
-  const project = projects.find((item) => item.id === id);
+  const project = await getProjectById(id);
 
   if (!project) {
     notFound();
   }
 
-  const projectTasks = tasks.filter((task) => task.projectId === id);
+  const projectTasks = await getTasksByProjectId(id);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">

@@ -1,11 +1,28 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
 
+import { authOptions } from "@/lib/auth";
 import { getTaskReminders } from "@/lib/reminders";
-import { getProjects, getTasks } from "@/lib/storage";
+import { getProjectsByUserId, getTasksByProjectId } from "@/lib/storage";
+import type { Task } from "@/types/models";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
-  const [projects, tasks] = await Promise.all([getProjects(), getTasks()]);
-  const reminders = getTaskReminders(tasks, 3);
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    redirect("/");
+  }
+
+  const projects = await getProjectsByUserId(session.user.email);
+
+  // Fetch only this user's tasks (from their projects)
+  const allTasks: Task[] = (
+    await Promise.all(projects.map((p) => getTasksByProjectId(p.id)))
+  ).flat();
+
+  const reminders = getTaskReminders(allTasks, 3);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">

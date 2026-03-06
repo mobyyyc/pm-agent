@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
-import { getProjects, getTasks, saveTasks } from "@/lib/storage";
+import { getTaskById, getProjectById, updateTaskStatus } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
-import { updateTaskStatusRequestSchema, validateTask } from "@/lib/validators";
+import { updateTaskStatusRequestSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ taskId: string }>;
@@ -22,29 +22,19 @@ export async function PATCH(request: Request, context: RouteContext) {
     const body = await request.json();
     const parsed = updateTaskStatusRequestSchema.parse(body);
 
-    const [tasks, projects] = await Promise.all([getTasks(), getProjects()]);
-    const taskIndex = tasks.findIndex((task) => task.id === taskId);
+    const task = await getTaskById(taskId);
 
-    if (taskIndex < 0) {
+    if (!task) {
       return NextResponse.json({ error: "Task not found." }, { status: 404 });
     }
 
-    const task = tasks[taskIndex];
-    const project = projects.find((p) => p.id === task.projectId);
+    const project = await getProjectById(task.projectId);
 
     if (!project || project.userId !== session.user.email) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const updatedTask = validateTask({
-      ...task,
-      status: parsed.status,
-      updatedAt: isoNow(),
-    });
-
-    const updatedTasks = [...tasks];
-    updatedTasks[taskIndex] = updatedTask;
-    await saveTasks(updatedTasks);
+    const updatedTask = await updateTaskStatus(taskId, parsed.status, isoNow());
 
     return NextResponse.json({ task: updatedTask });
   } catch (error) {

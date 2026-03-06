@@ -11,7 +11,7 @@ export default function AuthButton() {
       <div className="flex items-center gap-4">
         <p className="text-sm text-gray-600">Signed in as {session.user?.email}</p>
         <button
-          onClick={() => signOut()}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="cursor-pointer rounded-full bg-red-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-red-600"
         >
           Sign out

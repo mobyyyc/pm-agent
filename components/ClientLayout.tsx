@@ -33,7 +33,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </h1>
             <p className="text-white/60">Please sign in to access your projects.</p>
             <button
-                onClick={() => signIn("google")}
+                onClick={() => signIn("google", { callbackUrl: "/" })}
               className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm hover:bg-neutral-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white"
             >
                 Sign in with Google

@@ -168,7 +168,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-white font-medium">{session.user?.name || "User"}</p>
             </div>
             <button
-              onClick={() => signOut()}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
             >
               Sign out

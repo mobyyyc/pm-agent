@@ -1,27 +1,9 @@
 {
-  "name": "Versor Inc.",
-  "industry": "B2B SaaS / Custom Enterprise Solutions",
-  "preferredStack": ["Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Prisma", "Node.js"],
-  "values": [
-    "Fast iteration and prototyping",
-    "Extreme focus on user experience (UX) and intuitive design",
-    "Clear, transparent project ownership",
-    "Scalable, maintainable, self-documenting code"
-  ],
-  "constraints": [
-    "Lean engineering team (2-4 developers typically per project)",
-    "Aggressive MVP delivery within 4-6 weeks",
-    "Zero-downtime deployment requirements",
-    "Tight cloud infrastructure budget for early-stage prototypes"
-  ],
-  "targetAudience": [
-    "Startup founders needing technical scaffolding",
-    "Mid-market enterprise teams digitizing old workflows",
-    "Agencies seeking scalable backend architecture"
-  ],
-  "designSystem": [
-    "Minimalist aesthetic with dark modes by default",
-    "Pill-shaped UI elements for soft interactions",
-    "Heavy reliance on Arial and legible sans-serif typography"
-  ]
+  "name": "",
+  "industry": "",
+  "preferredStack": [],
+  "values": [],
+  "constraints": [],
+  "targetAudience": [],
+  "designSystem": []
 }

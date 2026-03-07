@@ -186,7 +186,7 @@ export default function CreateProjectPage() {
               </h2>
               
               {/* Options Pills */}
-              {currentAnalysis.options && currentAnalysis.options.length > 0 && (
+              {currentAnalysis.options && currentAnalysis.options.length > 0 ? (
                   <div className="flex flex-wrap gap-3 justify-center py-4">
                       {currentAnalysis.options.map((opt, i) => (
                           <button
@@ -198,7 +198,7 @@ export default function CreateProjectPage() {
                           </button>
                       ))}
                   </div>
-              )}
+              ) : null}
 
               <div className="relative group w-full flex flex-col items-center">
                 <input

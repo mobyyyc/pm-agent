@@ -12,7 +12,7 @@ const analysisJsonSchema = {
     options: { type: "ARRAY", items: { type: "STRING" } },
     summary: { type: "STRING" },
   },
-  required: ["status"],
+  required: ["status", "options"],
 };
 
 const responseJsonSchema = {
@@ -170,7 +170,9 @@ Design System: ${JSON.stringify(ck.designSystem || [])}
 
 === BEHAVIOR ===
 - Ask ONE clarifying question at a time if the user's idea is vague.
-- Suggest 2-3 short options for the user to pick if helpful.
+- Keep your questions extremely concise. DO NOT include examples (e.g., "like X or Y") in the question text itself.
+- ALWAYS provide 2-5 short options for the user to pick for EVERY question. Put the examples as the options.
+- ALWAYS fill the 'options' array in the JSON response when asking a question. NEVER leave it empty.
 - Frame your questions and suggestions around the company's capabilities, stack, constraints, and audience.
 - CRITICAL: Before setting status to "ready", you MUST know the following information:
   1. Duration of the project

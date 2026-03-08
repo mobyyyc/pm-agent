@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { generateProjectPlanWithGemini } from "@/lib/gemini";
-import { getProjectsByUserId, readCompanyKnowledge, insertProject, insertTasks } from "@/lib/storage";
+import { getProjectsByUserId, readTeamKnowledge, insertProject, insertTasks } from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createProjectRequestSchema, validateProject, validateTask } from "@/lib/validators";
 import type { Project, Task } from "@/types/models";
@@ -39,11 +39,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
 
-    const companyKnowledge = await readCompanyKnowledge(session?.user?.email);
+    const teamKnowledge = await readTeamKnowledge(session?.user?.email);
 
     const aiPlan = await generateProjectPlanWithGemini({
       projectIdea: parsed.idea,
-      companyKnowledge,
+      teamKnowledge,
       today: new Date().toISOString().slice(0, 10),
     });
 

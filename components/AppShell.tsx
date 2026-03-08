@@ -123,15 +123,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <PlusIcon className="h-4 w-4" />
             New Project
           </Link>
-          <Link
-            href="/company"
-            onClick={() => setSidebarOpen(false)}
-            className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-              pathname === "/company" ? "bg-white/10 text-white" : "text-neutral-400"
-            }`}
-          >
-            Company Profile
-          </Link>
 
           <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
             Projects
@@ -164,9 +155,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
+          <div className="mt-auto pt-4 border-t border-white/10">
+            <Link
+              href="/team"
+              onClick={() => setSidebarOpen(false)}
+              className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                pathname === "/team" ? "bg-white/10 text-white" : "text-neutral-400"
+              }`}
+            >
+              Team Profile
+            </Link>
+          </div>
+
           {/* Guest mode: offer sign-in link at bottom of sidebar */}
           {isGuest && (
-            <div className="mt-auto pt-4 border-t border-white/10">
+            <div className="pt-2">
               <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
               <button
                 onClick={() => signIn("google", { callbackUrl: "/" })}

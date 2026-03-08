@@ -1,5 +1,5 @@
-import type { CompanyKnowledge } from "@/types/models";
-import { validateCompanyKnowledge } from "@/lib/validators";
+import type { TeamKnowledge } from "@/types/models";
+import { validateTeamKnowledge } from "@/lib/validators";
 
 function splitList(input: string): string[] {
   return input
@@ -14,14 +14,14 @@ function extractField(text: string, key: string): string {
   return match?.[1]?.trim() || "";
 }
 
-export function parseCompanyFromJson(content: string): CompanyKnowledge {
+export function parseTeamFromJson(content: string): TeamKnowledge {
   const parsed = JSON.parse(content);
-  return validateCompanyKnowledge(parsed);
+  return validateTeamKnowledge(parsed);
 }
 
-export function parseCompanyFromText(content: string): CompanyKnowledge {
-  const name = extractField(content, "name") || "Unknown Company";
-  const industry = extractField(content, "industry") || "General";
+export function parseTeamFromText(content: string): TeamKnowledge {
+  const name = extractField(content, "name") || "Unknown Team";
+  const industry = extractField(content, "industry") || "Unspecified";
 
   const preferredStack = splitList(extractField(content, "preferred stack") || extractField(content, "stack"));
   const values = splitList(extractField(content, "values"));
@@ -33,7 +33,7 @@ export function parseCompanyFromText(content: string): CompanyKnowledge {
     extractField(content, "design system") || extractField(content, "design"),
   );
 
-  return validateCompanyKnowledge({
+  return validateTeamKnowledge({
     name,
     industry,
     preferredStack,

@@ -36,7 +36,12 @@ export const aiAnalysisSchema = z.object({
 
 export type AIAnalysis = z.infer<typeof aiAnalysisSchema>;
 
-export const companyKnowledgeSchema = z.object({
+export const teamCategorySchema = z.object({
+  title: z.string().min(1),
+  points: z.array(z.string().min(1)).min(1),
+});
+
+export const teamKnowledgeSchema = z.object({
   name: z.string().min(1),
   industry: z.string().min(1),
   preferredStack: z.array(z.string().min(1)),
@@ -46,15 +51,22 @@ export const companyKnowledgeSchema = z.object({
   designSystem: z.array(z.string().min(1)),
 });
 
-export const userCompanySchema = z.object({
+export const teamImportAnalysisSchema = z.object({
+  summary: z.string().min(1),
+  categories: z.array(teamCategorySchema),
+  normalized: teamKnowledgeSchema,
+});
+
+export const userTeamSchema = z.object({
   userId: z.string().min(1),
-  company: companyKnowledgeSchema,
+  team: teamKnowledgeSchema,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 
-export type CompanyKnowledge = z.infer<typeof companyKnowledgeSchema>;
-export type UserCompany = z.infer<typeof userCompanySchema>;
+export type TeamKnowledge = z.infer<typeof teamKnowledgeSchema>;
+export type UserTeam = z.infer<typeof userTeamSchema>;
+export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),

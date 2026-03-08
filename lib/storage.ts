@@ -1,55 +1,53 @@
 import { sql } from "@/lib/db";
 import {
-  companyKnowledgeSchema,
   projectSchema,
   taskSchema,
-  userCompanySchema,
-  type CompanyKnowledge,
+  userTeamSchema,
   type Project,
   type Task,
-  type UserCompany,
+  type TeamKnowledge,
+  type UserTeam,
 } from "@/types/models";
-import companyData from "@/data/company.json";
 
 // ---------------------------------------------------------------------------
-// Company knowledge (loaded from data/company.json at build time)
+// Team profile knowledge
 // ---------------------------------------------------------------------------
 
-export async function readDefaultCompanyKnowledge(): Promise<CompanyKnowledge> {
-  return companyKnowledgeSchema.parse({
-    name: companyData.name || "Default Company",
-    industry: companyData.industry || "General",
-    preferredStack: companyData.preferredStack || [],
-    values: companyData.values || [],
-    constraints: companyData.constraints || [],
-    targetAudience: companyData.targetAudience || [],
-    designSystem: companyData.designSystem || [],
-  });
+export async function readDefaultTeamKnowledge(): Promise<TeamKnowledge> {
+  return {
+    name: "",
+    industry: "",
+    preferredStack: [],
+    values: [],
+    constraints: [],
+    targetAudience: [],
+    designSystem: [],
+  };
 }
 
-export async function getCompanyByUserId(userId: string): Promise<UserCompany | null> {
-  const rows = await sql`SELECT * FROM companies WHERE user_id = ${userId} LIMIT 1`;
+export async function getTeamByUserId(userId: string): Promise<UserTeam | null> {
+  const rows = await sql`SELECT * FROM teams WHERE user_id = ${userId} LIMIT 1`;
   if (rows.length === 0) return null;
   const row = rows[0];
 
-  return userCompanySchema.parse({
+  return userTeamSchema.parse({
     userId: row.user_id,
-    company: row.knowledge,
+    team: row.knowledge,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
 }
 
-export async function upsertCompanyByUserId(
+export async function upsertTeamByUserId(
   userId: string,
-  company: CompanyKnowledge,
+  team: TeamKnowledge,
   timestamp: string,
-): Promise<UserCompany> {
+): Promise<UserTeam> {
   const rows = await sql`
-    INSERT INTO companies (user_id, knowledge, created_at, updated_at)
+    INSERT INTO teams (user_id, knowledge, created_at, updated_at)
     VALUES (
       ${userId},
-      ${JSON.stringify(company)}::jsonb,
+      ${JSON.stringify(team)}::jsonb,
       ${timestamp},
       ${timestamp}
     )
@@ -62,29 +60,29 @@ export async function upsertCompanyByUserId(
 
   const row = rows[0];
 
-  return userCompanySchema.parse({
+  return userTeamSchema.parse({
     userId: row.user_id,
-    company: row.knowledge,
+    team: row.knowledge,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
 }
 
-export async function deleteCompanyByUserId(userId: string): Promise<void> {
-  await sql`DELETE FROM companies WHERE user_id = ${userId}`;
+export async function deleteTeamByUserId(userId: string): Promise<void> {
+  await sql`DELETE FROM teams WHERE user_id = ${userId}`;
 }
 
-export async function readCompanyKnowledge(userId?: string): Promise<CompanyKnowledge> {
+export async function readTeamKnowledge(userId?: string): Promise<TeamKnowledge> {
   if (!userId) {
-    return readDefaultCompanyKnowledge();
+    return readDefaultTeamKnowledge();
   }
 
-  const userCompany = await getCompanyByUserId(userId);
-  if (!userCompany) {
-    return readDefaultCompanyKnowledge();
+  const userTeam = await getTeamByUserId(userId);
+  if (!userTeam) {
+    return readDefaultTeamKnowledge();
   }
 
-  return companyKnowledgeSchema.parse(userCompany.company);
+  return userTeam.team;
 }
 
 // ---------------------------------------------------------------------------

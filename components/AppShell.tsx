@@ -155,16 +155,56 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div className="mt-auto pt-4 border-t border-white/10">
-            <Link
-              href="/team"
-              onClick={() => setSidebarOpen(false)}
-              className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-                pathname === "/team" ? "bg-white/10 text-white" : "text-neutral-400"
-              }`}
-            >
-              Team Profile
-            </Link>
+          <div className="mt-auto border-t border-white/10">
+            <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+              Settings
+            </div>
+            <div className="space-y-1 pt-1">
+              <Link
+                href="/team"
+                onClick={() => setSidebarOpen(false)}
+                className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                  pathname === "/team" ? "bg-white/10 text-white" : "text-neutral-400"
+                }`}
+              >
+                Team Profile
+              </Link>
+            </div>
+
+            <div className="mt-4 border-t border-white/10">
+              <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+                Legal
+              </div>
+              <div className="space-y-1 pt-1">
+                <Link
+                  href="/privacy"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                    pathname === "/privacy" ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  Privacy Policy
+                </Link>
+                <Link
+                  href="/cookies"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                    pathname === "/cookies" ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  Cookie Policy
+                </Link>
+                <Link
+                  href="/terms"
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                    pathname === "/terms" ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  Terms
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Guest mode: offer sign-in link at bottom of sidebar */}

@@ -28,6 +28,8 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [showAnalysisProgress, setShowAnalysisProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -78,6 +80,8 @@ export default function TeamPage() {
       setPendingFileInputType(null);
       setSelectedFileName("");
       setImportAnalysis(null);
+      setShowAnalysisProgress(false);
+      setAnalysisProgress(0);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -92,9 +96,24 @@ export default function TeamPage() {
 
   const analyzeImport = async (inputType: "text" | "json", content: string) => {
     setAnalyzing(true);
+    setShowAnalysisProgress(true);
+    setAnalysisProgress(0);
     setError(null);
     setSuccess(null);
     setImportAnalysis(null);
+
+    const progressTimer = setInterval(() => {
+      setAnalysisProgress((prev) => {
+        const target = 95;
+        const eased = prev + (target - prev) * 0.08;
+
+        if (eased >= target) {
+          return target - 0.001;
+        }
+
+        return eased;
+      });
+    }, 80);
 
     try {
       const res = await fetch("/api/team/analyze", {
@@ -108,9 +127,19 @@ export default function TeamPage() {
         throw new Error(body?.issues?.[0] || body?.error || "Import failed");
       }
 
+      clearInterval(progressTimer);
+      setAnalysisProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
       setImportAnalysis(body.analysis || null);
       setSuccess("AI summary ready. Review and confirm import.");
+      setTimeout(() => {
+        setShowAnalysisProgress(false);
+      }, 250);
     } catch (e) {
+      clearInterval(progressTimer);
+      setShowAnalysisProgress(false);
+      setAnalysisProgress(0);
       setError(e instanceof Error ? e.message : "Import failed");
     } finally {
       setAnalyzing(false);
@@ -276,6 +305,17 @@ export default function TeamPage() {
             >
               {analyzing ? "Analyzing..." : "Import File"}
             </button>
+          </div>
+        )}
+
+        {showAnalysisProgress && (
+          <div className="mt-4">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-white transition-[width] duration-150 ease-linear"
+                style={{ width: `${analysisProgress}%` }}
+              />
+            </div>
           </div>
         )}
 

@@ -235,9 +235,7 @@ export async function insertTask(task: Task): Promise<void> {
 }
 
 export async function insertTasks(tasks: Task[]): Promise<void> {
-  for (const task of tasks) {
-    await insertTask(task);
-  }
+  await Promise.all(tasks.map((task) => insertTask(task)));
 }
 
 export async function updateTaskStatus(taskId: string, status: string, updatedAt: string): Promise<Task | null> {

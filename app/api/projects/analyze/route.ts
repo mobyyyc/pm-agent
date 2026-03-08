@@ -6,10 +6,26 @@ import { analyzeProjectRequestSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const start = performance.now();
   try {
-    const session = await getServerSession(authOptions);
+    let authMs = 0;
+    let parseMs = 0;
+    let teamMs = 0;
+    let geminiMs = 0;
+
+    const authStart = performance.now();
+    const cookieHeader = req.headers.get("cookie") ?? "";
+    const hasSessionCookie =
+      cookieHeader.includes("next-auth.session-token") ||
+      cookieHeader.includes("__Secure-next-auth.session-token");
+
+    const session = hasSessionCookie ? await getServerSession(authOptions) : null;
+    authMs = performance.now() - authStart;
+
+    const parseStart = performance.now();
     const json = await req.json();
     const result = analyzeProjectRequestSchema.safeParse(json);
+    parseMs = performance.now() - parseStart;
 
     if (!result.success) {
       return NextResponse.json(
@@ -19,11 +35,29 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, history } = result.data;
-  const userEmail = session?.user?.email ?? undefined;
-  const teamKnowledge = await readTeamKnowledge(userEmail);
-    const analysis = await analyzeProjectRequest({ message, history: history || [], teamKnowledge });
+    const userEmail = session?.user?.email ?? undefined;
 
-    return NextResponse.json(analysis);
+    const teamStart = performance.now();
+    const teamKnowledge = await readTeamKnowledge(userEmail);
+    teamMs = performance.now() - teamStart;
+
+    const geminiStart = performance.now();
+    const analysis = await analyzeProjectRequest({ message, history: history || [], teamKnowledge });
+    geminiMs = performance.now() - geminiStart;
+
+    const totalMs = performance.now() - start;
+    const response = NextResponse.json(analysis);
+    response.headers.set(
+      "Server-Timing",
+      [
+        `auth;dur=${authMs.toFixed(1)}`,
+        `parse;dur=${parseMs.toFixed(1)}`,
+        `team;dur=${teamMs.toFixed(1)}`,
+        `gemini;dur=${geminiMs.toFixed(1)}`,
+        `total;dur=${totalMs.toFixed(1)}`,
+      ].join(", "),
+    );
+    return response;
   } catch (error) {
     console.error("Analysis error:", error);
     return NextResponse.json(

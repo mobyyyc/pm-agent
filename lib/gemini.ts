@@ -7,6 +7,26 @@ import type { AIPlan, AIAnalysis, TeamImportAnalysis } from "@/types/models";
 
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent";
+const ANALYZE_MAX_HISTORY_MESSAGES = 10;
+const ANALYZE_TIMEOUT_MS = 15000;
+const PLAN_TIMEOUT_MS = 25000;
+const IMPORT_TIMEOUT_MS = 20000;
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Gemini request timed out after ${timeoutMs}ms.`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const analysisJsonSchema = {
   type: "OBJECT",
@@ -138,7 +158,7 @@ export async function generateProjectPlanWithGemini(input: {
     `Project idea: ${input.projectIdea}`,
   ].join("\n");
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const response = await fetchWithTimeout(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -155,7 +175,7 @@ export async function generateProjectPlanWithGemini(input: {
         responseSchema: responseJsonSchema,
       },
     }),
-  });
+  }, PLAN_TIMEOUT_MS);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -224,7 +244,9 @@ Design System: ${JSON.stringify(ck.designSystem || [])}
 - In your summary, reference the team's preferred approaches and constraints.
 `.trim();
 
-  const contents = input.history.map((msg) => ({
+  const recentHistory = input.history.slice(-ANALYZE_MAX_HISTORY_MESSAGES);
+
+  const contents = recentHistory.map((msg) => ({
     role: msg.role === "user" ? "user" : "model",
     parts: [{ text: msg.content }],
   }));
@@ -234,7 +256,7 @@ Design System: ${JSON.stringify(ck.designSystem || [])}
     parts: [{ text: input.message }],
   });
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const response = await fetchWithTimeout(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -245,7 +267,7 @@ Design System: ${JSON.stringify(ck.designSystem || [])}
         responseSchema: analysisJsonSchema,
       },
     }),
-  });
+  }, ANALYZE_TIMEOUT_MS);
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -295,7 +317,7 @@ export async function analyzeTeamImportWithGemini(input: {
     "=== USER INPUT END ===",
   ].join("\n");
 
-  const response = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+  const response = await fetchWithTimeout(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -305,7 +327,7 @@ export async function analyzeTeamImportWithGemini(input: {
         responseSchema: teamImportAnalysisJsonSchema,
       },
     }),
-  });
+  }, IMPORT_TIMEOUT_MS);
 
   if (!response.ok) {
     const errorText = await response.text();

@@ -37,6 +37,8 @@ const PROJECT_KEYWORDS = [
 ];
 
 const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|n\/a|\?+|\.+|\d+)$/i;
+const MAX_HISTORY_MESSAGES = 10;
+const MIN_PROGRESS_DELTA = 10;
 
 function assessAnswer(
   rawInput: string,
@@ -80,8 +82,8 @@ function assessAnswer(
 }
 
 function progressDeltaFromDetail(detailScore: number): number {
-  if (detailScore <= 1) return 5;
-  if (detailScore === 2) return 9;
+  if (detailScore <= 1) return MIN_PROGRESS_DELTA;
+  if (detailScore === 2) return MIN_PROGRESS_DELTA;
   if (detailScore === 3) return 14;
   if (detailScore === 4) return 20;
   return 26;
@@ -140,7 +142,7 @@ export default function CreateProjectPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: content,
-          history: conversationHistory,
+          history: conversationHistory.slice(-MAX_HISTORY_MESSAGES),
         }),
       });
 

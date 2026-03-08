@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, history } = result.data;
-    const teamKnowledge = await readTeamKnowledge(session?.user?.email);
+  const userEmail = session?.user?.email ?? undefined;
+  const teamKnowledge = await readTeamKnowledge(userEmail);
     const analysis = await analyzeProjectRequest({ message, history: history || [], teamKnowledge });
 
     return NextResponse.json(analysis);

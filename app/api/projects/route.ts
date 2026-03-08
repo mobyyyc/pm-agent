@@ -39,7 +39,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
 
-    const teamKnowledge = await readTeamKnowledge(session?.user?.email);
+  const userEmail = session?.user?.email ?? undefined;
+  const teamKnowledge = await readTeamKnowledge(userEmail);
 
     const aiPlan = await generateProjectPlanWithGemini({
       projectIdea: parsed.idea,

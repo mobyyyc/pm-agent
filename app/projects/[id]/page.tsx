@@ -63,7 +63,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     );
   }
 
-  const isUnauthedUser = !isGuest && sessionStatus !== "loading" && !session?.user?.email;
+  const isUnauthedUser = !isGuest && !session?.user?.email;
   const isGuestNotFound = isGuest && !guestProjectBundle;
 
   if (notFoundState || !project || isGuestNotFound || isUnauthedUser) {

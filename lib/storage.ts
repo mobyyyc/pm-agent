@@ -1,13 +1,88 @@
 import { sql } from "@/lib/db";
-import { projectSchema, taskSchema, type Project, type Task } from "@/types/models";
-import companyData from "@/data/company.json";
+import {
+  projectSchema,
+  taskSchema,
+  userTeamSchema,
+  type Project,
+  type Task,
+  type TeamKnowledge,
+  type UserTeam,
+} from "@/types/models";
 
 // ---------------------------------------------------------------------------
-// Company knowledge (loaded from data/company.json at build time)
+// Team profile knowledge
 // ---------------------------------------------------------------------------
 
-export async function readCompanyKnowledge(): Promise<unknown> {
-  return companyData;
+export async function readDefaultTeamKnowledge(): Promise<TeamKnowledge> {
+  return {
+    name: "",
+    industry: "",
+    preferredStack: [],
+    values: [],
+    constraints: [],
+    targetAudience: [],
+    designSystem: [],
+  };
+}
+
+export async function getTeamByUserId(userId: string): Promise<UserTeam | null> {
+  const rows = await sql`SELECT * FROM teams WHERE user_id = ${userId} LIMIT 1`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return userTeamSchema.parse({
+    userId: row.user_id,
+    team: row.knowledge,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function upsertTeamByUserId(
+  userId: string,
+  team: TeamKnowledge,
+  timestamp: string,
+): Promise<UserTeam> {
+  const rows = await sql`
+    INSERT INTO teams (user_id, knowledge, created_at, updated_at)
+    VALUES (
+      ${userId},
+      ${JSON.stringify(team)}::jsonb,
+      ${timestamp},
+      ${timestamp}
+    )
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      knowledge = EXCLUDED.knowledge,
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  const row = rows[0];
+
+  return userTeamSchema.parse({
+    userId: row.user_id,
+    team: row.knowledge,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function deleteTeamByUserId(userId: string): Promise<void> {
+  await sql`DELETE FROM teams WHERE user_id = ${userId}`;
+}
+
+export async function readTeamKnowledge(userId?: string): Promise<TeamKnowledge> {
+  if (!userId) {
+    return readDefaultTeamKnowledge();
+  }
+
+  const userTeam = await getTeamByUserId(userId);
+  if (!userTeam) {
+    return readDefaultTeamKnowledge();
+  }
+
+  return userTeam.team;
 }
 
 // ---------------------------------------------------------------------------
@@ -197,11 +272,13 @@ export async function createProjectWithTasks(project: Project, tasks: Task[]): P
 
 // Legacy aliases kept for backward-compatibility with any remaining callers
 export async function saveProjects(_projects: Project[]): Promise<void> {
+  void _projects;
   // No-op: individual insert/delete operations are used now
   throw new Error("saveProjects is no longer supported with Neon DB. Use insertProject / deleteProject instead.");
 }
 
 export async function saveTasks(_tasks: Task[]): Promise<void> {
+  void _tasks;
   // No-op: individual insert/update operations are used now
   throw new Error("saveTasks is no longer supported with Neon DB. Use insertTask / updateTaskStatus instead.");
 }

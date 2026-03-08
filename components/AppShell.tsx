@@ -5,7 +5,7 @@ import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Bars3Icon, PlusIcon, XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
 
 type Project = {
@@ -22,24 +22,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const pathname = usePathname();
 
-  // Fetch projects for authenticated users
   useEffect(() => {
-    if (session) {
-      fetchProjects();
-    }
-  }, [session]);
+    if (!session?.user?.email) return;
 
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
+    let active = true;
+
+    fetch("/api/projects")
+      .then((res) => (res.ok ? res.json() : { projects: [] }))
+      .then((data: { projects: Project[] }) => {
+        if (!active) return;
         setProjects(data.projects || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error);
-    }
-  };
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error("Failed to fetch projects:", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.email]);
 
   // Combine: use DB projects for authed users, context projects for guests
   const displayProjects: Project[] = isGuest
@@ -153,9 +155,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
+          <div className="mt-auto pt-4 border-t border-white/10">
+            <Link
+              href="/team"
+              onClick={() => setSidebarOpen(false)}
+              className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                pathname === "/team" ? "bg-white/10 text-white" : "text-neutral-400"
+              }`}
+            >
+              Team Profile
+            </Link>
+          </div>
+
           {/* Guest mode: offer sign-in link at bottom of sidebar */}
           {isGuest && (
-            <div className="mt-auto pt-4 border-t border-white/10">
+            <div className="pt-2">
               <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
               <button
                 onClick={() => signIn("google", { callbackUrl: "/" })}

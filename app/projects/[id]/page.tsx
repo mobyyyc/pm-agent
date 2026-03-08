@@ -16,24 +16,22 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const { data: session, status: sessionStatus } = useSession();
   const { isGuest, getGuestProject } = useGuest();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dbProject, setDbProject] = useState<Project | null>(null);
+  const [dbTasks, setDbTasks] = useState<Task[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
+
+  const guestProjectBundle = isGuest ? getGuestProject(id) : null;
+  const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
+  const tasks = isGuest ? (guestProjectBundle?.tasks || []) : dbTasks;
+  const isPageLoading =
+    sessionStatus === "loading" ||
+    (!isGuest && !!session?.user?.email && !notFoundState && dbProject === null);
 
   useEffect(() => {
     // Wait for session to settle
     if (sessionStatus === "loading") return;
 
     if (isGuest) {
-      const gp = getGuestProject(id);
-      if (gp) {
-        setProject(gp.project);
-        setTasks(gp.tasks);
-      } else {
-        setNotFoundState(true);
-      }
-      setLoading(false);
       return;
     }
 
@@ -49,29 +47,15 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         })
         .then((data) => {
           if (data) {
-            setProject(data.project);
-            setTasks(data.tasks || []);
+            setDbProject(data.project);
+            setDbTasks(data.tasks || []);
           }
         })
-        .catch(() => setNotFoundState(true))
-        .finally(() => setLoading(false));
-    } else {
-      setNotFoundState(true);
-      setLoading(false);
+        .catch(() => setNotFoundState(true));
     }
-  }, [id, isGuest, session, sessionStatus, getGuestProject]);
+  }, [id, isGuest, session?.user?.email, sessionStatus, guestProjectBundle]);
 
-  // Re-sync guest tasks when context updates
-  useEffect(() => {
-    if (isGuest) {
-      const gp = getGuestProject(id);
-      if (gp) {
-        setTasks(gp.tasks);
-      }
-    }
-  }, [isGuest, id, getGuestProject]);
-
-  if (loading) {
+  if (isPageLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-neutral-400">Loading project...</p>
@@ -79,7 +63,10 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     );
   }
 
-  if (notFoundState || !project) {
+  const isUnauthedUser = !isGuest && sessionStatus !== "loading" && !session?.user?.email;
+  const isGuestNotFound = isGuest && !guestProjectBundle;
+
+  if (notFoundState || !project || isGuestNotFound || isUnauthedUser) {
     notFound();
   }
 

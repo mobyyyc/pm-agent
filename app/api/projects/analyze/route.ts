@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { analyzeProjectRequest } from "@/lib/gemini";
-import { readCompanyKnowledge } from "@/lib/storage";
+import { readTeamKnowledge } from "@/lib/storage";
 import { analyzeProjectRequestSchema } from "@/lib/validators";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
     const json = await req.json();
     const result = analyzeProjectRequestSchema.safeParse(json);
 
@@ -16,8 +19,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { message, history } = result.data;
-    const companyKnowledge = await readCompanyKnowledge();
-    const analysis = await analyzeProjectRequest({ message, history: history || [], companyKnowledge });
+    const teamKnowledge = await readTeamKnowledge(session?.user?.email);
+    const analysis = await analyzeProjectRequest({ message, history: history || [], teamKnowledge });
 
     return NextResponse.json(analysis);
   } catch (error) {

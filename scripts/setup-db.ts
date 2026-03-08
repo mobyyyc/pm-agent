@@ -46,9 +46,21 @@ async function main() {
 
   console.log("  ✓ tasks table created");
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS teams (
+      user_id TEXT PRIMARY KEY,
+      knowledge JSONB NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
+  console.log("  ✓ teams table created");
+
   // Add useful indexes
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_teams_user_id ON teams(user_id)`;
 
   console.log("  ✓ indexes created");
   console.log("Done! Database is ready.");

@@ -7,7 +7,7 @@ Simple prototype for AI-assisted project planning.
 - Next.js App Router
 - Tailwind
 - Next.js API routes
-- JSON files for storage (`data/*.json`)
+- Neon Postgres for persistent storage
 - Gemini API
 
 ## Setup
@@ -35,11 +35,11 @@ Simple prototype for AI-assisted project planning.
 ## Workflow
 
 1. Enter project idea on `/`.
-2. Backend reads `data/company.json`.
-3. Backend sends idea + company knowledge to Gemini.
+2. Backend reads the signed-in user's team profile from DB (fallback: general context if no profile exists).
+3. Backend sends idea + team knowledge to Gemini.
 4. Gemini returns structured JSON (`guideline`, `timeline`, `tasks`).
 5. Backend validates output with Zod.
-6. Backend saves project + tasks in `data/projects.json` and `data/tasks.json`.
+6. Backend saves project + tasks in Neon.
 7. UI shows:
    - `My Projects` at `/projects`
    - Project dashboard at `/projects/[id]`
@@ -51,10 +51,12 @@ Simple prototype for AI-assisted project planning.
 - `GET /api/projects` - list projects
 - `POST /api/projects` - create project from idea using Gemini
 - `GET /api/projects/:id` - get single project + tasks
+- `GET /api/team` - get current user's team profile
+- `POST /api/team` - save/import current user's team profile
 - `PATCH /api/tasks/:taskId/status` - update task status
 - `GET /api/reminders?days=3` - near-due + overdue tasks
 
 ## Notes
 
 - This is an MVP prototype only.
-- No auth, no multi-tenant isolation, no production persistence.
+- Google auth + per-user data isolation are enabled.

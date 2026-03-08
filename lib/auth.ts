@@ -13,7 +13,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async session({ session, token }) {
+    async session({ session }) {
       if (session?.user) {
         // Add additional user info to session if needed
       }

@@ -2,9 +2,13 @@ import { z } from "zod";
 
 import {
   aiPlanSchema,
+  teamImportAnalysisSchema,
+  teamKnowledgeSchema,
   projectSchema,
   taskSchema,
   type AIPlan,
+  type TeamImportAnalysis,
+  type TeamKnowledge,
   type Project,
   type Task,
   aiAnalysisSchema,
@@ -25,6 +29,35 @@ export const analyzeProjectRequestSchema = z.object({
 export const updateTaskStatusRequestSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
 });
+
+const arrayFromStringSchema = z
+  .union([z.array(z.string()), z.string()])
+  .transform((value) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => item.trim()).filter(Boolean);
+    }
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  });
+
+export const upsertTeamRequestSchema = z.object({
+  name: z.string().min(1, "Team name is required."),
+  industry: z.string().min(1, "Industry is required."),
+  preferredStack: arrayFromStringSchema,
+  values: arrayFromStringSchema,
+  constraints: arrayFromStringSchema,
+  targetAudience: arrayFromStringSchema,
+  designSystem: arrayFromStringSchema,
+});
+
+export const importTeamRequestSchema = z.object({
+  inputType: z.enum(["json", "text"]),
+  content: z.string().min(1, "Content is required."),
+});
+
+export const analyzeTeamImportRequestSchema = importTeamRequestSchema;
 
 export function validateAndNormalizeAIAnalysis(data: unknown) {
   return aiAnalysisSchema.parse(data);
@@ -59,4 +92,12 @@ export function validateProject(project: unknown): Project {
 
 export function validateTask(task: unknown): Task {
   return taskSchema.parse(task);
+}
+
+export function validateTeamKnowledge(team: unknown): TeamKnowledge {
+  return teamKnowledgeSchema.parse(team);
+}
+
+export function validateAndNormalizeTeamImportAnalysis(analysis: unknown): TeamImportAnalysis {
+  return teamImportAnalysisSchema.parse(analysis);
 }

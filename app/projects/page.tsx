@@ -34,17 +34,13 @@ export default function ProjectsPage() {
   const { isGuest, guestProjects } = useGuest();
   const router = useRouter();
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [allTasks, setAllTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dbProjects, setDbProjects] = useState<Project[] | null>(null);
+  const [dbTasks, setDbTasks] = useState<Task[] | null>(null);
 
   useEffect(() => {
     if (sessionStatus === "loading") return;
 
     if (isGuest) {
-      setProjects(guestProjects.map((gp) => gp.project));
-      setAllTasks(guestProjects.flatMap((gp) => gp.tasks));
-      setLoading(false);
       return;
     }
 
@@ -58,7 +54,7 @@ export default function ProjectsPage() {
       .then((res) => (res.ok ? res.json() : { projects: [] }))
       .then((data: { projects: Project[] }) => {
         const projs = data.projects || [];
-        setProjects(projs);
+        setDbProjects(projs);
         if (projs.length > 0) {
           // Fetch tasks for each project for reminders
           Promise.all(
@@ -67,16 +63,22 @@ export default function ProjectsPage() {
                 .then((r) => (r.ok ? r.json() : { tasks: [] }))
                 .then((d) => (d.tasks || []) as Task[])
             )
-          ).then((taskArrays) => setAllTasks(taskArrays.flat()));
+          ).then((taskArrays) => setDbTasks(taskArrays.flat()));
+        } else {
+          setDbTasks([]);
         }
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [sessionStatus, session, isGuest, guestProjects, router]);
+      .finally(() => {});
+  }, [sessionStatus, session, isGuest, router]);
+
+  const projects = isGuest ? guestProjects.map((gp) => gp.project) : (dbProjects || []);
+  const allTasks = isGuest ? guestProjects.flatMap((gp) => gp.tasks) : (dbTasks || []);
+  const isPageLoading = sessionStatus === "loading" || (!isGuest && dbProjects === null);
 
   const reminders = getTaskReminders(allTasks, 3);
 
-  if (loading) {
+  if (isPageLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-neutral-400">Loading projects...</p>

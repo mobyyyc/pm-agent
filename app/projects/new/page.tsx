@@ -99,7 +99,12 @@ export default function CreateProjectPage() {
   const [interviewProgress, setInterviewProgress] = useState(0);
   const [showInterviewProgress, setShowInterviewProgress] = useState(false);
   const [progressWarning, setProgressWarning] = useState("");
+  const progressRef = useRef(0);
   const nonsenseStreakRef = useRef(0);
+
+  useEffect(() => {
+    progressRef.current = interviewProgress;
+  }, [interviewProgress]);
   
   // History is needed for the API context, but we won't display it
   const [conversationHistory, setConversationHistory] = useState<
@@ -118,12 +123,15 @@ export default function CreateProjectPage() {
     if (!content.trim() || isAnalyzing) return;
 
     const inputAssessment = assessAnswer(content, currentAnalysis?.question, currentAnalysis?.options);
-    setShowInterviewProgress(true);
 
     // 1. Set UI to "Analyzing" mode (clears previous question)
     setIsAnalyzing(true);
     setInputValue("");
     setCurrentAnalysis(null); // Clear displayed question to show loader
+
+    let nextProgress: number | null = null;
+    let shouldHideAfterComplete = false;
+    let shouldShowAfterThinking = false;
 
     try {
       // Send current history (without the new message) — the server appends it
@@ -143,21 +151,20 @@ export default function CreateProjectPage() {
       const data = (await res.json()) as AIAnalysis;
 
       if (data.status === "ready") {
-        setInterviewProgress(100);
+        nextProgress = 100;
+        shouldHideAfterComplete = true;
         nonsenseStreakRef.current = 0;
         setProgressWarning("");
-        setTimeout(() => {
-          setShowInterviewProgress(false);
-        }, 300);
       } else {
-        setShowInterviewProgress(true);
+        shouldShowAfterThinking = true;
 
         if (inputAssessment.relevant) {
           const delta = progressDeltaFromDetail(inputAssessment.detailScore);
-          setInterviewProgress((prev) => Math.min(95, prev + delta));
+          nextProgress = Math.min(95, progressRef.current + delta);
           nonsenseStreakRef.current = 0;
           setProgressWarning("");
         } else {
+          nextProgress = progressRef.current;
           nonsenseStreakRef.current += 1;
           if (nonsenseStreakRef.current >= 2) {
             setProgressWarning("Please provide project-related details so I can move forward.");
@@ -180,6 +187,19 @@ export default function CreateProjectPage() {
       alert("Something went wrong.");
     } finally {
       setIsAnalyzing(false);
+      if (shouldShowAfterThinking) {
+        setShowInterviewProgress(true);
+      }
+      if (nextProgress !== null) {
+        requestAnimationFrame(() => {
+          setInterviewProgress(nextProgress as number);
+        });
+      }
+      if (shouldHideAfterComplete) {
+        setTimeout(() => {
+          setShowInterviewProgress(false);
+        }, 900);
+      }
     }
   };
 
@@ -282,17 +302,6 @@ export default function CreateProjectPage() {
                 </button>
             </div>
 
-            {showInterviewProgress && (
-              <div className="mt-20 w-full space-y-2">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
-                    style={{ width: `${interviewProgress}%` }}
-                  />
-                </div>
-                {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
-              </div>
-            )}
           </div>
         )}
 
@@ -355,18 +364,6 @@ export default function CreateProjectPage() {
                   </button>
                 </div>
 
-                {showInterviewProgress && (
-                  <div className="mt-20 w-full space-y-2">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
-                        style={{ width: `${interviewProgress}%` }}
-                      />
-                    </div>
-                    {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
-                  </div>
-                )}
-                 
             </div>
            </div> 
         )}
@@ -412,6 +409,18 @@ export default function CreateProjectPage() {
                     Start Over
                 </button>
             </div>
+        )}
+
+        {showInterviewProgress && (
+          <div className="w-full max-w-4xl space-y-2 mt-12">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-white transition-[width] duration-700 ease-out"
+                style={{ width: `${interviewProgress}%` }}
+              />
+            </div>
+            {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
+          </div>
         )}
 
       </div>

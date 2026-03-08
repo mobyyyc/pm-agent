@@ -1,13 +1,86 @@
 import { sql } from "@/lib/db";
-import { projectSchema, taskSchema, type Project, type Task } from "@/types/models";
+import {
+  companyKnowledgeSchema,
+  projectSchema,
+  taskSchema,
+  userCompanySchema,
+  type CompanyKnowledge,
+  type Project,
+  type Task,
+  type UserCompany,
+} from "@/types/models";
 import companyData from "@/data/company.json";
 
 // ---------------------------------------------------------------------------
 // Company knowledge (loaded from data/company.json at build time)
 // ---------------------------------------------------------------------------
 
-export async function readCompanyKnowledge(): Promise<unknown> {
-  return companyData;
+export async function readDefaultCompanyKnowledge(): Promise<CompanyKnowledge> {
+  return companyKnowledgeSchema.parse({
+    name: companyData.name || "Default Company",
+    industry: companyData.industry || "General",
+    preferredStack: companyData.preferredStack || [],
+    values: companyData.values || [],
+    constraints: companyData.constraints || [],
+    targetAudience: companyData.targetAudience || [],
+    designSystem: companyData.designSystem || [],
+  });
+}
+
+export async function getCompanyByUserId(userId: string): Promise<UserCompany | null> {
+  const rows = await sql`SELECT * FROM companies WHERE user_id = ${userId} LIMIT 1`;
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return userCompanySchema.parse({
+    userId: row.user_id,
+    company: row.knowledge,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function upsertCompanyByUserId(
+  userId: string,
+  company: CompanyKnowledge,
+  timestamp: string,
+): Promise<UserCompany> {
+  const rows = await sql`
+    INSERT INTO companies (user_id, knowledge, created_at, updated_at)
+    VALUES (
+      ${userId},
+      ${JSON.stringify(company)}::jsonb,
+      ${timestamp},
+      ${timestamp}
+    )
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      knowledge = EXCLUDED.knowledge,
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  const row = rows[0];
+
+  return userCompanySchema.parse({
+    userId: row.user_id,
+    company: row.knowledge,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function readCompanyKnowledge(userId?: string): Promise<CompanyKnowledge> {
+  if (!userId) {
+    return readDefaultCompanyKnowledge();
+  }
+
+  const userCompany = await getCompanyByUserId(userId);
+  if (!userCompany) {
+    return readDefaultCompanyKnowledge();
+  }
+
+  return companyKnowledgeSchema.parse(userCompany.company);
 }
 
 // ---------------------------------------------------------------------------
@@ -197,11 +270,13 @@ export async function createProjectWithTasks(project: Project, tasks: Task[]): P
 
 // Legacy aliases kept for backward-compatibility with any remaining callers
 export async function saveProjects(_projects: Project[]): Promise<void> {
+  void _projects;
   // No-op: individual insert/delete operations are used now
   throw new Error("saveProjects is no longer supported with Neon DB. Use insertProject / deleteProject instead.");
 }
 
 export async function saveTasks(_tasks: Task[]): Promise<void> {
+  void _tasks;
   // No-op: individual insert/update operations are used now
   throw new Error("saveTasks is no longer supported with Neon DB. Use insertTask / updateTaskStatus instead.");
 }

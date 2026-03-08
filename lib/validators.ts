@@ -2,9 +2,11 @@ import { z } from "zod";
 
 import {
   aiPlanSchema,
+  companyKnowledgeSchema,
   projectSchema,
   taskSchema,
   type AIPlan,
+  type CompanyKnowledge,
   type Project,
   type Task,
   aiAnalysisSchema,
@@ -24,6 +26,33 @@ export const analyzeProjectRequestSchema = z.object({
 
 export const updateTaskStatusRequestSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
+});
+
+const arrayFromStringSchema = z
+  .union([z.array(z.string()), z.string()])
+  .transform((value) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => item.trim()).filter(Boolean);
+    }
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  });
+
+export const upsertCompanyRequestSchema = z.object({
+  name: z.string().min(1, "Company name is required."),
+  industry: z.string().min(1, "Industry is required."),
+  preferredStack: arrayFromStringSchema,
+  values: arrayFromStringSchema,
+  constraints: arrayFromStringSchema,
+  targetAudience: arrayFromStringSchema,
+  designSystem: arrayFromStringSchema,
+});
+
+export const importCompanyRequestSchema = z.object({
+  inputType: z.enum(["json", "text"]),
+  content: z.string().min(1, "Content is required."),
 });
 
 export function validateAndNormalizeAIAnalysis(data: unknown) {
@@ -59,4 +88,8 @@ export function validateProject(project: unknown): Project {
 
 export function validateTask(task: unknown): Task {
   return taskSchema.parse(task);
+}
+
+export function validateCompanyKnowledge(company: unknown): CompanyKnowledge {
+  return companyKnowledgeSchema.parse(company);
 }

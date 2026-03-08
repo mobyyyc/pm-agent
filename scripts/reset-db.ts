@@ -7,6 +7,7 @@ const sql = neon(process.env.DATABASE_URL!);
 
 async function main() {
   console.log("Dropping old tables...");
+  await sql`DROP TABLE IF EXISTS companies CASCADE`;
   await sql`DROP TABLE IF EXISTS tasks CASCADE`;
   await sql`DROP TABLE IF EXISTS projects CASCADE`;
   await sql`DROP TYPE IF EXISTS task_status CASCADE`;
@@ -44,8 +45,19 @@ async function main() {
   `;
   console.log("  ✓ tasks");
 
+  await sql`
+    CREATE TABLE companies (
+      user_id TEXT PRIMARY KEY,
+      knowledge JSONB NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+  console.log("  ✓ companies");
+
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_companies_user_id ON companies(user_id)`;
   console.log("  ✓ indexes");
 
   // Verify

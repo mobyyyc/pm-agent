@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
 
-    const companyKnowledge = await readCompanyKnowledge();
+    const companyKnowledge = await readCompanyKnowledge(session?.user?.email);
 
     const aiPlan = await generateProjectPlanWithGemini({
       projectIdea: parsed.idea,

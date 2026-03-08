@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, Sparkles, CheckCircle2 } from "lucide-react";
 import CodeRainBackground from "@/components/CodeRainBackground";
 import { useGuest } from "@/components/GuestContext";
-import { useSession } from "next-auth/react";
 
 // Use local type for brevity if imports are tricky, but prefer importing
 import type { AIAnalysis } from "@/types/models";
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const { data: session } = useSession();
   const { isGuest, addGuestProject } = useGuest();
   
   // State
@@ -153,7 +151,7 @@ export default function CreateProjectPage() {
               New Project
             </h1>
             <p className="mb-8 bg-transparent text-xl font-light text-white/60">
-              Tell me what you want to build. I'll help you plan it.
+              Tell me what you want to build. I&apos;ll help you plan it.
             </p>
             
             <div className="relative group w-full">
@@ -247,7 +245,7 @@ export default function CreateProjectPage() {
                     <CheckCircle2 className="h-8 w-8 text-green-400 relative z-10" />
                 </div>
                 
-                <h2 className="mb-4 text-3xl font-bold text-white">You're all set!</h2>
+                <h2 className="mb-4 text-3xl font-bold text-white">You&apos;re all set!</h2>
                 <p className="text-xl text-white/70 mb-8 leading-relaxed">
                     {currentAnalysis.summary}
                 </p>

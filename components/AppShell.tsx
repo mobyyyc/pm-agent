@@ -5,7 +5,7 @@ import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Bars3Icon, PlusIcon, XMarkIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
 
 type Project = {
@@ -22,24 +22,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const pathname = usePathname();
 
-  // Fetch projects for authenticated users
   useEffect(() => {
-    if (session) {
-      fetchProjects();
-    }
-  }, [session]);
+    if (!session?.user?.email) return;
 
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch("/api/projects");
-      if (res.ok) {
-        const data = await res.json();
+    let active = true;
+
+    fetch("/api/projects")
+      .then((res) => (res.ok ? res.json() : { projects: [] }))
+      .then((data: { projects: Project[] }) => {
+        if (!active) return;
         setProjects(data.projects || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch projects:", error);
-    }
-  };
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error("Failed to fetch projects:", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.email]);
 
   // Combine: use DB projects for authed users, context projects for guests
   const displayProjects: Project[] = isGuest
@@ -120,6 +122,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           >
             <PlusIcon className="h-4 w-4" />
             New Project
+          </Link>
+          <Link
+            href="/company"
+            onClick={() => setSidebarOpen(false)}
+            className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+              pathname === "/company" ? "bg-white/10 text-white" : "text-neutral-400"
+            }`}
+          >
+            Company Profile
           </Link>
 
           <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">

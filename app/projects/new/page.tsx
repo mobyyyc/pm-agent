@@ -9,6 +9,84 @@ import { useGuest } from "@/components/GuestContext";
 // Use local type for brevity if imports are tricky, but prefer importing
 import type { AIAnalysis } from "@/types/models";
 
+const PROJECT_KEYWORDS = [
+  "project",
+  "app",
+  "web",
+  "mobile",
+  "platform",
+  "feature",
+  "user",
+  "customer",
+  "timeline",
+  "deadline",
+  "week",
+  "month",
+  "team",
+  "developer",
+  "design",
+  "api",
+  "database",
+  "budget",
+  "scope",
+  "mvp",
+  "ios",
+  "android",
+  "desktop",
+  "software",
+];
+
+const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|n\/a|\?+|\.+|\d+)$/i;
+
+function assessAnswer(
+  rawInput: string,
+  currentQuestion?: string,
+  currentOptions?: string[],
+): { relevant: boolean; detailScore: number } {
+  const input = rawInput.trim();
+  if (!input) return { relevant: false, detailScore: 0 };
+
+  const lowerInput = input.toLowerCase();
+  if (NONSENSE_PATTERN.test(lowerInput)) {
+    return { relevant: false, detailScore: 0 };
+  }
+
+  const words = lowerInput.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+  const charCount = input.length;
+
+  const matchesKeyword = PROJECT_KEYWORDS.some((keyword) => lowerInput.includes(keyword));
+  const matchesOption = !!currentOptions?.some((option) => option.toLowerCase() === lowerInput);
+  const mentionsQuestionContext = !!currentQuestion && lowerInput.includes(currentQuestion.toLowerCase().split(" ")[0] || "");
+
+  const relevant =
+    matchesOption ||
+    matchesKeyword ||
+    mentionsQuestionContext ||
+    wordCount >= 5 ||
+    charCount >= 25;
+
+  if (!relevant) {
+    return { relevant: false, detailScore: 0 };
+  }
+
+  let detailScore = 1;
+  if (wordCount >= 10) detailScore += 1;
+  if (wordCount >= 20) detailScore += 1;
+  if (wordCount >= 35) detailScore += 1;
+  if (charCount >= 120) detailScore += 1;
+
+  return { relevant: true, detailScore };
+}
+
+function progressDeltaFromDetail(detailScore: number): number {
+  if (detailScore <= 1) return 5;
+  if (detailScore === 2) return 9;
+  if (detailScore === 3) return 14;
+  if (detailScore === 4) return 20;
+  return 26;
+}
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const { isGuest, addGuestProject } = useGuest();
@@ -18,6 +96,10 @@ export default function CreateProjectPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentAnalysis, setCurrentAnalysis] = useState<AIAnalysis | null>(null);
+  const [interviewProgress, setInterviewProgress] = useState(0);
+  const [showInterviewProgress, setShowInterviewProgress] = useState(false);
+  const [progressWarning, setProgressWarning] = useState("");
+  const nonsenseStreakRef = useRef(0);
   
   // History is needed for the API context, but we won't display it
   const [conversationHistory, setConversationHistory] = useState<
@@ -34,6 +116,9 @@ export default function CreateProjectPage() {
 
   const handleSend = async (content: string = inputValue) => {
     if (!content.trim() || isAnalyzing) return;
+
+    const inputAssessment = assessAnswer(content, currentAnalysis?.question, currentAnalysis?.options);
+    setShowInterviewProgress(true);
 
     // 1. Set UI to "Analyzing" mode (clears previous question)
     setIsAnalyzing(true);
@@ -56,6 +141,29 @@ export default function CreateProjectPage() {
       }
 
       const data = (await res.json()) as AIAnalysis;
+
+      if (data.status === "ready") {
+        setInterviewProgress(100);
+        nonsenseStreakRef.current = 0;
+        setProgressWarning("");
+        setTimeout(() => {
+          setShowInterviewProgress(false);
+        }, 300);
+      } else {
+        setShowInterviewProgress(true);
+
+        if (inputAssessment.relevant) {
+          const delta = progressDeltaFromDetail(inputAssessment.detailScore);
+          setInterviewProgress((prev) => Math.min(95, prev + delta));
+          nonsenseStreakRef.current = 0;
+          setProgressWarning("");
+        } else {
+          nonsenseStreakRef.current += 1;
+          if (nonsenseStreakRef.current >= 2) {
+            setProgressWarning("Please provide project-related details so I can move forward.");
+          }
+        }
+      }
       
       // 2. Update with new question/status
       setCurrentAnalysis(data);
@@ -173,6 +281,18 @@ export default function CreateProjectPage() {
                     <ArrowRight className="h-5 w-5" />
                 </button>
             </div>
+
+            {showInterviewProgress && (
+              <div className="mt-20 w-full space-y-2">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
+                    style={{ width: `${interviewProgress}%` }}
+                  />
+                </div>
+                {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
+              </div>
+            )}
           </div>
         )}
 
@@ -209,13 +329,17 @@ export default function CreateProjectPage() {
                     className="w-full bg-transparent border-b-2 border-white/10 text-xl py-3 px-2 text-white placeholder:text-white/20 focus:outline-none focus:border-white/40 transition-all text-center mb-8"
                     autoFocus
                 />
-                 
+
                 <div className="flex gap-4">
                   <button
                       onClick={() => {
                           setConversationHistory([]);
                           setCurrentAnalysis(null);
                           setInputValue("");
+                        setInterviewProgress(0);
+                        setShowInterviewProgress(false);
+                          nonsenseStreakRef.current = 0;
+                        setProgressWarning("");
                       }}
                       className="rounded-full bg-white/5 px-6 py-3 text-base text-white/60 transition-all hover:bg-white/10 hover:text-white cursor-pointer"
                   >
@@ -230,6 +354,18 @@ export default function CreateProjectPage() {
                       <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
+
+                {showInterviewProgress && (
+                  <div className="mt-20 w-full space-y-2">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
+                        style={{ width: `${interviewProgress}%` }}
+                      />
+                    </div>
+                    {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
+                  </div>
+                )}
                  
             </div>
            </div> 

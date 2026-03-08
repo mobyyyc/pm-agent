@@ -34,6 +34,8 @@ export default function TeamPage() {
   const [mode, setMode] = useState<InputMode>("text");
   const [rawText, setRawText] = useState("");
   const [rawJsonText, setRawJsonText] = useState("");
+  const [pendingFileContent, setPendingFileContent] = useState("");
+  const [pendingFileInputType, setPendingFileInputType] = useState<"json" | "text" | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [importAnalysis, setImportAnalysis] = useState<TeamImportAnalysis | null>(null);
@@ -72,6 +74,8 @@ export default function TeamPage() {
 
       setRawText("");
       setRawJsonText("");
+      setPendingFileContent("");
+      setPendingFileInputType(null);
       setSelectedFileName("");
       setImportAnalysis(null);
       if (fileInputRef.current) {
@@ -142,12 +146,17 @@ export default function TeamPage() {
   const handleUpload = async (file: File | null) => {
     if (!file) return;
 
+    setError(null);
+    setSuccess(null);
+    setImportAnalysis(null);
     setSelectedFileName(file.name);
+
     const content = await file.text();
     const isJson = file.name.toLowerCase().endsWith(".json");
-    setRawJsonText(isJson ? content : "");
 
-    await analyzeImport(isJson ? "json" : "text", content);
+    setPendingFileContent(content);
+    setPendingFileInputType(isJson ? "json" : "text");
+    setRawJsonText(isJson ? content : "");
   };
 
   const handleDrop = async (event: React.DragEvent<HTMLLabelElement>) => {
@@ -253,10 +262,20 @@ export default function TeamPage() {
               {selectedFileName && <p className="mt-4 text-sm text-white/80">Selected: {selectedFileName}</p>}
             </label>
             {rawJsonText ? (
-              <p className="text-xs text-neutral-500">Detected JSON upload and analyzed it.</p>
+              <p className="text-xs text-neutral-500">Detected JSON upload and ready to analyze.</p>
             ) : (
-              <p className="text-xs text-neutral-500">Upload `.json`, `.txt`, or `.md` files.</p>
+              <p className="text-xs text-neutral-500">Upload `.json`, `.txt`, or `.md` files, then click Import File.</p>
             )}
+            <button
+              onClick={() => {
+                if (!pendingFileContent || !pendingFileInputType) return;
+                analyzeImport(pendingFileInputType, pendingFileContent);
+              }}
+              disabled={!pendingFileContent || !pendingFileInputType || saving || analyzing}
+              className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black disabled:opacity-50 cursor-pointer"
+            >
+              {analyzing ? "Analyzing..." : "Import File"}
+            </button>
           </div>
         )}
 

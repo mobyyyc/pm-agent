@@ -70,6 +70,10 @@ export async function upsertCompanyByUserId(
   });
 }
 
+export async function deleteCompanyByUserId(userId: string): Promise<void> {
+  await sql`DELETE FROM companies WHERE user_id = ${userId}`;
+}
+
 export async function readCompanyKnowledge(userId?: string): Promise<CompanyKnowledge> {
   if (!userId) {
     return readDefaultCompanyKnowledge();

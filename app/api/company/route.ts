@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { parseCompanyFromJson, parseCompanyFromText } from "@/lib/company-parser";
-import { getCompanyByUserId, readDefaultCompanyKnowledge, upsertCompanyByUserId } from "@/lib/storage";
+import { deleteCompanyByUserId, getCompanyByUserId, readDefaultCompanyKnowledge, upsertCompanyByUserId } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { importCompanyRequestSchema, upsertCompanyRequestSchema } from "@/lib/validators";
 
@@ -83,6 +83,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: "Failed to save company profile.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await deleteCompanyByUserId(session.user.email);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to reset company profile.", detail: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }

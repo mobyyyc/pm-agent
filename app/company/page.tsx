@@ -104,6 +104,41 @@ export default function CompanyPage() {
     }
   };
 
+  const resetCompanyInfo = async () => {
+    const confirmed = window.confirm("Clear all saved company info?");
+    if (!confirmed) return;
+
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch("/api/company", {
+        method: "DELETE",
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body?.error || "Failed to reset");
+      }
+
+      setCompany(emptyCompany);
+      setRawText("");
+      setRawJsonText("");
+      setSelectedFileName("");
+      setMode("manual");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+      setSuccess("Company info reset.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to reset company info");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const importTextOrJson = async (inputType: "text" | "json", content: string) => {
     setSaving(true);
     setError(null);
@@ -310,6 +345,16 @@ export default function CompanyPage() {
             )}
           </div>
         )}
+
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <button
+            onClick={resetCompanyInfo}
+            disabled={saving}
+            className="rounded-full bg-white/10 px-6 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? "Resetting..." : "Reset Company Info"}
+          </button>
+        </div>
 
         {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
         {success && <p className="mt-4 text-sm text-green-400">{success}</p>}

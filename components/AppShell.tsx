@@ -5,7 +5,14 @@ import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Bars3Icon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  ChevronLeftIcon,
+  PlusIcon,
+  Squares2X2Icon,
+  UserGroupIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
 
 type Project = {
@@ -47,6 +54,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const displayProjects: Project[] = isGuest
     ? guestProjects.map((gp) => ({ id: gp.project.id, name: gp.project.name, idea: gp.project.idea }))
     : projects;
+  const projectRouteMatch = pathname.match(/^\/projects\/([^/]+)(?:\/.*)?$/);
+  const selectedProjectId = projectRouteMatch?.[1] ?? null;
+  const isProjectSidebar = !!selectedProjectId;
+  const selectedProject = selectedProjectId
+    ? displayProjects.find((project) => project.id === selectedProjectId)
+    : null;
+  const isMembersTab = !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/members`);
+  const isDashboardTab =
+    !!selectedProjectId &&
+    (pathname === `/projects/${selectedProjectId}` ||
+      (!isMembersTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
 
   const deleteProject = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -99,70 +117,132 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        <button
+          onClick={() => router.push("/projects")}
+          className={`absolute left-16 top-3 z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 ${
+            isProjectSidebar
+              ? "cursor-pointer translate-x-0 opacity-100 hover:bg-white/10 hover:text-white"
+              : "pointer-events-none -translate-x-1 opacity-0"
+          }`}
+          aria-label="Back to main sidebar"
+        >
+          <ChevronLeftIcon className="h-6 w-6" />
+        </button>
+
         <div className="flex h-16 items-center justify-between px-4">
-            {/* Spacer for toggle button */}
+          <div />
         </div>
 
-        <nav className="flex flex-col p-4 space-y-2 overflow-y-auto h-[calc(100vh-4rem)]">
-          <Link
-            href="/"
-            onClick={() => setSidebarOpen(false)}
-            className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-              pathname === "/" ? "bg-white/10 text-white" : "text-neutral-400"
+        <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+          <div className="relative flex-1 overflow-hidden">
+          <nav
+            className={`absolute inset-0 flex flex-col p-4 space-y-2 overflow-y-auto transition-all duration-300 ease-in-out ${
+              isProjectSidebar ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100"
             }`}
           >
-            Home
-          </Link>
-          <Link
-            href="/projects/new"
-            onClick={() => setSidebarOpen(false)}
-            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-              pathname === "/projects/new" ? "bg-white/10 text-white" : "text-neutral-400"
-            }`}
-          >
-            <PlusIcon className="h-4 w-4" />
-            New Project
-          </Link>
+            <Link
+              href="/"
+              className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                pathname === "/" ? "bg-white/10 text-white" : "text-neutral-400"
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              href="/projects/new"
+              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                pathname === "/projects/new" ? "bg-white/10 text-white" : "text-neutral-400"
+              }`}
+            >
+              <PlusIcon className="h-4 w-4" />
+              New Project
+            </Link>
 
-          <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-            Projects
-          </div>
-          
-          <div className="space-y-1">
-            {displayProjects.map((project) => (
-              <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
-                    <Link
-                        href={`/projects/${project.id}`}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`block grow px-3 py-2 text-sm truncate ${
-                        pathname === `/projects/${project.id}` ? "text-white font-medium" : "text-neutral-400"
-                        }`}
-                        title={project.idea}
-                    >
-                        {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
-                    </Link>
-                    <button
-                        onClick={(e) => deleteProject(e, project.id)}
-                      className="cursor-pointer rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
-                        title="Delete Project"
-                    >
-                        <XMarkIcon className="h-4 w-4" />
-                    </button>
+            <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+              Projects
+            </div>
+
+            <div className="space-y-1">
+              {displayProjects.map((project) => (
+                <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
+                  <Link
+                    href={`/projects/${project.id}`}
+                    className={`block grow px-3 py-2 text-sm truncate ${
+                      pathname === `/projects/${project.id}` ? "text-white font-medium" : "text-neutral-400"
+                    }`}
+                    title={project.idea}
+                  >
+                    {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
+                  </Link>
+                  <button
+                    onClick={(e) => deleteProject(e, project.id)}
+                    className="cursor-pointer rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
+                    title="Delete Project"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
                 </div>
-            ))}
-            {displayProjects.length === 0 && (
-                <p className="px-3 text-xs text-neutral-600">No projects yet.</p>
+              ))}
+              {displayProjects.length === 0 && <p className="px-3 text-xs text-neutral-600">No projects yet.</p>}
+            </div>
+
+            {isGuest && (
+              <div className="pt-2">
+                <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
+                <button
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  className="w-full rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 transition-all cursor-pointer"
+                >
+                  Sign in to save projects
+                </button>
+              </div>
             )}
+          </nav>
+
+          <nav
+            className={`absolute inset-0 flex flex-col p-4 overflow-y-auto transition-all duration-300 ease-in-out ${
+              isProjectSidebar ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+            }`}
+          >
+            <div className="mb-6 px-2">
+              <p className="text-xs uppercase tracking-wider text-neutral-500">Project</p>
+              <p className="mt-2 truncate text-sm font-medium text-white">
+                {selectedProject?.name || selectedProject?.idea || "Project"}
+              </p>
+            </div>
+
+            {selectedProjectId && (
+              <div className="space-y-2">
+                <Link
+                  href={`/projects/${selectedProjectId}`}
+                  className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 ${
+                    isDashboardTab ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  <Squares2X2Icon className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link
+                  href={`/projects/${selectedProjectId}/members`}
+                  className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 ${
+                    isMembersTab ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  <UserGroupIcon className="h-4 w-4" />
+                  Members
+                </Link>
+              </div>
+            )}
+          </nav>
           </div>
 
-          <div className="mt-auto border-t border-white/10">
+          <div className="border-t border-white/10 px-4 pb-4">
             <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Settings
             </div>
             <div className="space-y-1 pt-1">
               <Link
                 href="/team"
-                onClick={() => setSidebarOpen(false)}
                 className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
                   pathname === "/team" ? "bg-white/10 text-white" : "text-neutral-400"
                 }`}
@@ -178,7 +258,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <div className="space-y-1 pt-1">
                 <Link
                   href="/privacy"
-                  onClick={() => setSidebarOpen(false)}
                   className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
                     pathname === "/privacy" ? "bg-white/10 text-white" : "text-neutral-400"
                   }`}
@@ -187,7 +266,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </Link>
                 <Link
                   href="/cookies"
-                  onClick={() => setSidebarOpen(false)}
                   className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
                     pathname === "/cookies" ? "bg-white/10 text-white" : "text-neutral-400"
                   }`}
@@ -196,7 +274,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </Link>
                 <Link
                   href="/terms"
-                  onClick={() => setSidebarOpen(false)}
                   className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
                     pathname === "/terms" ? "bg-white/10 text-white" : "text-neutral-400"
                   }`}
@@ -206,20 +283,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
-
-          {/* Guest mode: offer sign-in link at bottom of sidebar */}
-          {isGuest && (
-            <div className="pt-2">
-              <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
-              <button
-                onClick={() => signIn("google", { callbackUrl: "/" })}
-                className="w-full rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 transition-all cursor-pointer"
-              >
-                Sign in to save projects
-              </button>
-            </div>
-          )}
-        </nav>
+        </div>
       </aside>
 
       {/* Main Content Area */}

@@ -52,7 +52,7 @@ export function TaskStatusSelect({ taskId, initialStatus, isGuest }: { taskId: s
           value={status}
           disabled={isPending}
           onChange={(event) => onChange(event.target.value as TaskStatus)}
-          className="w-full appearance-none rounded-md border border-neutral-300 bg-white px-3 py-1.5 pr-8 text-sm text-neutral-900 shadow-sm outline-none transition focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus-visible:border-indigo-400 dark:focus-visible:ring-indigo-400/30 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-400"
+          className="w-full appearance-none rounded-md bg-white px-3 py-1.5 pr-8 text-sm text-neutral-900 shadow-sm outline-none transition focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus-visible:border-indigo-400 dark:focus-visible:ring-indigo-400/30 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-400"
         >
           {statusOptions.map((option) => (
             <option key={option.value} value={option.value} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">

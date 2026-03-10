@@ -80,16 +80,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         )}
       </header>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6 transition-all hover:bg-white/10">
+      <section className="rounded-2xl bg-white/5 p-6 transition-all hover:bg-white/10">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Guideline</h2>
         <p className="text-base text-neutral-300 leading-relaxed">{project.guideline}</p>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl bg-white/5 p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
         <ul className="space-y-3">
           {project.timeline.map((item, index) => (
-            <li key={`${item.phase}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10">
+            <li key={`${item.phase}-${index}`} className="rounded-xl bg-white/5 p-4 transition-colors hover:bg-white/10">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
                 <span className="font-medium text-white text-lg">{item.phase}</span>
                 <span className="text-xs font-mono text-neutral-400 bg-white/5 px-2 py-1 rounded-md self-start">
@@ -102,14 +102,14 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="rounded-2xl bg-white/5 p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Task List</h2>
         {tasks.length === 0 ? (
           <p className="text-sm text-neutral-400">No tasks generated.</p>
         ) : (
           <ul className="space-y-3">
             {tasks.map((task) => (
-              <li key={task.id} className="rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10">
+              <li key={task.id} className="rounded-xl bg-white/5 p-4 transition-colors hover:bg-white/10">
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="space-y-1">
                     <p className="font-medium text-white text-lg">{task.title}</p>

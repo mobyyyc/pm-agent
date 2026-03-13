@@ -18,6 +18,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   const [dbProject, setDbProject] = useState<Project | null>(null);
   const [dbTasks, setDbTasks] = useState<Task[]>([]);
+  const [renderedTasks, setRenderedTasks] = useState<Task[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
@@ -55,6 +56,10 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     }
   }, [id, isGuest, session?.user?.email, sessionStatus, guestProjectBundle]);
 
+  useEffect(() => {
+    setRenderedTasks(tasks);
+  }, [tasks]);
+
   if (isPageLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -69,6 +74,22 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   if (notFoundState || !project || isGuestNotFound || isUnauthedUser) {
     notFound();
   }
+
+  const todoCount = renderedTasks.filter((task) => task.status === "todo").length;
+  const inProgressCount = renderedTasks.filter((task) => task.status === "in_progress").length;
+  const doneCount = renderedTasks.filter((task) => task.status === "done").length;
+
+  const statusCardStyles: Record<Task["status"], string> = {
+    todo: "bg-linear-to-l from-sky-500/18 to-transparent",
+    in_progress: "bg-linear-to-l from-amber-500/18 to-transparent",
+    done: "bg-linear-to-l from-emerald-500/18 to-transparent",
+  };
+
+  const handleStatusChange = (taskId: string, status: Task["status"]) => {
+    setRenderedTasks((currentTasks) =>
+      currentTasks.map((task) => (task.id === taskId ? { ...task, status } : task)),
+    );
+  };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
@@ -103,16 +124,29 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       </section>
 
       <section className="rounded-2xl bg-white/5 p-6">
-        <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Task List</h2>
-        {tasks.length === 0 ? (
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
+          <div className="flex flex-wrap gap-2 text-xs font-medium">
+            <span className="rounded-md bg-sky-500/10 px-2.5 py-1 text-sky-200">To do: {todoCount}</span>
+            <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-amber-200">In progress: {inProgressCount}</span>
+            <span className="rounded-md bg-emerald-500/10 px-2.5 py-1 text-emerald-200">Done: {doneCount}</span>
+          </div>
+        </div>
+        {renderedTasks.length === 0 ? (
           <p className="text-sm text-neutral-400">No tasks generated.</p>
         ) : (
           <ul className="space-y-3">
-            {tasks.map((task) => (
-              <li key={task.id} className="rounded-xl bg-white/5 p-4 transition-colors hover:bg-white/10">
+            {renderedTasks.map((task, index) => (
+              <li
+                key={task.id}
+                className={`rounded-xl p-4 transition-colors hover:bg-white/10 ${statusCardStyles[task.status]}`}
+              >
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="font-medium text-white text-lg">{task.title}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-black/25 px-2 py-0.5 text-xs font-medium text-neutral-300">Task {index + 1}</span>
+                      <p className="font-medium text-white text-lg">{task.title}</p>
+                    </div>
                     <p className="text-sm text-neutral-400 leading-relaxed">{task.description}</p>
                     <div className="flex flex-wrap gap-2 pt-2">
                        <span className="text-xs text-neutral-500 bg-white/5 px-2 py-1 rounded-md">Deadline: {task.deadline}</span>
@@ -120,7 +154,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                     </div>
                   </div>
                   <div className="shrink-0 pt-1">
-                    <TaskStatusSelect taskId={task.id} initialStatus={task.status} isGuest={isGuest} />
+                    <TaskStatusSelect
+                      taskId={task.id}
+                      initialStatus={task.status}
+                      isGuest={isGuest}
+                      onStatusChange={handleStatusChange}
+                    />
                   </div>
                 </div>
               </li>

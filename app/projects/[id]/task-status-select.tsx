@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useGuest } from "@/components/GuestContext";
 
@@ -12,15 +12,57 @@ const statusOptions: Array<{ value: TaskStatus; label: string }> = [
   { value: "done", label: "Done" },
 ];
 
-export function TaskStatusSelect({ taskId, initialStatus, isGuest }: { taskId: string; initialStatus: TaskStatus; isGuest?: boolean }) {
+const statusStyles: Record<
+  TaskStatus,
+  {
+    dot: string;
+    active: string;
+    inactive: string;
+  }
+> = {
+  todo: {
+    dot: "bg-sky-300",
+    active: "bg-sky-500/20 text-sky-200",
+    inactive: "text-neutral-300 hover:bg-white/10",
+  },
+  in_progress: {
+    dot: "bg-amber-300",
+    active: "bg-amber-500/20 text-amber-100",
+    inactive: "text-neutral-300 hover:bg-white/10",
+  },
+  done: {
+    dot: "bg-emerald-300",
+    active: "bg-emerald-500/20 text-emerald-100",
+    inactive: "text-neutral-300 hover:bg-white/10",
+  },
+};
+
+export function TaskStatusSelect({
+  taskId,
+  initialStatus,
+  isGuest,
+  onStatusChange,
+}: {
+  taskId: string;
+  initialStatus: TaskStatus;
+  isGuest?: boolean;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
+}) {
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { updateGuestTaskStatus } = useGuest();
 
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
   const onChange = (nextStatus: TaskStatus) => {
+    const previousStatus = status;
+
     setStatus(nextStatus);
+    onStatusChange?.(taskId, nextStatus);
     setError(null);
 
     if (isGuest) {
@@ -37,7 +79,8 @@ export function TaskStatusSelect({ taskId, initialStatus, isGuest }: { taskId: s
 
       if (!response.ok) {
         setError("Failed to update.");
-        setStatus(initialStatus);
+        setStatus(previousStatus);
+        onStatusChange?.(taskId, previousStatus);
         return;
       }
 
@@ -46,24 +89,33 @@ export function TaskStatusSelect({ taskId, initialStatus, isGuest }: { taskId: s
   };
 
   return (
-    <div className="flex flex-col gap-1">
-      <div className="relative">
-        <select
-          value={status}
-          disabled={isPending}
-          onChange={(event) => onChange(event.target.value as TaskStatus)}
-          className="w-full appearance-none rounded-md bg-white px-3 py-1.5 pr-8 text-sm text-neutral-900 shadow-sm outline-none transition focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/30 disabled:cursor-not-allowed disabled:bg-neutral-100 disabled:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:focus-visible:border-indigo-400 dark:focus-visible:ring-indigo-400/30 dark:disabled:bg-neutral-800 dark:disabled:text-neutral-400"
-        >
-          {statusOptions.map((option) => (
-            <option key={option.value} value={option.value} className="bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500 dark:text-neutral-400" aria-hidden="true">
-          ▾
-        </span>
+    <div className="flex min-w-70 flex-col gap-1">
+      <div className="rounded-xl bg-linear-to-l from-white/12 to-transparent p-1">
+        <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Task status">
+          {statusOptions.map((option) => {
+            const isActive = status === option.value;
+            const theme = statusStyles[option.value];
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={isActive}
+                disabled={isPending}
+                onClick={() => onChange(option.value)}
+                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isActive ? theme.active : theme.inactive
+                }`}
+              >
+                <span className={`h-2 w-2 rounded-full ${theme.dot}`} aria-hidden="true" />
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
+      {isPending ? <span className="text-xs text-neutral-400">Saving status...</span> : null}
       {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>
   );

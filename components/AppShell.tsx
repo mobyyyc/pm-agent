@@ -158,6 +158,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               New Project
             </Link>
 
+            <div className="mt-4 border-t border-white/10" />
             <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Projects
             </div>
@@ -236,7 +237,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
           </div>
 
-          <div className="border-t border-white/10 px-4 pb-4">
+          <div className="px-4 pb-4">
+            <div className="mt-4 border-t border-white/10" />
             <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Settings
             </div>

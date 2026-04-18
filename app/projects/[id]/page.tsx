@@ -126,10 +126,19 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       <section className="rounded-2xl bg-white/5 p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
-          <div className="flex flex-wrap gap-2 text-xs font-medium">
-            <span className="rounded-md bg-sky-500/10 px-2.5 py-1 text-sky-200">To do: {todoCount}</span>
-            <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-amber-200">In progress: {inProgressCount}</span>
-            <span className="rounded-md bg-emerald-500/10 px-2.5 py-1 text-emerald-200">Done: {doneCount}</span>
+          <div className="flex items-center gap-4 text-xs font-medium sm:gap-5">
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-sky-200">
+              <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
+              To do: {todoCount}
+            </span>
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-amber-200">
+              <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
+              In progress: {inProgressCount}
+            </span>
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
+              Done: {doneCount}
+            </span>
           </div>
         </div>
         {renderedTasks.length === 0 ? (
@@ -139,7 +148,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             {renderedTasks.map((task, index) => (
               <li
                 key={task.id}
-                className={`rounded-xl p-4 transition-colors hover:bg-white/10 ${statusCardStyles[task.status]}`}
+                className={`rounded-xl p-4 transition-colors duration-500 ease-in-out hover:bg-white/10 ${statusCardStyles[task.status]}`}
               >
                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="space-y-1">

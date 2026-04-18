@@ -140,26 +140,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               isProjectSidebar ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100"
             }`}
           >
-            <Link
-              href="/"
-              className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-                pathname === "/" ? "bg-white/10 text-white" : "text-neutral-400"
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              href="/projects/new"
-              className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
-                pathname === "/projects/new" ? "bg-white/10 text-white" : "text-neutral-400"
-              }`}
-            >
-              <PlusIcon className="h-4 w-4" />
-              New Project
-            </Link>
+            <div className="space-y-1">
+              <Link
+                href="/"
+                className={`block rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                  pathname === "/" ? "bg-white/10 text-white" : "text-neutral-400"
+                }`}
+              >
+                Home
+              </Link>
+              <Link
+                href="/projects/new"
+                className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                  pathname === "/projects/new" ? "bg-white/10 text-white" : "text-neutral-400"
+                }`}
+              >
+                <PlusIcon className="h-4 w-4" />
+                New Project
+              </Link>
+            </div>
 
-            <div className="mt-4 border-t border-white/10" />
-            <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+            <div className="my-4 border-t border-white/10" />
+            <div className="pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Projects
             </div>
 
@@ -238,11 +240,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="px-4 pb-4">
-            <div className="mt-4 border-t border-white/10" />
-            <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+            <div className="my-4 border-t border-white/10" />
+            <div className="pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
               Settings
             </div>
-            <div className="space-y-1 pt-1">
+            <div className="space-y-1">
               <Link
                 href="/team"
                 className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
@@ -253,11 +255,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
 
-            <div className="mt-4 border-t border-white/10">
-              <div className="pt-4 pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-                Legal
-              </div>
-              <div className="space-y-1 pt-1">
+            <div className="my-4 border-t border-white/10" />
+            <div className="pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
+              Legal
+            </div>
+            <div className="space-y-1">
                 <Link
                   href="/privacy"
                   className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
@@ -282,7 +284,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   Terms
                 </Link>
-              </div>
             </div>
           </div>
         </div>

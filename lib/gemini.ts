@@ -5,11 +5,12 @@ import {
 } from "@/lib/validators";
 import type { AIPlan, AIAnalysis, TeamImportAnalysis } from "@/types/models";
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent";
-const ANALYZE_MAX_HISTORY_MESSAGES = 10;
-const ANALYZE_TIMEOUT_MS = 15000;
-const ANALYZE_MAX_ATTEMPTS = 2;
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const ANALYZE_MAX_HISTORY_MESSAGES = 4;
+const ANALYZE_TIMEOUT_MS = 12000;
+const ANALYZE_MAX_ATTEMPTS = 1;
 const PLAN_TIMEOUT_MS = 25000;
 const IMPORT_TIMEOUT_MS = 20000;
 
@@ -41,6 +42,16 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   } finally {
     clearTimeout(timer);
   }
+}
+
+function compactList(value: unknown): string {
+  if (!Array.isArray(value)) return "N/A";
+  const normalized = value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  return normalized.length > 0 ? normalized.join(", ") : "N/A";
 }
 
 const analysisJsonSchema = {
@@ -231,32 +242,22 @@ export async function analyzeProjectRequest(input: {
 
   const systemInstruction = `
 You are an expert product manager supporting ${teamName}.
-You help users clarify their project ideas in the context of this team.
+Keep responses short and practical.
 
-=== TEAM CONTEXT ===
-Team: ${teamName}
-Industry: ${ck.industry || "N/A"}
-Preferred Tech Stack: ${JSON.stringify(ck.preferredStack || [])}
-Core Values: ${JSON.stringify(ck.values || [])}
-Constraints: ${JSON.stringify(ck.constraints || [])}
-Target Audience: ${JSON.stringify(ck.targetAudience || [])}
-Design System: ${JSON.stringify(ck.designSystem || [])}
+TEAM CONTEXT
+- Team: ${teamName}
+- Industry: ${typeof ck.industry === "string" && ck.industry.trim() ? ck.industry : "N/A"}
+- Stack: ${compactList(ck.preferredStack)}
+- Constraints: ${compactList(ck.constraints)}
+- Audience: ${compactList(ck.targetAudience)}
 
-=== BEHAVIOR ===
-- Ask ONE clarifying question at a time if the user's idea is vague.
-- Keep your questions extremely concise. DO NOT include examples (e.g., "like X or Y") in the question text itself.
-- ALWAYS provide 2-5 short options for the user to pick for EVERY question. Put the examples as the options.
-- ALWAYS fill the 'options' array in the JSON response when asking a question. NEVER leave it empty.
-- Frame your questions and suggestions around the team's capabilities, constraints, and audience.
-- CRITICAL: Before setting status to "ready", you MUST know the following information:
-  1. Duration of the project
-  2. Scale of the project
-  3. How many members/developers will work on it
-  4. Type of project (webapp, local software, ios app, etc.)
-- DO NOT assume any of this information (e.g. do not assume the duration). If anything is missing, you must ask the user.
-- Once you have ALL the required information (duration, scale, team size, project type, and main features), set status to "ready" and summarize the plan.
-- If the user asks specifically to generate the plan but required info is missing, kindly ask for the missing info first.
-- In your summary, reference the team's preferred approaches and constraints.
+RULES
+- Ask one concise clarifying question when needed.
+- Include 2-4 concise options every time status is "asking".
+- Do not include examples inside the question sentence.
+- Set status to "ready" only after you know: duration, scale, team size, project type, and key features.
+- Do not assume missing information.
+- When ready, provide a concise summary tailored to team context.
 `.trim();
 
   const recentHistory = input.history.slice(-ANALYZE_MAX_HISTORY_MESSAGES);

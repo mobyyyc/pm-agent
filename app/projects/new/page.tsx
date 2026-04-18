@@ -37,13 +37,22 @@ const PROJECT_KEYWORDS = [
 ];
 
 const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|n\/a|\?+|\.+|\d+)$/i;
-const MAX_HISTORY_MESSAGES = 10;
+const MAX_HISTORY_MESSAGES = 4;
 const MIN_PROGRESS_DELTA = 10;
-const ANALYZE_REQUEST_TIMEOUT_MS = 22000;
-const ANALYZE_MAX_ATTEMPTS = 2;
+const ANALYZE_REQUEST_TIMEOUT_MS = 12000;
 
-function isTransientAnalyzeStatus(status: number): boolean {
-  return status === 429 || (status >= 500 && status <= 504);
+type AnalyzeTiming = {
+  elapsedMs: number;
+  serverTiming: string | null;
+};
+
+function parseServerTimingDuration(serverTiming: string | null, metric: string): number | null {
+  if (!serverTiming) return null;
+  const regex = new RegExp(`${metric};dur=([0-9.]+)`);
+  const match = serverTiming.match(regex);
+  if (!match) return null;
+  const duration = Number(match[1]);
+  return Number.isFinite(duration) ? duration : null;
 }
 
 function parseAnalyzeError(error: unknown): string {
@@ -120,6 +129,7 @@ export default function CreateProjectPage() {
   const [showInterviewProgress, setShowInterviewProgress] = useState(false);
   const [progressWarning, setProgressWarning] = useState("");
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [analyzeTiming, setAnalyzeTiming] = useState<AnalyzeTiming | null>(null);
   const [showSlowHint, setShowSlowHint] = useState(false);
   const progressRef = useRef(0);
   const nonsenseStreakRef = useRef(0);
@@ -155,63 +165,64 @@ export default function CreateProjectPage() {
   }, [isAnalyzing]);
 
   const requestAnalysis = async (message: string, history: { role: "user" | "model"; content: string }[]) => {
-    let lastError: unknown = null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ANALYZE_REQUEST_TIMEOUT_MS);
+    const startedAt = performance.now();
 
-    for (let attempt = 1; attempt <= ANALYZE_MAX_ATTEMPTS; attempt += 1) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), ANALYZE_REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch("/api/projects/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          history,
+        }),
+        signal: controller.signal,
+      });
 
-      try {
-        const res = await fetch("/api/projects/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            message,
-            history,
-          }),
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          const errorBody = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
-          const detail = errorBody?.detail || errorBody?.error || "Failed to analyze";
-          const err = new Error(detail);
-
-          if (!isTransientAnalyzeStatus(res.status) || attempt >= ANALYZE_MAX_ATTEMPTS) {
-            throw err;
-          }
-
-          lastError = err;
-          await new Promise((resolve) => setTimeout(resolve, attempt * 250));
-          continue;
-        }
-
-        return (await res.json()) as AIAnalysis;
-      } catch (error) {
-        lastError = error;
-        const isAbort = error instanceof DOMException && error.name === "AbortError";
-        if (attempt >= ANALYZE_MAX_ATTEMPTS || !isAbort) {
-          throw error;
-        }
-        await new Promise((resolve) => setTimeout(resolve, attempt * 250));
-      } finally {
-        clearTimeout(timer);
+      if (!res.ok) {
+        const errorBody = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
+        const detail = errorBody?.detail || errorBody?.error || "Failed to analyze";
+        throw new Error(detail);
       }
-    }
 
-    throw lastError instanceof Error ? lastError : new Error("Failed to analyze");
+      const analysis = (await res.json()) as AIAnalysis;
+      const elapsedMs = Math.round(performance.now() - startedAt);
+      const serverTiming = res.headers.get("server-timing");
+      setAnalyzeTiming({ elapsedMs, serverTiming });
+
+      return analysis;
+    } finally {
+      clearTimeout(timer);
+    }
   };
 
   const handleSend = async (content: string = inputValue) => {
     if (!content.trim() || isAnalyzing) return;
 
     const inputAssessment = assessAnswer(content, currentAnalysis?.question, currentAnalysis?.options);
+    const trimmedContent = content.trim();
+
+    // Fast local guard: avoid a full model round-trip for very short first inputs.
+    if (conversationHistory.length === 0 && !inputAssessment.relevant && trimmedContent.split(/\s+/).length <= 2) {
+      setInputValue("");
+      setAnalyzeError(null);
+      setCurrentAnalysis({
+        status: "asking",
+        question: "What are you building? Please describe it in one sentence.",
+        options: ["Web app", "Mobile app", "Desktop app", "AI tool"],
+      });
+      setShowInterviewProgress(true);
+      setProgressWarning("Add a bit more detail so I can generate a faster, better plan.");
+      return;
+    }
 
     // 1. Set UI to "Analyzing" mode (clears previous question)
     setIsAnalyzing(true);
     setInputValue("");
     setCurrentAnalysis(null); // Clear displayed question to show loader
     setAnalyzeError(null);
+    setAnalyzeTiming(null);
 
     let nextProgress: number | null = null;
     let shouldHideAfterComplete = false;
@@ -495,6 +506,16 @@ export default function CreateProjectPage() {
             {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
           </div>
         )}
+
+        {analyzeTiming ? (
+          <p className="text-xs text-white/35">
+            Analyze time: {analyzeTiming.elapsedMs}ms
+            {(() => {
+              const geminiMs = parseServerTimingDuration(analyzeTiming.serverTiming, "gemini");
+              return geminiMs !== null ? ` (${Math.round(geminiMs)}ms model)` : "";
+            })()}
+          </p>
+        ) : null}
 
         {analyzeError ? (
           <div className="w-full max-w-2xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">

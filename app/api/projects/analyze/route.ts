@@ -64,14 +64,17 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Unknown error";
     const lowerMessage = message.toLowerCase();
     const isTimeout = lowerMessage.includes("timed out");
-    const status = isTimeout ? 504 : 502;
+    const isRateLimited = lowerMessage.includes(" 429") || lowerMessage.includes("resource_exhausted") || lowerMessage.includes("quota exceeded");
+    const status = isTimeout ? 504 : isRateLimited ? 429 : 502;
 
     return NextResponse.json(
       {
         error: "Failed to analyze request",
         detail: isTimeout
           ? "The AI took too long to respond. Please try again."
-          : "The AI service is temporarily unavailable. Please retry.",
+          : isRateLimited
+            ? "Gemini rate limit or quota reached. Wait briefly or use a different model key."
+            : "The AI service is temporarily unavailable. Please retry.",
       },
       { status }
     );

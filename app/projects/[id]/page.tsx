@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useGuest } from "@/components/GuestContext";
@@ -13,6 +13,8 @@ type PageProps = {
 
 type TimelineDraft = Project["timeline"][number];
 type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">;
+
+const COLLAPSE_ANIMATION_MS = 320;
 
 async function getResponseErrorMessage(response: Response, fallback: string): Promise<string> {
   const body = (await response.json().catch(() => null)) as { detail?: string; error?: string } | null;
@@ -44,8 +46,13 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
+  const [timelineEditCooldownIndex, setTimelineEditCooldownIndex] = useState<number | null>(null);
+  const [taskEditCooldownId, setTaskEditCooldownId] = useState<string | null>(null);
 
   const [frameActionError, setFrameActionError] = useState<string | null>(null);
+
+  const timelineCooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const taskCooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
   const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
@@ -90,6 +97,17 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     setRenderedTasks(tasks);
   }, [tasks]);
 
+  useEffect(() => {
+    return () => {
+      if (timelineCooldownTimeoutRef.current) {
+        clearTimeout(timelineCooldownTimeoutRef.current);
+      }
+      if (taskCooldownTimeoutRef.current) {
+        clearTimeout(taskCooldownTimeoutRef.current);
+      }
+    };
+  }, []);
+
   if (isPageLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -117,6 +135,28 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   const frameEditButtonClass =
     "pointer-events-none inline-flex h-7 shrink-0 translate-y-1 items-center rounded-full bg-white/15 px-4 text-xs font-semibold text-white opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60";
+
+  const startTimelineEditCooldown = (timelineIndex: number) => {
+    if (timelineCooldownTimeoutRef.current) {
+      clearTimeout(timelineCooldownTimeoutRef.current);
+    }
+
+    setTimelineEditCooldownIndex(timelineIndex);
+    timelineCooldownTimeoutRef.current = setTimeout(() => {
+      setTimelineEditCooldownIndex((current) => (current === timelineIndex ? null : current));
+    }, COLLAPSE_ANIMATION_MS);
+  };
+
+  const startTaskEditCooldown = (taskId: string) => {
+    if (taskCooldownTimeoutRef.current) {
+      clearTimeout(taskCooldownTimeoutRef.current);
+    }
+
+    setTaskEditCooldownId(taskId);
+    taskCooldownTimeoutRef.current = setTimeout(() => {
+      setTaskEditCooldownId((current) => (current === taskId ? null : current));
+    }, COLLAPSE_ANIMATION_MS);
+  };
 
   const handleStatusChange = (taskId: string, status: Task["status"]) => {
     setRenderedTasks((currentTasks) =>
@@ -177,6 +217,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       setEditingTimelineIndex(null);
       setTimelineDraft(null);
+      startTimelineEditCooldown(timelineIndex);
     } catch (error) {
       setRenderedTimeline(previousTimeline);
       setFrameActionError(error instanceof Error ? error.message : "Failed to save timeline item.");
@@ -296,6 +337,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       setEditingTaskId(null);
       setTaskDraft(null);
+      startTaskEditCooldown(taskId);
     } catch (error) {
       setRenderedTasks(previousTasks);
       setFrameActionError(error instanceof Error ? error.message : "Failed to save task.");
@@ -378,37 +420,30 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                     isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"
                   }`}
                 >
-                  {isEditing ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleRemoveTimeline(index)}
-                      disabled={isPending}
-                      className="absolute left-4 top-4 z-10 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isPending ? "Removing..." : "Remove"}
-                    </button>
-                  ) : null}
-
                   <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <span className="text-lg font-medium text-white">{timelineView.phase}</span>
                     <span className="self-start rounded-md bg-white/5 px-2 py-1 font-mono text-xs text-neutral-400">
                       {timelineView.startDate} &rarr; {timelineView.endDate}
                     </span>
                   </div>
-                  <div className="flex items-end justify-between gap-3">
+                  <div className="flex min-h-7 items-end justify-between gap-3">
                     <p className="min-w-0 flex-1 text-sm text-neutral-400">
                       Deliverable: <span className="text-neutral-300">{timelineView.deliverable}</span>
                     </p>
-                    {!isEditing ? (
-                      <button
-                        type="button"
-                        onClick={() => handleTimelineEditStart(index)}
-                        disabled={isPending}
-                        className={frameEditButtonClass}
-                      >
-                        Edit
-                      </button>
-                    ) : null}
+                    <div className="flex h-7 w-16 shrink-0 items-end justify-end">
+                      {!isEditing && timelineEditCooldownIndex !== index ? (
+                        <button
+                          type="button"
+                          onClick={() => handleTimelineEditStart(index)}
+                          disabled={isPending}
+                          className={frameEditButtonClass}
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <span aria-hidden="true" className="inline-flex h-7 w-full" />
+                      )}
+                    </div>
                   </div>
 
                   <div
@@ -455,7 +490,15 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           />
                         </label>
                       </div>
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveTimeline(index)}
+                          disabled={isPending}
+                          className="rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Remove
+                        </button>
                         <button
                           type="button"
                           onClick={() => void handleSaveTimeline()}
@@ -508,17 +551,6 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                     statusCardStyles[taskView.status]
                   } ${isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"}`}
                 >
-                  {isEditing ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleRemoveTask(task.id)}
-                      disabled={isPending}
-                      className="absolute left-4 top-4 z-10 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isPending ? "Removing..." : "Remove"}
-                    </button>
-                  ) : null}
-
                   <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -551,16 +583,20 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                         Assignee: {taskView.suggestedAssignee}
                       </span>
                     </div>
-                    {!isEditing ? (
-                      <button
-                        type="button"
-                        onClick={() => handleTaskEditStart(task)}
-                        disabled={isPending}
-                        className={frameEditButtonClass}
-                      >
-                        Edit
-                      </button>
-                    ) : null}
+                    <div className="flex h-7 w-16 shrink-0 items-end justify-end">
+                      {!isEditing && taskEditCooldownId !== task.id ? (
+                        <button
+                          type="button"
+                          onClick={() => handleTaskEditStart(task)}
+                          disabled={isPending}
+                          className={frameEditButtonClass}
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <span aria-hidden="true" className="inline-flex h-7 w-full" />
+                      )}
+                    </div>
                   </div>
 
                   <div
@@ -619,7 +655,15 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           </select>
                         </label>
                       </div>
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => void handleRemoveTask(task.id)}
+                          disabled={isPending}
+                          className="rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Remove
+                        </button>
                         <button
                           type="button"
                           onClick={() => void handleSaveTask()}

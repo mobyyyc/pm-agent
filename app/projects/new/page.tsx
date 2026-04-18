@@ -40,6 +40,7 @@ const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|
 const MAX_HISTORY_MESSAGES = 4;
 const MIN_PROGRESS_DELTA = 10;
 const ANALYZE_REQUEST_TIMEOUT_MS = 12000;
+const PROGRESS_BAR_ANIMATION_MS = 500;
 
 type AnalyzeTiming = {
   elapsedMs: number;
@@ -127,16 +128,26 @@ export default function CreateProjectPage() {
   const [currentAnalysis, setCurrentAnalysis] = useState<AIAnalysis | null>(null);
   const [interviewProgress, setInterviewProgress] = useState(0);
   const [showInterviewProgress, setShowInterviewProgress] = useState(false);
+  const [isProgressBarExpanded, setIsProgressBarExpanded] = useState(false);
   const [progressWarning, setProgressWarning] = useState("");
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
   const [analyzeTiming, setAnalyzeTiming] = useState<AnalyzeTiming | null>(null);
   const [showSlowHint, setShowSlowHint] = useState(false);
   const progressRef = useRef(0);
   const nonsenseStreakRef = useRef(0);
+  const progressBarHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     progressRef.current = interviewProgress;
   }, [interviewProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (progressBarHideTimeoutRef.current) {
+        clearTimeout(progressBarHideTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // History is needed for the API context, but we won't display it
   const [conversationHistory, setConversationHistory] = useState<
@@ -201,21 +212,6 @@ export default function CreateProjectPage() {
     if (!content.trim() || isAnalyzing) return;
 
     const inputAssessment = assessAnswer(content, currentAnalysis?.question, currentAnalysis?.options);
-    const trimmedContent = content.trim();
-
-    // Fast local guard: avoid a full model round-trip for very short first inputs.
-    if (conversationHistory.length === 0 && !inputAssessment.relevant && trimmedContent.split(/\s+/).length <= 2) {
-      setInputValue("");
-      setAnalyzeError(null);
-      setCurrentAnalysis({
-        status: "asking",
-        question: "What are you building? Please describe it in one sentence.",
-        options: ["Web app", "Mobile app", "Desktop app", "AI tool"],
-      });
-      setShowInterviewProgress(true);
-      setProgressWarning("Add a bit more detail so I can generate a faster, better plan.");
-      return;
-    }
 
     // 1. Set UI to "Analyzing" mode (clears previous question)
     setIsAnalyzing(true);
@@ -241,11 +237,11 @@ export default function CreateProjectPage() {
 
         if (inputAssessment.relevant) {
           const delta = progressDeltaFromDetail(inputAssessment.detailScore);
-          nextProgress = Math.min(95, progressRef.current + delta);
+          nextProgress = Math.min(95, Math.max(10, progressRef.current + delta));
           nonsenseStreakRef.current = 0;
           setProgressWarning("");
         } else {
-          nextProgress = progressRef.current;
+          nextProgress = Math.max(10, progressRef.current);
           nonsenseStreakRef.current += 1;
           if (nonsenseStreakRef.current >= 2) {
             setProgressWarning("Please provide project-related details so I can move forward.");
@@ -269,7 +265,18 @@ export default function CreateProjectPage() {
     } finally {
       setIsAnalyzing(false);
       if (shouldShowAfterThinking) {
-        setShowInterviewProgress(true);
+        if (progressBarHideTimeoutRef.current) {
+          clearTimeout(progressBarHideTimeoutRef.current);
+          progressBarHideTimeoutRef.current = null;
+        }
+        if (!showInterviewProgress) {
+          setShowInterviewProgress(true);
+          requestAnimationFrame(() => {
+            setIsProgressBarExpanded(true);
+          });
+        } else {
+          setIsProgressBarExpanded(true);
+        }
       }
       if (nextProgress !== null) {
         requestAnimationFrame(() => {
@@ -277,9 +284,10 @@ export default function CreateProjectPage() {
         });
       }
       if (shouldHideAfterComplete) {
-        setTimeout(() => {
+        setIsProgressBarExpanded(false);
+        progressBarHideTimeoutRef.current = setTimeout(() => {
           setShowInterviewProgress(false);
-        }, 900);
+        }, PROGRESS_BAR_ANIMATION_MS);
       }
     }
   };
@@ -430,6 +438,7 @@ export default function CreateProjectPage() {
                           setCurrentAnalysis(null);
                           setInputValue("");
                         setInterviewProgress(0);
+                        setIsProgressBarExpanded(false);
                         setShowInterviewProgress(false);
                           nonsenseStreakRef.current = 0;
                         setProgressWarning("");
@@ -496,10 +505,14 @@ export default function CreateProjectPage() {
         )}
 
         {showInterviewProgress && (
-          <div className="w-full max-w-4xl space-y-2 mt-12">
+          <div
+            className={`mt-12 w-full max-w-4xl origin-center space-y-2 transition-all duration-500 ease-in-out ${
+              isProgressBarExpanded ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
+            }`}
+          >
             <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-white transition-[width] duration-700 ease-out"
+                className="h-full rounded-full bg-white transition-[width] duration-700 ease-in-out"
                 style={{ width: `${interviewProgress}%` }}
               />
             </div>

@@ -39,6 +39,24 @@ const PROJECT_KEYWORDS = [
 const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|n\/a|\?+|\.+|\d+)$/i;
 const MAX_HISTORY_MESSAGES = 10;
 const MIN_PROGRESS_DELTA = 10;
+const ANALYZE_REQUEST_TIMEOUT_MS = 22000;
+const ANALYZE_MAX_ATTEMPTS = 2;
+
+function isTransientAnalyzeStatus(status: number): boolean {
+  return status === 429 || (status >= 500 && status <= 504);
+}
+
+function parseAnalyzeError(error: unknown): string {
+  if (error instanceof DOMException && error.name === "AbortError") {
+    return "The request timed out. Please try again.";
+  }
+
+  if (error instanceof Error) {
+    return error.message || "Something went wrong while analyzing.";
+  }
+
+  return "Something went wrong while analyzing.";
+}
 
 function assessAnswer(
   rawInput: string,
@@ -101,6 +119,8 @@ export default function CreateProjectPage() {
   const [interviewProgress, setInterviewProgress] = useState(0);
   const [showInterviewProgress, setShowInterviewProgress] = useState(false);
   const [progressWarning, setProgressWarning] = useState("");
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+  const [showSlowHint, setShowSlowHint] = useState(false);
   const progressRef = useRef(0);
   const nonsenseStreakRef = useRef(0);
 
@@ -121,6 +141,67 @@ export default function CreateProjectPage() {
     }
   }, [isAnalyzing, isGenerating, currentAnalysis]);
 
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setShowSlowHint(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowSlowHint(true);
+    }, 3500);
+
+    return () => clearTimeout(timer);
+  }, [isAnalyzing]);
+
+  const requestAnalysis = async (message: string, history: { role: "user" | "model"; content: string }[]) => {
+    let lastError: unknown = null;
+
+    for (let attempt = 1; attempt <= ANALYZE_MAX_ATTEMPTS; attempt += 1) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ANALYZE_REQUEST_TIMEOUT_MS);
+
+      try {
+        const res = await fetch("/api/projects/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message,
+            history,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const errorBody = (await res.json().catch(() => null)) as { detail?: string; error?: string } | null;
+          const detail = errorBody?.detail || errorBody?.error || "Failed to analyze";
+          const err = new Error(detail);
+
+          if (!isTransientAnalyzeStatus(res.status) || attempt >= ANALYZE_MAX_ATTEMPTS) {
+            throw err;
+          }
+
+          lastError = err;
+          await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+          continue;
+        }
+
+        return (await res.json()) as AIAnalysis;
+      } catch (error) {
+        lastError = error;
+        const isAbort = error instanceof DOMException && error.name === "AbortError";
+        if (attempt >= ANALYZE_MAX_ATTEMPTS || !isAbort) {
+          throw error;
+        }
+        await new Promise((resolve) => setTimeout(resolve, attempt * 250));
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    throw lastError instanceof Error ? lastError : new Error("Failed to analyze");
+  };
+
   const handleSend = async (content: string = inputValue) => {
     if (!content.trim() || isAnalyzing) return;
 
@@ -130,27 +211,14 @@ export default function CreateProjectPage() {
     setIsAnalyzing(true);
     setInputValue("");
     setCurrentAnalysis(null); // Clear displayed question to show loader
+    setAnalyzeError(null);
 
     let nextProgress: number | null = null;
     let shouldHideAfterComplete = false;
     let shouldShowAfterThinking = false;
 
     try {
-      // Send current history (without the new message) — the server appends it
-      const res = await fetch("/api/projects/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: content,
-          history: conversationHistory.slice(-MAX_HISTORY_MESSAGES),
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to analyze");
-      }
-
-      const data = (await res.json()) as AIAnalysis;
+      const data = await requestAnalysis(content, conversationHistory.slice(-MAX_HISTORY_MESSAGES));
 
       if (data.status === "ready") {
         nextProgress = 100;
@@ -186,7 +254,7 @@ export default function CreateProjectPage() {
       
     } catch (error) {
       console.error(error);
-      alert("Something went wrong.");
+      setAnalyzeError(parseAnalyzeError(error));
     } finally {
       setIsAnalyzing(false);
       if (shouldShowAfterThinking) {
@@ -235,7 +303,7 @@ export default function CreateProjectPage() {
       if (data.project?.id) {
         window.location.href = `/projects/${data.project.id}`;
       } else {
-        router.push("/projects");
+        router.push("/");
       }
     } catch (error) {
       console.error(error);
@@ -271,6 +339,9 @@ export default function CreateProjectPage() {
                     <Loader2 className="h-16 w-16 text-white animate-spin relative z-10" />
                 </div>
                 <p className="mt-8 text-white/50 text-xl font-light animate-pulse">Thinking...</p>
+            {showSlowHint ? (
+              <p className="mt-3 text-sm text-white/40">Still working. Large prompts may take a few extra seconds.</p>
+            ) : null}
             </div>
         )}
 
@@ -424,6 +495,12 @@ export default function CreateProjectPage() {
             {progressWarning ? <p className="text-sm text-amber-300">{progressWarning}</p> : null}
           </div>
         )}
+
+        {analyzeError ? (
+          <div className="w-full max-w-2xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {analyzeError}
+          </div>
+        ) : null}
 
       </div>
     </div>

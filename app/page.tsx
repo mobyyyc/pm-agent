@@ -17,12 +17,6 @@ export default function HomePage() {
         
         <div className="flex gap-4">
           <Link
-            href="/projects"
-            className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-white/20"
-          >
-            View Projects
-          </Link>
-          <Link
             href="/projects/new"
             className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition-all shadow-lg hover:bg-gray-200"
           >

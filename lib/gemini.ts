@@ -9,8 +9,23 @@ const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent";
 const ANALYZE_MAX_HISTORY_MESSAGES = 10;
 const ANALYZE_TIMEOUT_MS = 15000;
+const ANALYZE_MAX_ATTEMPTS = 2;
 const PLAN_TIMEOUT_MS = 25000;
 const IMPORT_TIMEOUT_MS = 20000;
+
+function isRetryableAnalyzeError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("timed out") ||
+    message.includes("429") ||
+    message.includes("500") ||
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504")
+  );
+}
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
@@ -256,37 +271,57 @@ Design System: ${JSON.stringify(ck.designSystem || [])}
     parts: [{ text: input.message }],
   });
 
-  const response = await fetchWithTimeout(`${GEMINI_URL}?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemInstruction }] },
-      contents,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: analysisJsonSchema,
-      },
-    }),
-  }, ANALYZE_TIMEOUT_MS);
+  let lastError: unknown = null;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Gemini analyze request failed: ${response.status} ${errorText}`);
+  for (let attempt = 1; attempt <= ANALYZE_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(
+        `${GEMINI_URL}?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemInstruction }] },
+            contents,
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: analysisJsonSchema,
+            },
+          }),
+        },
+        ANALYZE_TIMEOUT_MS,
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Gemini analyze request failed: ${response.status} ${errorText}`);
+      }
+
+      const json = (await response.json()) as GeminiResponse;
+      const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!rawText) throw new Error("Gemini returned empty analysis.");
+
+      let parsed;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        throw new Error("Gemini returned invalid analysis JSON.");
+      }
+
+      return validateAndNormalizeAIAnalysis(parsed);
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= ANALYZE_MAX_ATTEMPTS || !isRetryableAnalyzeError(error)) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, attempt * 300));
+    }
   }
 
-  const json = (await response.json()) as GeminiResponse;
-  const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!rawText) throw new Error("Gemini returned empty analysis.");
-
-  let parsed;
-  try {
-    parsed = JSON.parse(rawText);
-  } catch {
-    throw new Error("Gemini returned invalid analysis JSON.");
-  }
-
-  return validateAndNormalizeAIAnalysis(parsed);
+  throw lastError instanceof Error ? lastError : new Error("Failed to analyze project request.");
 }
 
 export async function analyzeTeamImportWithGemini(input: {

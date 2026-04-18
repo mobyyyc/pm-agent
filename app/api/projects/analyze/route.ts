@@ -60,9 +60,20 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error("Analysis error:", error);
+
+    const message = error instanceof Error ? error.message : "Unknown error";
+    const lowerMessage = message.toLowerCase();
+    const isTimeout = lowerMessage.includes("timed out");
+    const status = isTimeout ? 504 : 502;
+
     return NextResponse.json(
-      { error: "Failed to analyze request" },
-      { status: 500 }
+      {
+        error: "Failed to analyze request",
+        detail: isTimeout
+          ? "The AI took too long to respond. Please try again."
+          : "The AI service is temporarily unavailable. Please retry.",
+      },
+      { status }
     );
   }
 }

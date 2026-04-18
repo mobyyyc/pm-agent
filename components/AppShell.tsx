@@ -26,6 +26,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { isGuest, exitGuestMode, guestProjects, removeGuestProject } = useGuest();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarView, setSidebarView] = useState<"main" | "project">("main");
   const [projects, setProjects] = useState<Project[]>([]);
   const pathname = usePathname();
 
@@ -55,8 +56,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     ? guestProjects.map((gp) => ({ id: gp.project.id, name: gp.project.name, idea: gp.project.idea }))
     : projects;
   const projectRouteMatch = pathname.match(/^\/projects\/([^/]+)(?:\/.*)?$/);
-  const selectedProjectId = projectRouteMatch?.[1] ?? null;
-  const isProjectSidebar = !!selectedProjectId;
+  const routeProjectId = projectRouteMatch?.[1] ?? null;
+  const selectedProjectId = routeProjectId === "new" ? null : routeProjectId;
+  const isProjectRoute = !!selectedProjectId;
+  const isProjectSidebar = sidebarView === "project" && isProjectRoute;
   const selectedProject = selectedProjectId
     ? displayProjects.find((project) => project.id === selectedProjectId)
     : null;
@@ -65,6 +68,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     !!selectedProjectId &&
     (pathname === `/projects/${selectedProjectId}` ||
       (!isMembersTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
+
+  useEffect(() => {
+    setSidebarView(isProjectRoute ? "project" : "main");
+  }, [isProjectRoute]);
 
   const deleteProject = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -118,7 +125,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }`}
       >
         <button
-          onClick={() => router.push("/projects")}
+          onClick={() => setSidebarView("main")}
           className={`absolute left-16 top-3 z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 ${
             isProjectSidebar
               ? "cursor-pointer translate-x-0 opacity-100 hover:bg-white/10 hover:text-white"
@@ -170,6 +177,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
                   <Link
                     href={`/projects/${project.id}`}
+                    onClick={() => setSidebarView("project")}
                     className={`block grow px-3 py-2 text-sm truncate ${
                       pathname === `/projects/${project.id}` ? "text-white font-medium" : "text-neutral-400"
                     }`}

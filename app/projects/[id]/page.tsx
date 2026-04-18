@@ -374,7 +374,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
               return (
                 <li
                   key={`${item.phase}-${index}`}
-                  className={`group rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
+                  className={`group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
                     isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"
                   }`}
                 >
@@ -383,7 +383,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       type="button"
                       onClick={() => void handleRemoveTimeline(index)}
                       disabled={isPending}
-                      className="mb-4 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="absolute left-4 top-4 z-10 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPending ? "Removing..." : "Remove"}
                     </button>
@@ -416,58 +416,57 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       isEditing ? "mt-4 max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Phase</span>
-                        <input
-                          type="text"
-                          value={timelineDraft?.phase || ""}
-                          onChange={(event) => handleTimelineDraftChange("phase", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Deliverable</span>
-                        <input
-                          type="text"
-                          value={timelineDraft?.deliverable || ""}
-                          onChange={(event) => handleTimelineDraftChange("deliverable", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Start Date</span>
-                        <input
-                          type="date"
-                          value={timelineDraft?.startDate || ""}
-                          onChange={(event) => handleTimelineDraftChange("startDate", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>End Date</span>
-                        <input
-                          type="date"
-                          value={timelineDraft?.endDate || ""}
-                          onChange={(event) => handleTimelineDraftChange("endDate", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
+                    <div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Phase</span>
+                          <input
+                            type="text"
+                            value={timelineDraft?.phase || ""}
+                            onChange={(event) => handleTimelineDraftChange("phase", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Deliverable</span>
+                          <input
+                            type="text"
+                            value={timelineDraft?.deliverable || ""}
+                            onChange={(event) => handleTimelineDraftChange("deliverable", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Start Date</span>
+                          <input
+                            type="date"
+                            value={timelineDraft?.startDate || ""}
+                            onChange={(event) => handleTimelineDraftChange("startDate", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>End Date</span>
+                          <input
+                            type="date"
+                            value={timelineDraft?.endDate || ""}
+                            onChange={(event) => handleTimelineDraftChange("endDate", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveTimeline()}
+                          disabled={isPending}
+                          className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {isEditing ? (
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => void handleSaveTimeline()}
-                        disabled={isPending}
-                        className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isPending ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  ) : null}
                 </li>
               );
             })}
@@ -505,7 +504,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
               return (
                 <li
                   key={task.id}
-                  className={`group rounded-xl p-4 transition-all duration-300 ease-in-out ${
+                  className={`group relative rounded-xl p-4 transition-all duration-300 ease-in-out ${
                     statusCardStyles[taskView.status]
                   } ${isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"}`}
                 >
@@ -514,7 +513,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       type="button"
                       onClick={() => void handleRemoveTask(task.id)}
                       disabled={isPending}
-                      className="mb-4 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="absolute left-4 top-4 z-10 rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPending ? "Removing..." : "Remove"}
                     </button>
@@ -569,70 +568,69 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       isEditing ? "mt-4 max-h-140 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <label className="space-y-1 text-xs text-neutral-400 sm:col-span-2">
-                        <span>Title</span>
-                        <input
-                          type="text"
-                          value={taskDraft?.title || ""}
-                          onChange={(event) => handleTaskDraftChange("title", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400 sm:col-span-2">
-                        <span>Description</span>
-                        <textarea
-                          value={taskDraft?.description || ""}
-                          onChange={(event) => handleTaskDraftChange("description", event.target.value)}
-                          rows={4}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Deadline</span>
-                        <input
-                          type="date"
-                          value={taskDraft?.deadline || ""}
-                          onChange={(event) => handleTaskDraftChange("deadline", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Assignee</span>
-                        <input
-                          type="text"
-                          value={taskDraft?.suggestedAssignee || ""}
-                          onChange={(event) => handleTaskDraftChange("suggestedAssignee", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                        />
-                      </label>
-                      <label className="space-y-1 text-xs text-neutral-400">
-                        <span>Status</span>
-                        <select
-                          value={taskDraft?.status || "todo"}
-                          onChange={(event) => handleTaskDraftChange("status", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                    <div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="space-y-1 text-xs text-neutral-400 sm:col-span-2">
+                          <span>Title</span>
+                          <input
+                            type="text"
+                            value={taskDraft?.title || ""}
+                            onChange={(event) => handleTaskDraftChange("title", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400 sm:col-span-2">
+                          <span>Description</span>
+                          <textarea
+                            value={taskDraft?.description || ""}
+                            onChange={(event) => handleTaskDraftChange("description", event.target.value)}
+                            rows={4}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Deadline</span>
+                          <input
+                            type="date"
+                            value={taskDraft?.deadline || ""}
+                            onChange={(event) => handleTaskDraftChange("deadline", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Assignee</span>
+                          <input
+                            type="text"
+                            value={taskDraft?.suggestedAssignee || ""}
+                            onChange={(event) => handleTaskDraftChange("suggestedAssignee", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          />
+                        </label>
+                        <label className="space-y-1 text-xs text-neutral-400">
+                          <span>Status</span>
+                          <select
+                            value={taskDraft?.status || "todo"}
+                            onChange={(event) => handleTaskDraftChange("status", event.target.value)}
+                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          >
+                            <option value="todo">To do</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveTask()}
+                          disabled={isPending}
+                          className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <option value="todo">To do</option>
-                          <option value="in_progress">In progress</option>
-                          <option value="done">Done</option>
-                        </select>
-                      </label>
+                          {isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {isEditing ? (
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => void handleSaveTask()}
-                        disabled={isPending}
-                        className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {isPending ? "Saving..." : "Save"}
-                      </button>
-                    </div>
-                  ) : null}
                 </li>
               );
             })}

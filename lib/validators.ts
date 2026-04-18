@@ -6,6 +6,8 @@ import {
   teamKnowledgeSchema,
   projectSchema,
   taskSchema,
+  taskStatusSchema,
+  timelineItemSchema,
   type AIPlan,
   type TeamImportAnalysis,
   type TeamKnowledge,
@@ -28,6 +30,18 @@ export const analyzeProjectRequestSchema = z.object({
 
 export const updateTaskStatusRequestSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
+});
+
+export const updateProjectTimelineRequestSchema = z.object({
+  timeline: z.array(timelineItemSchema),
+});
+
+export const updateTaskRequestSchema = z.object({
+  title: z.string().min(1, "Task title is required."),
+  description: z.string().min(1, "Task description is required."),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Deadline must be in YYYY-MM-DD format."),
+  suggestedAssignee: z.string().min(1, "Suggested assignee is required."),
+  status: taskStatusSchema,
 });
 
 const arrayFromStringSchema = z

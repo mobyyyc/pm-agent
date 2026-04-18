@@ -162,6 +162,67 @@ export async function deleteProject(projectId: string): Promise<void> {
   await sql`DELETE FROM projects WHERE id = ${projectId}`;
 }
 
+export async function updateProjectTimeline(
+  projectId: string,
+  timeline: Project["timeline"],
+  updatedAt: string,
+): Promise<Project | null> {
+  const rows = await sql`
+    UPDATE projects
+    SET timeline = ${JSON.stringify(timeline)}::jsonb, updated_at = ${updatedAt}
+    WHERE id = ${projectId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return projectSchema.parse({
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    idea: row.idea,
+    guideline: row.guideline,
+    timeline: row.timeline,
+    taskIds: row.task_ids,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function removeTaskIdFromProject(
+  projectId: string,
+  taskId: string,
+  updatedAt: string,
+): Promise<Project | null> {
+  const project = await getProjectById(projectId);
+  if (!project) return null;
+
+  const nextTaskIds = project.taskIds.filter((projectTaskId) => projectTaskId !== taskId);
+
+  const rows = await sql`
+    UPDATE projects
+    SET task_ids = ${JSON.stringify(nextTaskIds)}::jsonb, updated_at = ${updatedAt}
+    WHERE id = ${projectId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return projectSchema.parse({
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    idea: row.idea,
+    guideline: row.guideline,
+    timeline: row.timeline,
+    taskIds: row.task_ids,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Tasks
 // ---------------------------------------------------------------------------
@@ -257,6 +318,44 @@ export async function updateTaskStatus(taskId: string, status: string, updatedAt
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+export async function updateTaskDetails(
+  taskId: string,
+  payload: Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">,
+  updatedAt: string,
+): Promise<Task | null> {
+  const rows = await sql`
+    UPDATE tasks
+    SET
+      title = ${payload.title},
+      description = ${payload.description},
+      deadline = ${payload.deadline},
+      suggested_assignee = ${payload.suggestedAssignee},
+      status = ${payload.status},
+      updated_at = ${updatedAt}
+    WHERE id = ${taskId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return taskSchema.parse({
+    id: row.id,
+    projectId: row.project_id,
+    title: row.title,
+    description: row.description,
+    deadline: row.deadline,
+    suggestedAssignee: row.suggested_assignee,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
+export async function deleteTaskById(taskId: string): Promise<void> {
+  await sql`DELETE FROM tasks WHERE id = ${taskId}`;
 }
 
 // ---------------------------------------------------------------------------

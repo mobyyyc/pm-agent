@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
-import { getProjectById, getTasksByProjectId, deleteProject } from "@/lib/storage";
+import { deleteProject, getProjectById, getTasksByProjectId, updateProjectTimeline } from "@/lib/storage";
+import { isoNow } from "@/lib/utils";
+import { updateProjectTimelineRequestSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -61,6 +64,44 @@ export async function DELETE(_request: Request, context: RouteContext) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to delete project.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(request: Request, context: RouteContext) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await context.params;
+    const project = await getProjectById(id);
+
+    if (!project) {
+      return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    if (project.userId !== session.user.email) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const parsed = updateProjectTimelineRequestSchema.parse(body);
+    const updatedProject = await updateProjectTimeline(id, parsed.timeline, isoNow());
+
+    return NextResponse.json({ project: updatedProject });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed.", issues: error.issues.map((issue) => issue.message) },
+        { status: 422 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to update project.", detail: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }

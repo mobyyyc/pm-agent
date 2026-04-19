@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import ClientLayout from "@/components/ClientLayout";
 import { GuestProvider } from "@/components/GuestContext";
 import ThemeProvider from "@/components/ThemeProvider";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-nunito",
+});
 
 export const metadata: Metadata = {
   title: "VERSOR",
@@ -17,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className={`${nunito.variable} antialiased`}>
         <ThemeProvider>
           <SessionProvider>
             <GuestProvider>

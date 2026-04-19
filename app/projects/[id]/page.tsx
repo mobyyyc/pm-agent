@@ -562,16 +562,24 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       <p className="text-sm leading-relaxed text-neutral-400">{taskView.description}</p>
                     </div>
 
-                    {!isEditing ? (
-                      <div className="shrink-0 pt-1">
+                    <div className="shrink-0 pt-1">
+                      {!isEditing ? (
                         <TaskStatusSelect
                           taskId={task.id}
                           initialStatus={task.status}
                           isGuest={isGuest}
                           onStatusChange={handleStatusChange}
                         />
-                      </div>
-                    ) : null}
+                      ) : (
+                        <div aria-hidden="true" className="min-w-70 rounded-xl p-1 opacity-0">
+                          <div className="grid grid-cols-3 gap-1">
+                            <span className="h-8 rounded-lg" />
+                            <span className="h-8 rounded-lg" />
+                            <span className="h-8 rounded-lg" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-2 flex items-end justify-between gap-3">

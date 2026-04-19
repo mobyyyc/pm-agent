@@ -39,7 +39,7 @@ const PROJECT_KEYWORDS = [
 const NONSENSE_PATTERN = /^(idk|i\s*don'?t\s*know|asdf+|qwer+|test+|random|none|n\/a|\?+|\.+|\d+)$/i;
 const MAX_HISTORY_MESSAGES = 4;
 const MIN_PROGRESS_DELTA = 10;
-const ANALYZE_REQUEST_TIMEOUT_MS = 12000;
+const ANALYZE_REQUEST_TIMEOUT_MS = 30000;
 const PROGRESS_BAR_ANIMATION_MS = 500;
 
 type AnalyzeTiming = {
@@ -62,6 +62,11 @@ function parseAnalyzeError(error: unknown): string {
   }
 
   if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("timed out") || message.includes("timeout")) {
+      return "The request timed out. Please try again.";
+    }
+
     return error.message || "Something went wrong while analyzing.";
   }
 
@@ -531,7 +536,7 @@ export default function CreateProjectPage() {
         ) : null}
 
         {analyzeError ? (
-          <div className="w-full max-w-2xl rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          <div className="request-timeout-alert w-full max-w-2xl rounded-2xl px-4 py-3 text-sm">
             {analyzeError}
           </div>
         ) : null}

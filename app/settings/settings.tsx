@@ -4,10 +4,17 @@ import { useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 
 import { TeamProfile, TEAM_PROFILE_TABS, type TeamProfileTab } from "./TeamProfile";
+import GithubAccountSettings from "./GithubAccount";
+
+type SettingsTab = TeamProfileTab | "github-account";
 
 export default function Settings() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState<TeamProfileTab>("overview");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+
+  const handleTeamProfileTabChange = (tab: TeamProfileTab) => {
+    setActiveTab(tab);
+  };
 
   if (status === "loading") {
     return <div className="mx-auto max-w-5xl p-8 text-neutral-300">Loading settings...</div>;
@@ -71,10 +78,30 @@ export default function Settings() {
               );
             })}
           </nav>
+
+          <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">Github</p>
+          <nav className="space-y-1" aria-label="Github sections">
+            <button
+              type="button"
+              onClick={() => setActiveTab("github-account")}
+              className={`w-full rounded-xl px-3 py-2 text-left transition-colors cursor-pointer ${
+                activeTab === "github-account"
+                  ? "bg-white/10 text-white"
+                  : "text-neutral-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <p className="text-sm font-semibold">Account</p>
+              <p className="text-xs opacity-80">Link your Github account</p>
+            </button>
+          </nav>
         </aside>
 
         <section className="app-frame self-start rounded-2xl p-5 sm:p-6">
-          <TeamProfile activeTab={activeTab} onChangeTab={setActiveTab} />
+          {activeTab === "github-account" ? (
+            <GithubAccountSettings />
+          ) : (
+            <TeamProfile activeTab={activeTab} onChangeTab={handleTeamProfileTabChange} />
+          )}
         </section>
       </div>
     </main>

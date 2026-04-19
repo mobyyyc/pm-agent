@@ -300,13 +300,15 @@ button:disabled,
   cursor: not-allowed;
 }
 
-.settings-reset-button {
+.settings-reset-button,
+.app-danger-button {
   background-color: rgba(239, 68, 68, 0.2);
   color: #fee2e2;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.settings-reset-button:hover:not(:disabled) {
+.settings-reset-button:hover:not(:disabled),
+.app-danger-button:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.3);
   color: #fff1f2;
 }
@@ -326,14 +328,31 @@ button:disabled,
   color: #fff1f2;
 }
 
-html[data-theme="light"] .settings-reset-button {
+html[data-theme="light"] .settings-reset-button,
+html[data-theme="light"] .app-danger-button {
   background-color: rgba(239, 68, 68, 0.2);
   color: #7f1d1d;
 }
 
-html[data-theme="light"] .settings-reset-button:hover:not(:disabled) {
+html[data-theme="light"] .settings-reset-button:hover:not(:disabled),
+html[data-theme="light"] .app-danger-button:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.3);
   color: #7f1d1d;
+}
+
+.request-timeout-alert {
+  display: block;
+  border: 1px solid rgba(248, 113, 113, 0.46) !important;
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  color: #fff1f2 !important;
+  box-shadow: 0 10px 24px -16px rgba(239, 68, 68, 0.6);
+}
+
+html[data-theme="light"] .request-timeout-alert {
+  border-color: rgba(185, 28, 28, 0.45) !important;
+  background-color: rgba(239, 68, 68, 0.22) !important;
+  color: #7f1d1d !important;
+  box-shadow: 0 10px 24px -16px rgba(185, 28, 28, 0.28);
 }
 
 html[data-theme="light"] .settings-tab-reset {

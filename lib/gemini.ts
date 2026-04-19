@@ -9,7 +9,7 @@ const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview"
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const ANALYZE_MAX_HISTORY_MESSAGES = 4;
-const ANALYZE_TIMEOUT_MS = 12000;
+const ANALYZE_TIMEOUT_MS = 30000;
 const ANALYZE_MAX_ATTEMPTS = 1;
 const PLAN_TIMEOUT_MS = 25000;
 const IMPORT_TIMEOUT_MS = 20000;

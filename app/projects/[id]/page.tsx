@@ -495,7 +495,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleRemoveTimeline(index)}
                           disabled={isPending}
-                          className="rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-danger-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Remove
                         </button>
@@ -668,7 +668,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleRemoveTask(task.id)}
                           disabled={isPending}
-                          className="rounded-full bg-red-500/20 px-4 py-1.5 text-xs font-semibold text-red-100 transition hover:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-danger-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Remove
                         </button>

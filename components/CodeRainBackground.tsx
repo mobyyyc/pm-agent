@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useTheme } from 'next-themes';
 
 export default function CodeRainBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,6 +28,10 @@ export default function CodeRainBackground() {
     
     window.addEventListener('resize', resize);
     resize();
+
+    const isLightMode = resolvedTheme === 'light';
+    const particleRgb = isLightMode ? '51, 65, 85' : '255, 255, 255';
+    const opacityMultiplier = isLightMode ? 0.75 : 1;
 
     // Define radial lines
     const lineCount = Math.floor((canvas.width * canvas.height) / 15000);
@@ -66,8 +72,8 @@ export default function CodeRainBackground() {
 
         // Draw the line with a gradient
         const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-        gradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
-        gradient.addColorStop(1, `rgba(255, 255, 255, ${line.opacity * line.fadeIn})`);
+        gradient.addColorStop(0, `rgba(${particleRgb}, 0)`);
+        gradient.addColorStop(1, `rgba(${particleRgb}, ${line.opacity * line.fadeIn * opacityMultiplier})`);
         
         ctx.strokeStyle = gradient;
         ctx.lineWidth = line.width;
@@ -99,7 +105,7 @@ export default function CodeRainBackground() {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [resolvedTheme]);
 
   return (
     <canvas

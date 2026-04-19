@@ -3,6 +3,7 @@ import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import ClientLayout from "@/components/ClientLayout";
 import { GuestProvider } from "@/components/GuestContext";
+import ThemeProvider from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "VERSOR",
@@ -15,13 +16,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <SessionProvider>
-          <GuestProvider>
-            <ClientLayout>{children}</ClientLayout>
-          </GuestProvider>
-        </SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <GuestProvider>
+              <ClientLayout>{children}</ClientLayout>
+            </GuestProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -367,7 +367,7 @@ export default function CreateProjectPage() {
         {/* --- Initial View --- */}
         {isInitial && (
           <div className="w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
-            <h1 className="mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
+            <h1 className="new-project-heading mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
               New Project
             </h1>
             <p className="mb-8 bg-transparent text-xl font-light text-white/60">

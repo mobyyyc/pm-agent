@@ -14,6 +14,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
+import ThemeToggleButton from "@/components/ThemeToggleButton";
 
 type Project = {
   id: string;
@@ -70,7 +71,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       (!isMembersTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
 
   useEffect(() => {
-    setSidebarView(isProjectRoute ? "project" : "main");
+    const nextView = isProjectRoute ? "project" : "main";
+    const syncId = window.setTimeout(() => {
+      setSidebarView(nextView);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(syncId);
+    };
   }, [isProjectRoute]);
 
   const deleteProject = async (e: React.MouseEvent, id: string) => {
@@ -309,6 +317,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggleButton />
             <div className="text-sm text-right">
                 <p className="text-white font-medium">{displayName}</p>
                 {isGuest && <p className="text-xs text-neutral-500">Temporary session</p>}

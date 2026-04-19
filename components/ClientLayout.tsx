@@ -5,6 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import AppShell from "@/components/AppShell";
 import { useGuest } from "@/components/GuestContext";
 import { useEffect } from "react";
+import ThemeToggleButton from "@/components/ThemeToggleButton";
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
@@ -20,7 +21,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   if (status === "loading") {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-black text-white">
+      <div className="relative flex h-screen w-full items-center justify-center bg-black text-white">
+        <ThemeToggleButton className="absolute right-4 top-4" />
             <p>Loading...</p>
         </div>
     );
@@ -32,7 +34,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center gap-6 bg-black p-4 text-white">
+    <div className="relative flex h-screen flex-col items-center justify-center gap-6 bg-black p-4 text-white">
+        <ThemeToggleButton className="absolute right-4 top-4" />
         <h1 className="text-4xl font-semibold tracking-tight">
           <span className="text-white/95">VERSOR</span>
           <span className="ml-0.5 text-neutral-400">.AI</span>

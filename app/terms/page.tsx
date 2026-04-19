@@ -50,7 +50,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-semibold text-white">Disclaimers and Limitation of Liability</h2>
           <p className="mt-2 leading-7 text-neutral-300">
-            The service is provided on an "as is" and "as available" basis to the maximum extent permitted by law. We are not liable
+            The service is provided on an &quot;as is&quot; and &quot;as available&quot; basis to the maximum extent permitted by law. We are not liable
             for indirect, incidental, special, consequential, or punitive damages.
           </p>
         </section>

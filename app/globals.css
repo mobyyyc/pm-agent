@@ -20,6 +20,7 @@
     0 6px 14px -10px rgba(255, 255, 255, 0.08), 0 0 28px -18px rgba(255, 255, 255, 0.16);
   --frame-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 22px 46px -24px rgba(255, 255, 255, 0.2),
     0 12px 24px -12px rgba(255, 255, 255, 0.14), 0 0 56px -16px rgba(255, 255, 255, 0.3);
+  --status-frame-gradient-from: rgba(255, 255, 255, 0.09);
   color-scheme: dark;
 }
 
@@ -40,6 +41,7 @@ html[data-theme="light"] {
   --frame-shadow-lg: 0 24px 46px -28px rgba(42, 74, 114, 0.34), 0 10px 24px -16px rgba(42, 74, 114, 0.22);
   --frame-shadow-md: 0 18px 34px -26px rgba(42, 74, 114, 0.3), 0 8px 20px -16px rgba(42, 74, 114, 0.2);
   --frame-shadow-hover: 0 30px 56px -30px rgba(42, 74, 114, 0.4), 0 14px 28px -16px rgba(42, 74, 114, 0.26);
+  --status-frame-gradient-from: rgba(15, 23, 42, 0.12);
   color-scheme: light;
 }
 

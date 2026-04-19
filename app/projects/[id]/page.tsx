@@ -521,15 +521,15 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
           <div className="flex items-center gap-4 text-xs font-medium sm:gap-5">
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-sky-200">
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
               <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
               To do: {todoCount}
             </span>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-amber-200">
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
               <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
               In progress: {inProgressCount}
             </span>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-emerald-200">
+            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
               <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
               Done: {doneCount}
             </span>

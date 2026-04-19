@@ -22,17 +22,17 @@ const statusStyles: Record<
 > = {
   todo: {
     dot: "bg-sky-300",
-    active: "bg-sky-500/20 text-sky-200",
+    active: "bg-sky-500/20 text-white",
     inactive: "text-neutral-300 hover:bg-white/10",
   },
   in_progress: {
     dot: "bg-amber-300",
-    active: "bg-amber-500/20 text-amber-100",
+    active: "bg-amber-500/20 text-white",
     inactive: "text-neutral-300 hover:bg-white/10",
   },
   done: {
     dot: "bg-emerald-300",
-    active: "bg-emerald-500/20 text-emerald-100",
+    active: "bg-emerald-500/20 text-white",
     inactive: "text-neutral-300 hover:bg-white/10",
   },
 };
@@ -90,7 +90,7 @@ export function TaskStatusSelect({
 
   return (
     <div className="flex min-w-70 flex-col gap-1">
-      <div className="rounded-xl bg-linear-to-l from-white/12 to-transparent p-1">
+      <div className="rounded-xl bg-linear-to-l from-(--status-frame-gradient-from) to-transparent p-1">
         <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Task status">
           {statusOptions.map((option) => {
             const isActive = status === option.value;

@@ -310,13 +310,13 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               </div>
 
               <div className="space-y-3">
-                {[
+                {([
                   ["Preferred stack", profileToShow.preferredStack],
                   ["Values", profileToShow.values],
                   ["Constraints", profileToShow.constraints],
                   ["Target audience", profileToShow.targetAudience],
                   ["Design system", profileToShow.designSystem],
-                ].map(([title, values]) => (
+                ] as Array<[string, string[]]>).map(([title, values]) => (
                   <div key={title} className="app-frame-item rounded-xl p-4">
                     <p className="text-xs uppercase tracking-wide text-neutral-500">{title}</p>
                     {values.length === 0 ? (

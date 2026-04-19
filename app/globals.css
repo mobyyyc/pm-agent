@@ -299,3 +299,53 @@ button:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
 }
+
+.settings-reset-button {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fee2e2;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.settings-reset-button:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.3);
+  color: #fff1f2;
+}
+
+.settings-tab-reset {
+  color: #fca5a5;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.settings-tab-reset:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #ffe4e6;
+}
+
+.settings-tab-reset.settings-tab-reset-active {
+  background-color: rgba(239, 68, 68, 0.24);
+  color: #fff1f2;
+}
+
+html[data-theme="light"] .settings-reset-button {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #7f1d1d;
+}
+
+html[data-theme="light"] .settings-reset-button:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.3);
+  color: #7f1d1d;
+}
+
+html[data-theme="light"] .settings-tab-reset {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .settings-tab-reset:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+  color: #7f1d1d;
+}
+
+html[data-theme="light"] .settings-tab-reset.settings-tab-reset-active {
+  background-color: rgba(239, 68, 68, 0.22);
+  color: #7f1d1d;
+}

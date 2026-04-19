@@ -397,12 +397,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         </p>
       ) : null}
 
-      <section className="rounded-2xl bg-white/5 p-6 transition-all hover:bg-white/10">
+      <section className="app-frame app-frame-hover rounded-2xl bg-white/5 p-6 transition-all hover:bg-white/10">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Guideline</h2>
         <p className="text-base text-neutral-300 leading-relaxed">{project.guideline}</p>
       </section>
 
-      <section className="rounded-2xl bg-white/5 p-6">
+      <section className="app-frame rounded-2xl bg-white/5 p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
         {renderedTimeline.length === 0 ? (
           <p className="text-sm text-neutral-400">No timeline items available.</p>
@@ -416,7 +416,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
               return (
                 <li
                   key={`${item.phase}-${index}`}
-                  className={`group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
+                  className={`app-frame-item app-frame-hover group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
                     isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"
                   }`}
                 >
@@ -517,7 +517,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         )}
       </section>
 
-      <section className="rounded-2xl bg-white/5 p-6">
+      <section className="app-frame rounded-2xl bg-white/5 p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
           <div className="flex items-center gap-4 text-xs font-medium sm:gap-5">
@@ -547,7 +547,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
               return (
                 <li
                   key={task.id}
-                  className={`group relative rounded-xl p-4 transition-all duration-300 ease-in-out ${
+                  className={`app-frame-item app-frame-hover group relative rounded-xl p-4 transition-all duration-300 ease-in-out ${
                     statusCardStyles[taskView.status]
                   } ${isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"}`}
                 >

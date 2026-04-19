@@ -205,7 +205,7 @@ export default function TeamPage() {
   if (!session?.user?.email) {
     return (
       <main className="mx-auto max-w-3xl p-8">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
+        <div className="app-frame rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
           <h1 className="text-2xl font-semibold text-white">Team Profile</h1>
           <p className="mt-3 text-neutral-400">Sign in to manage a personal team profile used by project planning AI.</p>
           <button
@@ -226,7 +226,7 @@ export default function TeamPage() {
         <p className="mt-2 text-sm text-neutral-400">This profile is stored per user and used to personalize generated plans for teams and organizations.</p>
       </header>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <section className="app-frame rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex flex-wrap gap-2">
           {(["text", "upload"] as InputMode[]).map((inputMode) => (
             <button
@@ -279,7 +279,7 @@ export default function TeamPage() {
                 setIsDragging(false);
               }}
               onDrop={handleDrop}
-              className={`flex min-h-56 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all ${
+              className={`app-frame-item flex min-h-56 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all ${
                 isDragging
                   ? "border-white bg-white/10"
                   : "border-white/20 bg-black/30 hover:border-white/40 hover:bg-white/5"
@@ -329,7 +329,7 @@ export default function TeamPage() {
                 <p className="text-sm text-neutral-400">No strong categories detected.</p>
               ) : (
                 importAnalysis.categories.map((category, index) => (
-                  <div key={`${category.title}-${index}`} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                  <div key={`${category.title}-${index}`} className="app-frame-item rounded-xl border border-white/10 bg-black/20 p-4">
                     <p className="text-sm font-semibold text-white">{category.title}</p>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-neutral-300">
                       {category.points.map((point, pointIndex) => (

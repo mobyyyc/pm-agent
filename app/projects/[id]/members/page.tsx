@@ -72,7 +72,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
         <p className="text-sm text-neutral-500">Project: {project.name || project.idea}</p>
       </header>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+      <section className="app-frame rounded-2xl border border-white/10 bg-white/5 p-6">
         <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Team</h2>
         <p className="text-sm text-neutral-400">
           Member management UI will appear here. Next step is adding invitations and accepting them.

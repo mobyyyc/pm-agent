@@ -14,12 +14,13 @@
   --theme-toggle-background: rgba(255, 255, 255, 0.08);
   --theme-toggle-hover: rgba(255, 255, 255, 0.16);
   --theme-toggle-text: #e5e7eb;
-  --frame-shadow-lg: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 18px 38px -24px rgba(255, 255, 255, 0.14),
-    0 8px 20px -12px rgba(255, 255, 255, 0.1), 0 0 42px -18px rgba(255, 255, 255, 0.2);
-  --frame-shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.11), 0 14px 30px -22px rgba(255, 255, 255, 0.11),
-    0 6px 14px -10px rgba(255, 255, 255, 0.08), 0 0 28px -18px rgba(255, 255, 255, 0.16);
-  --frame-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.2), 0 22px 46px -24px rgba(255, 255, 255, 0.2),
-    0 12px 24px -12px rgba(255, 255, 255, 0.14), 0 0 56px -16px rgba(255, 255, 255, 0.3);
+  --frame-surface: rgba(255, 255, 255, 0.08);
+  --frame-surface-item: rgba(255, 255, 255, 0.07);
+  --frame-surface-hover: rgba(255, 255, 255, 0.12);
+  --frame-surface-item-hover: rgba(255, 255, 255, 0.11);
+  --frame-shadow-lg: 0 24px 44px -30px rgba(0, 0, 0, 0.78), 0 10px 20px -14px rgba(0, 0, 0, 0.56);
+  --frame-shadow-md: 0 18px 32px -28px rgba(0, 0, 0, 0.7), 0 8px 16px -12px rgba(0, 0, 0, 0.5);
+  --frame-shadow-hover: 0 30px 56px -32px rgba(0, 0, 0, 0.84), 0 14px 26px -14px rgba(0, 0, 0, 0.62);
   --status-frame-gradient-from: rgba(255, 255, 255, 0.09);
   color-scheme: dark;
 }
@@ -38,6 +39,10 @@ html[data-theme="light"] {
   --theme-toggle-background: rgba(15, 23, 42, 0.06);
   --theme-toggle-hover: rgba(15, 23, 42, 0.12);
   --theme-toggle-text: #0f172a;
+  --frame-surface: var(--surface-soft);
+  --frame-surface-item: var(--surface-soft);
+  --frame-surface-hover: rgba(15, 23, 42, 0.1);
+  --frame-surface-item-hover: rgba(15, 23, 42, 0.09);
   --frame-shadow-lg: 0 24px 46px -28px rgba(42, 74, 114, 0.34), 0 10px 24px -16px rgba(42, 74, 114, 0.22);
   --frame-shadow-md: 0 18px 34px -26px rgba(42, 74, 114, 0.3), 0 8px 20px -16px rgba(42, 74, 114, 0.2);
   --frame-shadow-hover: 0 30px 56px -30px rgba(42, 74, 114, 0.4), 0 14px 28px -16px rgba(42, 74, 114, 0.26);
@@ -80,14 +85,24 @@ body {
 }
 
 .app-frame {
+  background-color: var(--frame-surface) !important;
+  border: none !important;
   box-shadow: var(--frame-shadow-lg);
 }
 
 .app-frame-item {
+  background-color: var(--frame-surface-item) !important;
+  border: none !important;
   box-shadow: var(--frame-shadow-md);
 }
 
-.app-frame-hover:hover {
+.app-frame.app-frame-hover:hover {
+  background-color: var(--frame-surface-hover) !important;
+  box-shadow: var(--frame-shadow-hover);
+}
+
+.app-frame-item.app-frame-hover:hover {
+  background-color: var(--frame-surface-item-hover) !important;
   box-shadow: var(--frame-shadow-hover);
 }
 

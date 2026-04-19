@@ -520,7 +520,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       <section className="app-frame rounded-2xl bg-white/5 p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
-          <div className="flex items-center gap-4 text-xs font-medium sm:gap-5">
+          <div className="flex items-center gap-4 text-[13px] font-medium sm:gap-5">
             <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
               <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
               To do: {todoCount}

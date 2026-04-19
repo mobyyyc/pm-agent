@@ -104,7 +104,7 @@ export function TaskStatusSelect({
                 aria-checked={isActive}
                 disabled={isPending}
                 onClick={() => onChange(option.value)}
-                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
                   isActive ? theme.active : theme.inactive
                 }`}
               >

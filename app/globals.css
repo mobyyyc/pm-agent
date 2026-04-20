@@ -300,6 +300,11 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/* Keep pill control labels clear of the left rounded cap. */
+[class~="rounded-full"][class~="px-3"] {
+  padding-inline: 0.95rem;
+}
+
 .settings-reset-button,
 .app-danger-button {
   background-color: rgba(239, 68, 68, 0.2);
@@ -367,4 +372,29 @@ html[data-theme="light"] .settings-tab-reset:hover {
 html[data-theme="light"] .settings-tab-reset.settings-tab-reset-active {
   background-color: rgba(239, 68, 68, 0.22);
   color: #7f1d1d;
+}
+
+.project-scroll-area {
+  scrollbar-gutter: stable;
+}
+
+.project-scroll-fade-top,
+.project-scroll-fade-bottom {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 20px;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+}
+
+.project-scroll-fade-top {
+  top: 0;
+  background: linear-gradient(to bottom, var(--sidebar-background), transparent);
+}
+
+.project-scroll-fade-bottom {
+  bottom: 0;
+  background: linear-gradient(to top, var(--sidebar-background), transparent);
 }

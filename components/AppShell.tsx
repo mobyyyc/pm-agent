@@ -4,7 +4,7 @@
 import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bars3Icon,
   ChevronLeftIcon,
@@ -29,7 +29,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarView, setSidebarView] = useState<"main" | "project">("main");
   const [projects, setProjects] = useState<Project[]>([]);
+  const [showProjectFadeTop, setShowProjectFadeTop] = useState(false);
+  const [showProjectFadeBottom, setShowProjectFadeBottom] = useState(false);
   const pathname = usePathname();
+  const projectScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -80,6 +83,45 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       window.clearTimeout(syncId);
     };
   }, [isProjectRoute]);
+
+  const updateProjectScrollFades = useCallback(() => {
+    const scrollArea = projectScrollRef.current;
+    if (!scrollArea) return;
+
+    const hasOverflow = scrollArea.scrollHeight - scrollArea.clientHeight > 1;
+    if (!hasOverflow) {
+      setShowProjectFadeTop(false);
+      setShowProjectFadeBottom(false);
+      return;
+    }
+
+    const nextShowTop = scrollArea.scrollTop > 1;
+    const nextShowBottom = scrollArea.scrollTop + scrollArea.clientHeight < scrollArea.scrollHeight - 1;
+
+    setShowProjectFadeTop((prev) => (prev === nextShowTop ? prev : nextShowTop));
+    setShowProjectFadeBottom((prev) => (prev === nextShowBottom ? prev : nextShowBottom));
+  }, []);
+
+  useEffect(() => {
+    const rafId = window.requestAnimationFrame(() => {
+      updateProjectScrollFades();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
+  }, [displayProjects.length, sidebarOpen, isProjectSidebar, updateProjectScrollFades]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      updateProjectScrollFades();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateProjectScrollFades]);
 
   const deleteProject = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -151,7 +193,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
           <div className="relative flex-1 overflow-hidden">
           <nav
-            className={`absolute inset-0 flex flex-col p-4 space-y-2 overflow-y-auto transition-all duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col p-4 transition-all duration-300 ease-in-out ${
               isProjectSidebar ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100"
             }`}
           >
@@ -180,29 +222,41 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               Projects
             </div>
 
-            <div className="space-y-1">
-              {displayProjects.map((project) => (
-                <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
-                  <Link
-                    href={`/projects/${project.id}`}
-                    onClick={() => setSidebarView("project")}
-                    className={`block grow px-3 py-2 text-sm truncate ${
-                      pathname === `/projects/${project.id}` ? "text-white font-medium" : "text-neutral-400"
-                    }`}
-                    title={project.idea}
-                  >
-                    {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
-                  </Link>
-                  <button
-                    onClick={(e) => deleteProject(e, project.id)}
-                    className="cursor-pointer rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
-                    title="Delete Project"
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </button>
+            <div className="relative min-h-0 flex-1">
+              <div ref={projectScrollRef} onScroll={updateProjectScrollFades} className="project-scroll-area h-full overflow-y-auto">
+                <div className="space-y-1 pr-1">
+                  {displayProjects.map((project) => (
+                    <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
+                      <Link
+                        href={`/projects/${project.id}`}
+                        onClick={() => setSidebarView("project")}
+                        className={`block grow py-2 pr-3 pl-[0.95rem] text-sm truncate ${
+                          pathname === `/projects/${project.id}` ? "text-white font-medium" : "text-neutral-400"
+                        }`}
+                        title={project.idea}
+                      >
+                        {project.name || (project.idea.length > 25 ? project.idea.substring(0, 25) + "..." : project.idea)}
+                      </Link>
+                      <button
+                        onClick={(e) => deleteProject(e, project.id)}
+                        className="cursor-pointer rounded-full p-1 opacity-0 text-neutral-500 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-white"
+                        title="Delete Project"
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {displayProjects.length === 0 && <p className="px-3 text-xs text-neutral-600">No projects yet.</p>}
                 </div>
-              ))}
-              {displayProjects.length === 0 && <p className="px-3 text-xs text-neutral-600">No projects yet.</p>}
+              </div>
+              <div
+                aria-hidden="true"
+                className={`project-scroll-fade-top ${showProjectFadeTop ? "opacity-100" : "opacity-0"}`}
+              />
+              <div
+                aria-hidden="true"
+                className={`project-scroll-fade-bottom ${showProjectFadeBottom ? "opacity-100" : "opacity-0"}`}
+              />
             </div>
 
             {isGuest && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
 import { TeamProfile, TEAM_PROFILE_TABS, type TeamProfileTab } from "./TeamProfile";
@@ -10,7 +11,10 @@ type SettingsTab = TeamProfileTab | "github-account";
 
 export default function Settings() {
   const { data: session, status } = useSession();
-  const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() =>
+    searchParams.get("github_link") ? "github-account" : "overview",
+  );
 
   const handleTeamProfileTabChange = (tab: TeamProfileTab) => {
     setActiveTab(tab);

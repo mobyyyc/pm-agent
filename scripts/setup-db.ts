@@ -57,10 +57,29 @@ async function main() {
 
   console.log("  ✓ teams table created");
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS github_links (
+      user_id TEXT PRIMARY KEY,
+      github_user_id BIGINT NOT NULL UNIQUE,
+      github_login TEXT NOT NULL,
+      github_name TEXT,
+      github_avatar_url TEXT,
+      github_email TEXT,
+      access_token TEXT NOT NULL,
+      scope TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
+  console.log("  ✓ github_links table created");
+
   // Add useful indexes
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_teams_user_id ON teams(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_github_links_user_id ON github_links(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_github_links_github_user_id ON github_links(github_user_id)`;
 
   console.log("  ✓ indexes created");
   console.log("Done! Database is ready.");

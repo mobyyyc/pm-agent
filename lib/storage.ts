@@ -86,6 +86,100 @@ export async function readTeamKnowledge(userId?: string): Promise<TeamKnowledge>
 }
 
 // ---------------------------------------------------------------------------
+// Linked Github accounts
+// ---------------------------------------------------------------------------
+
+export type GithubLink = {
+  userId: string;
+  githubUserId: number;
+  githubLogin: string;
+  githubName: string | null;
+  githubAvatarUrl: string | null;
+  githubEmail: string | null;
+  accessToken: string;
+  scope: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+function mapGithubLinkRow(row: Record<string, unknown>): GithubLink {
+  return {
+    userId: String(row.user_id),
+    githubUserId: Number(row.github_user_id),
+    githubLogin: String(row.github_login),
+    githubName: typeof row.github_name === "string" ? row.github_name : null,
+    githubAvatarUrl: typeof row.github_avatar_url === "string" ? row.github_avatar_url : null,
+    githubEmail: typeof row.github_email === "string" ? row.github_email : null,
+    accessToken: String(row.access_token),
+    scope: typeof row.scope === "string" ? row.scope : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  };
+}
+
+export async function getGithubLinkByUserId(userId: string): Promise<GithubLink | null> {
+  const rows = await sql`SELECT * FROM github_links WHERE user_id = ${userId} LIMIT 1`;
+  if (rows.length === 0) return null;
+  return mapGithubLinkRow(rows[0] as Record<string, unknown>);
+}
+
+export async function upsertGithubLinkByUserId(input: {
+  userId: string;
+  githubUserId: number;
+  githubLogin: string;
+  githubName: string | null;
+  githubAvatarUrl: string | null;
+  githubEmail: string | null;
+  accessToken: string;
+  scope: string | null;
+  timestamp: string;
+}): Promise<GithubLink> {
+  const rows = await sql`
+    INSERT INTO github_links (
+      user_id,
+      github_user_id,
+      github_login,
+      github_name,
+      github_avatar_url,
+      github_email,
+      access_token,
+      scope,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${input.userId},
+      ${input.githubUserId},
+      ${input.githubLogin},
+      ${input.githubName},
+      ${input.githubAvatarUrl},
+      ${input.githubEmail},
+      ${input.accessToken},
+      ${input.scope},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      github_user_id = EXCLUDED.github_user_id,
+      github_login = EXCLUDED.github_login,
+      github_name = EXCLUDED.github_name,
+      github_avatar_url = EXCLUDED.github_avatar_url,
+      github_email = EXCLUDED.github_email,
+      access_token = EXCLUDED.access_token,
+      scope = EXCLUDED.scope,
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  return mapGithubLinkRow(rows[0] as Record<string, unknown>);
+}
+
+export async function deleteGithubLinkByUserId(userId: string): Promise<void> {
+  await sql`DELETE FROM github_links WHERE user_id = ${userId}`;
+}
+
+// ---------------------------------------------------------------------------
 // Projects
 // ---------------------------------------------------------------------------
 

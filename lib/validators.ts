@@ -36,6 +36,15 @@ export const updateProjectTimelineRequestSchema = z.object({
   timeline: z.array(timelineItemSchema),
 });
 
+export const createTaskRequestSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required."),
+  title: z.string().min(1, "Task title is required."),
+  description: z.string().min(1, "Task description is required."),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Deadline must be in YYYY-MM-DD format."),
+  suggestedAssignee: z.string().min(1, "Suggested assignee is required."),
+  status: taskStatusSchema.optional().default("todo"),
+});
+
 export const updateTaskRequestSchema = z.object({
   title: z.string().min(1, "Task title is required."),
   description: z.string().min(1, "Task description is required."),

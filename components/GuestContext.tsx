@@ -18,8 +18,10 @@ type GuestContextValue = {
   addGuestProject: (project: Project, tasks: Task[]) => void;
   removeGuestProject: (projectId: string) => void;
   getGuestProject: (projectId: string) => GuestProject | undefined;
+  addGuestTimelineItem: (projectId: string, timelineItem: Project["timeline"][number]) => void;
   updateGuestTimelineItem: (projectId: string, timelineIndex: number, timelineItem: Project["timeline"][number]) => void;
   removeGuestTimelineItem: (projectId: string, timelineIndex: number) => void;
+  addGuestTask: (projectId: string, task: Task) => void;
   updateGuestTask: (taskId: string, updates: GuestTaskUpdates) => void;
   removeGuestTask: (taskId: string) => void;
   updateGuestTaskStatus: (taskId: string, status: Task["status"]) => void;
@@ -50,6 +52,27 @@ export function GuestProvider({ children }: { children: ReactNode }) {
     (projectId: string) => guestProjects.find((gp) => gp.project.id === projectId),
     [guestProjects],
   );
+
+  const addGuestTimelineItem = useCallback((projectId: string, timelineItem: Project["timeline"][number]) => {
+    const now = new Date().toISOString();
+
+    setGuestProjects((prev) =>
+      prev.map((gp) => {
+        if (gp.project.id !== projectId) {
+          return gp;
+        }
+
+        return {
+          ...gp,
+          project: {
+            ...gp.project,
+            timeline: [...gp.project.timeline, timelineItem],
+            updatedAt: now,
+          },
+        };
+      }),
+    );
+  }, []);
 
   const updateGuestTimelineItem = useCallback(
     (projectId: string, timelineIndex: number, timelineItem: Project["timeline"][number]) => {
@@ -118,6 +141,32 @@ export function GuestProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const addGuestTask = useCallback((projectId: string, task: Task) => {
+    const now = new Date().toISOString();
+
+    setGuestProjects((prev) =>
+      prev.map((gp) => {
+        if (gp.project.id !== projectId) {
+          return gp;
+        }
+
+        if (gp.tasks.some((existingTask) => existingTask.id === task.id)) {
+          return gp;
+        }
+
+        return {
+          ...gp,
+          tasks: [...gp.tasks, task],
+          project: {
+            ...gp.project,
+            taskIds: gp.project.taskIds.includes(task.id) ? gp.project.taskIds : [...gp.project.taskIds, task.id],
+            updatedAt: now,
+          },
+        };
+      }),
+    );
+  }, []);
+
   const removeGuestTask = useCallback((taskId: string) => {
     const now = new Date().toISOString();
 
@@ -155,8 +204,10 @@ export function GuestProvider({ children }: { children: ReactNode }) {
         addGuestProject,
         removeGuestProject,
         getGuestProject,
+        addGuestTimelineItem,
         updateGuestTimelineItem,
         removeGuestTimelineItem,
+        addGuestTask,
         updateGuestTask,
         removeGuestTask,
         updateGuestTaskStatus,

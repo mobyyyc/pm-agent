@@ -18,7 +18,7 @@ export default function HomePage() {
         <div className="flex items-center gap-4">
           <Link
             href="/projects/new"
-            className="inline-flex h-11 items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black transition-all shadow-lg hover:bg-gray-200"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black shadow-lg transition-colors duration-200 hover:bg-white/90"
           >
             Create New Project
           </Link>

@@ -9,6 +9,7 @@
   --border-soft: rgba(255, 255, 255, 0.12);
   --border-medium: rgba(255, 255, 255, 0.18);
   --border-strong: rgba(255, 255, 255, 0.32);
+  --border-hover-strong: rgba(255, 255, 255, 0.4);
   --sidebar-background: #171717;
   --theme-toggle-border: rgba(255, 255, 255, 0.2);
   --theme-toggle-background: rgba(255, 255, 255, 0.08);
@@ -34,6 +35,7 @@ html[data-theme="light"] {
   --border-soft: rgba(15, 23, 42, 0.14);
   --border-medium: rgba(15, 23, 42, 0.2);
   --border-strong: rgba(15, 23, 42, 0.3);
+  --border-hover-strong: rgba(15, 23, 42, 0.44);
   --sidebar-background: #e7edf5;
   --theme-toggle-border: rgba(15, 23, 42, 0.2);
   --theme-toggle-background: rgba(15, 23, 42, 0.06);
@@ -254,6 +256,10 @@ html[data-theme="light"] [class~="hover:bg-white/20"]:hover {
 
 html[data-theme="light"] [class~="hover:bg-white/25"]:hover {
   background-color: rgba(15, 23, 42, 0.2) !important;
+}
+
+html[data-theme="light"] [class~="hover:border-white/40"]:hover {
+  border-color: var(--border-hover-strong) !important;
 }
 
 html[data-theme="light"] [class~="hover:bg-white/90"]:hover {

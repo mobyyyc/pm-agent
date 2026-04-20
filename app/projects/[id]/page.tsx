@@ -26,6 +26,8 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const { data: session, status: sessionStatus } = useSession();
   const {
     isGuest,
+    addGuestTask,
+    addGuestTimelineItem,
     getGuestProject,
     removeGuestTask,
     removeGuestTimelineItem,
@@ -42,10 +44,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [editingTimelineIndex, setEditingTimelineIndex] = useState<number | null>(null);
   const [timelineDraft, setTimelineDraft] = useState<TimelineDraft | null>(null);
   const [pendingTimelineIndex, setPendingTimelineIndex] = useState<number | null>(null);
+  const [isAddingTimeline, setIsAddingTimeline] = useState(false);
 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
+  const [isAddingTask, setIsAddingTask] = useState(false);
   const [timelineEditCooldownIndex, setTimelineEditCooldownIndex] = useState<number | null>(null);
   const [taskEditCooldownId, setTaskEditCooldownId] = useState<string | null>(null);
 
@@ -135,6 +139,25 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   const frameEditButtonClass =
     "pointer-events-none inline-flex h-7 shrink-0 translate-y-1 items-center rounded-full bg-white/15 px-4 text-xs font-semibold text-white opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60";
+  const framePrimaryActionButtonClass =
+    "inline-flex h-9 items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black shadow-lg transition-colors duration-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60";
+
+  const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+  const createTimelineTemplate = (): TimelineDraft => ({
+    phase: `Phase ${renderedTimeline.length + 1}`,
+    startDate: getTodayDate(),
+    endDate: getTodayDate(),
+    deliverable: "Describe the expected deliverable",
+  });
+
+  const createTaskTemplate = (): TaskDraft => ({
+    title: `New Task ${renderedTasks.length + 1}`,
+    description: "Describe what this task needs to deliver.",
+    deadline: getTodayDate(),
+    suggestedAssignee: "Unassigned",
+    status: "todo",
+  });
 
   const startTimelineEditCooldown = (timelineIndex: number) => {
     if (timelineCooldownTimeoutRef.current) {
@@ -223,6 +246,47 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       setFrameActionError(error instanceof Error ? error.message : "Failed to save timeline item.");
     } finally {
       setPendingTimelineIndex(null);
+    }
+  };
+
+  const handleAddTimeline = async () => {
+    const timelineTemplate = createTimelineTemplate();
+    const previousTimeline = renderedTimeline;
+    const nextTimeline = [...renderedTimeline, timelineTemplate];
+    const createdTimelineIndex = nextTimeline.length - 1;
+
+    setRenderedTimeline(nextTimeline);
+    setIsAddingTimeline(true);
+    setFrameActionError(null);
+
+    try {
+      if (isGuest) {
+        addGuestTimelineItem(id, timelineTemplate);
+      } else {
+        const response = await fetch(`/api/projects/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ timeline: nextTimeline }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await getResponseErrorMessage(response, "Failed to add timeline item."));
+        }
+
+        const data = (await response.json()) as { project?: Project };
+        if (data.project) {
+          setDbProject(data.project);
+          setRenderedTimeline(data.project.timeline);
+        }
+      }
+
+      setEditingTimelineIndex(createdTimelineIndex);
+      setTimelineDraft({ ...timelineTemplate });
+    } catch (error) {
+      setRenderedTimeline(previousTimeline);
+      setFrameActionError(error instanceof Error ? error.message : "Failed to add timeline item.");
+    } finally {
+      setIsAddingTimeline(false);
     }
   };
 
@@ -381,6 +445,69 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     }
   };
 
+  const handleAddTask = async () => {
+    const taskTemplate = createTaskTemplate();
+    setIsAddingTask(true);
+    setFrameActionError(null);
+
+    try {
+      if (isGuest) {
+        const timestamp = new Date().toISOString();
+        const guestTask: Task = {
+          id: `task_${crypto.randomUUID()}`,
+          projectId: id,
+          title: taskTemplate.title,
+          description: taskTemplate.description,
+          deadline: taskTemplate.deadline,
+          suggestedAssignee: taskTemplate.suggestedAssignee,
+          status: taskTemplate.status,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        };
+
+        setRenderedTasks((currentTasks) => [...currentTasks, guestTask]);
+        addGuestTask(id, guestTask);
+        setEditingTaskId(guestTask.id);
+        setTaskDraft({ ...taskTemplate });
+        return;
+      }
+
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: id,
+          title: taskTemplate.title,
+          description: taskTemplate.description,
+          deadline: taskTemplate.deadline,
+          suggestedAssignee: taskTemplate.suggestedAssignee,
+          status: taskTemplate.status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await getResponseErrorMessage(response, "Failed to add task."));
+      }
+
+      const data = (await response.json()) as { task?: Task; project?: Project | null };
+      if (!data.task) {
+        throw new Error("Failed to add task.");
+      }
+
+      setDbTasks((currentTasks) => [...currentTasks, data.task as Task]);
+      setRenderedTasks((currentTasks) => [...currentTasks, data.task as Task]);
+      if (data.project) {
+        setDbProject(data.project);
+      }
+      setEditingTaskId(data.task.id);
+      setTaskDraft({ ...taskTemplate });
+    } catch (error) {
+      setFrameActionError(error instanceof Error ? error.message : "Failed to add task.");
+    } finally {
+      setIsAddingTask(false);
+    }
+  };
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
@@ -515,6 +642,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             })}
           </ul>
         )}
+        <div className="mt-5 flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => void handleAddTimeline()}
+            disabled={isAddingTimeline || pendingTimelineIndex !== null}
+            className={framePrimaryActionButtonClass}
+          >
+            {isAddingTimeline ? "Adding timeline..." : "Add Timeline"}
+          </button>
+        </div>
       </section>
 
       <section className="app-frame rounded-2xl bg-white/5 p-6">
@@ -688,6 +825,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             })}
           </ul>
         )}
+        <div className="mt-5 flex items-center justify-start">
+          <button
+            type="button"
+            onClick={() => void handleAddTask()}
+            disabled={isAddingTask || pendingTaskId !== null}
+            className={framePrimaryActionButtonClass}
+          >
+            {isAddingTask ? "Adding task..." : "Add Task"}
+          </button>
+        </div>
       </section>
     </main>
   );

@@ -317,6 +317,43 @@ export async function removeTaskIdFromProject(
   });
 }
 
+export async function addTaskIdToProject(
+  projectId: string,
+  taskId: string,
+  updatedAt: string,
+): Promise<Project | null> {
+  const project = await getProjectById(projectId);
+  if (!project) return null;
+
+  if (project.taskIds.includes(taskId)) {
+    return project;
+  }
+
+  const nextTaskIds = [...project.taskIds, taskId];
+
+  const rows = await sql`
+    UPDATE projects
+    SET task_ids = ${JSON.stringify(nextTaskIds)}::jsonb, updated_at = ${updatedAt}
+    WHERE id = ${projectId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  const row = rows[0];
+
+  return projectSchema.parse({
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    idea: row.idea,
+    guideline: row.guideline,
+    timeline: row.timeline,
+    taskIds: row.task_ids,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Tasks
 // ---------------------------------------------------------------------------

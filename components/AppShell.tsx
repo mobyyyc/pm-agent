@@ -22,6 +22,11 @@ type Project = {
   idea: string;
 };
 
+type ProjectTitleUpdatedDetail = {
+  projectId: string;
+  name: string;
+};
+
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const { isGuest, exitGuestMode, guestProjects, removeGuestProject } = useGuest();
@@ -54,6 +59,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       active = false;
     };
   }, [session?.user?.email]);
+
+  useEffect(() => {
+    const handleProjectTitleUpdated = (event: Event) => {
+      const { detail } = event as CustomEvent<ProjectTitleUpdatedDetail>;
+      if (!detail?.projectId) return;
+
+      setProjects((currentProjects) =>
+        currentProjects.map((project) =>
+          project.id === detail.projectId
+            ? {
+                ...project,
+                name: detail.name,
+              }
+            : project,
+        ),
+      );
+    };
+
+    window.addEventListener("project-title-updated", handleProjectTitleUpdated);
+    return () => {
+      window.removeEventListener("project-title-updated", handleProjectTitleUpdated);
+    };
+  }, []);
 
   // Combine: use DB projects for authed users, context projects for guests
   const displayProjects: Project[] = isGuest

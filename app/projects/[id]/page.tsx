@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, use } from "react";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { PencilIcon } from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
 import { TaskStatusSelect } from "./task-status-select";
 import type { Project, Task } from "@/types/models";
@@ -13,6 +14,7 @@ type PageProps = {
 
 type TimelineDraft = Project["timeline"][number];
 type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">;
+type ProjectTitleUpdatedDetail = { projectId: string; name: string };
 
 const COLLAPSE_ANIMATION_MS = 320;
 
@@ -31,6 +33,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     getGuestProject,
     removeGuestTask,
     removeGuestTimelineItem,
+    updateGuestProjectTitle,
     updateGuestTask,
     updateGuestTimelineItem,
   } = useGuest();
@@ -52,11 +55,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [timelineEditCooldownIndex, setTimelineEditCooldownIndex] = useState<number | null>(null);
   const [taskEditCooldownId, setTaskEditCooldownId] = useState<string | null>(null);
+  const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false);
+  const [isSavingProjectTitle, setIsSavingProjectTitle] = useState(false);
+  const [projectTitleDraft, setProjectTitleDraft] = useState("");
 
   const [frameActionError, setFrameActionError] = useState<string | null>(null);
 
   const timelineCooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const taskCooldownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const projectTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const skipProjectTitleBlurSaveRef = useRef(false);
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
   const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
@@ -100,6 +108,17 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   useEffect(() => {
     setRenderedTasks(tasks);
   }, [tasks]);
+
+  useEffect(() => {
+    if (isEditingProjectTitle) return;
+    setProjectTitleDraft(project?.name || "");
+  }, [isEditingProjectTitle, project?.name]);
+
+  useEffect(() => {
+    if (!isEditingProjectTitle) return;
+    projectTitleInputRef.current?.focus();
+    projectTitleInputRef.current?.select();
+  }, [isEditingProjectTitle]);
 
   useEffect(() => {
     return () => {
@@ -185,6 +204,86 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     setRenderedTasks((currentTasks) =>
       currentTasks.map((task) => (task.id === taskId ? { ...task, status } : task)),
     );
+  };
+
+  const handleProjectTitleEditStart = () => {
+    setProjectTitleDraft(project.name || "");
+    setIsEditingProjectTitle(true);
+    setFrameActionError(null);
+  };
+
+  const handleProjectTitleEditCancel = () => {
+    setProjectTitleDraft(project.name || "");
+    setIsEditingProjectTitle(false);
+    setFrameActionError(null);
+  };
+
+  const handleProjectTitleSave = async () => {
+    if (isSavingProjectTitle) return;
+
+    const nextTitle = projectTitleDraft.trim();
+    if (!nextTitle) {
+      setFrameActionError("Project title is required.");
+      return;
+    }
+
+    if (nextTitle === project.name) {
+      setIsEditingProjectTitle(false);
+      return;
+    }
+
+    setFrameActionError(null);
+    setIsSavingProjectTitle(true);
+    const previousProject = project;
+
+    try {
+      if (isGuest) {
+        updateGuestProjectTitle(id, nextTitle);
+        setProjectTitleDraft(nextTitle);
+        setIsEditingProjectTitle(false);
+        window.dispatchEvent(
+          new CustomEvent<ProjectTitleUpdatedDetail>("project-title-updated", {
+            detail: { projectId: id, name: nextTitle },
+          }),
+        );
+        return;
+      }
+
+      setDbProject({
+        ...project,
+        name: nextTitle,
+      });
+
+      const response = await fetch(`/api/projects/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextTitle }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await getResponseErrorMessage(response, "Failed to save project title."));
+      }
+
+      const data = (await response.json()) as { project?: Project };
+      const savedTitle = data.project?.name || nextTitle;
+      if (data.project) {
+        setDbProject(data.project);
+        setProjectTitleDraft(savedTitle);
+      }
+
+      setIsEditingProjectTitle(false);
+      window.dispatchEvent(
+        new CustomEvent<ProjectTitleUpdatedDetail>("project-title-updated", {
+          detail: { projectId: id, name: savedTitle },
+        }),
+      );
+    } catch (error) {
+      setDbProject(previousProject);
+      setProjectTitleDraft(previousProject.name || "");
+      setFrameActionError(error instanceof Error ? error.message : "Failed to save project title.");
+    } finally {
+      setIsSavingProjectTitle(false);
+    }
   };
 
   const handleTimelineEditStart = (timelineIndex: number) => {
@@ -511,7 +610,54 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">{project.name || "Project Dashboard"}</h1>
+        <div className="relative min-h-10 w-full">
+          <div className={`inline-flex items-start gap-2 ${isEditingProjectTitle ? "invisible" : ""}`}>
+            <h1 className="text-3xl font-bold tracking-tight text-white">{project.name || "Project Dashboard"}</h1>
+            <button
+              type="button"
+              onClick={handleProjectTitleEditStart}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Edit project title"
+              title="Edit project title"
+            >
+              <PencilIcon className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+
+          {isEditingProjectTitle ? (
+            <input
+              ref={projectTitleInputRef}
+              type="text"
+              value={projectTitleDraft}
+              onChange={(event) => setProjectTitleDraft(event.target.value)}
+              onBlur={() => {
+                if (skipProjectTitleBlurSaveRef.current) {
+                  skipProjectTitleBlurSaveRef.current = false;
+                  return;
+                }
+
+                void handleProjectTitleSave();
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  skipProjectTitleBlurSaveRef.current = true;
+                  void handleProjectTitleSave();
+                  return;
+                }
+
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  skipProjectTitleBlurSaveRef.current = true;
+                  handleProjectTitleEditCancel();
+                }
+              }}
+              className="project-title-underline absolute left-0 top-0 w-full border-b bg-transparent p-0 text-3xl font-bold tracking-tight text-white outline-none"
+              aria-label="Project title"
+              disabled={isSavingProjectTitle}
+            />
+          ) : null}
+        </div>
         <p className="text-base text-neutral-400 max-w-2xl leading-relaxed">{project.idea}</p>
         {isGuest && (
           <p className="text-xs text-amber-500/80">Guest project — this data will be lost when you exit.</p>

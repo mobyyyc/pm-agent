@@ -256,14 +256,23 @@ export async function deleteProject(projectId: string): Promise<void> {
   await sql`DELETE FROM projects WHERE id = ${projectId}`;
 }
 
-export async function updateProjectTimeline(
+export async function updateProject(
   projectId: string,
-  timeline: Project["timeline"],
+  updates: {
+    name?: string;
+    timeline?: Project["timeline"];
+  },
   updatedAt: string,
 ): Promise<Project | null> {
+  const nextName = updates.name ?? null;
+  const nextTimelineJson = updates.timeline === undefined ? null : JSON.stringify(updates.timeline);
+
   const rows = await sql`
     UPDATE projects
-    SET timeline = ${JSON.stringify(timeline)}::jsonb, updated_at = ${updatedAt}
+    SET
+      name = COALESCE(${nextName}, name),
+      timeline = COALESCE(${nextTimelineJson}::jsonb, timeline),
+      updated_at = ${updatedAt}
     WHERE id = ${projectId}
     RETURNING *
   `;
@@ -282,6 +291,14 @@ export async function updateProjectTimeline(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+export async function updateProjectTimeline(
+  projectId: string,
+  timeline: Project["timeline"],
+  updatedAt: string,
+): Promise<Project | null> {
+  return updateProject(projectId, { timeline }, updatedAt);
 }
 
 export async function removeTaskIdFromProject(

@@ -32,9 +32,14 @@ export const updateTaskStatusRequestSchema = z.object({
   status: z.enum(["todo", "in_progress", "done"]),
 });
 
-export const updateProjectTimelineRequestSchema = z.object({
-  timeline: z.array(timelineItemSchema),
-});
+export const updateProjectRequestSchema = z
+  .object({
+    name: z.string().trim().min(1, "Project title is required.").optional(),
+    timeline: z.array(timelineItemSchema).optional(),
+  })
+  .refine((value) => value.name !== undefined || value.timeline !== undefined, {
+    message: "At least one project field must be provided.",
+  });
 
 export const createTaskRequestSchema = z.object({
   projectId: z.string().min(1, "Project ID is required."),

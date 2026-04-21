@@ -404,3 +404,11 @@ html[data-theme="light"] .settings-tab-reset.settings-tab-reset-active {
   bottom: 0;
   background: linear-gradient(to top, var(--sidebar-background), transparent);
 }
+
+.project-title-underline {
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+html[data-theme="light"] .project-title-underline {
+  border-bottom-color: rgba(0, 0, 0, 0.5);
+}

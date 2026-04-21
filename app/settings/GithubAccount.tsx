@@ -125,10 +125,27 @@ export default function GithubAccountSettings() {
 
         {linkedAccount ? (
           <div className="mt-4 rounded-xl bg-white/5 px-4 py-3 text-sm text-neutral-300">
-            <p>
-              Connected as <span className="font-semibold text-white">{linkedAccount.githubName || linkedAccount.githubLogin}</span>
-            </p>
-            <p className="mt-1 text-neutral-400">@{linkedAccount.githubLogin}</p>
+            <div className="flex items-center gap-3">
+              {linkedAccount.githubAvatarUrl ? (
+                <img
+                  src={linkedAccount.githubAvatarUrl}
+                  alt={`${linkedAccount.githubLogin} Github avatar`}
+                  className="h-12 w-12 rounded-full border border-white/10 object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/10 text-base font-semibold text-white">
+                  {linkedAccount.githubLogin.slice(0, 1).toUpperCase()}
+                </div>
+              )}
+
+              <div>
+                <p>
+                  Connected as{" "}
+                  <span className="font-semibold text-white">{linkedAccount.githubName || linkedAccount.githubLogin}</span>
+                </p>
+                <p className="mt-1 text-neutral-400">@{linkedAccount.githubLogin}</p>
+              </div>
+            </div>
           </div>
         ) : null}
       </div>

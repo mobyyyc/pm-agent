@@ -21,6 +21,7 @@ type GuestContextValue = {
   addGuestTimelineItem: (projectId: string, timelineItem: Project["timeline"][number]) => void;
   updateGuestTimelineItem: (projectId: string, timelineIndex: number, timelineItem: Project["timeline"][number]) => void;
   removeGuestTimelineItem: (projectId: string, timelineIndex: number) => void;
+  updateGuestProjectTitle: (projectId: string, title: string) => void;
   addGuestTask: (projectId: string, task: Task) => void;
   updateGuestTask: (taskId: string, updates: GuestTaskUpdates) => void;
   removeGuestTask: (taskId: string) => void;
@@ -119,6 +120,27 @@ export function GuestProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const updateGuestProjectTitle = useCallback((projectId: string, title: string) => {
+    const now = new Date().toISOString();
+
+    setGuestProjects((prev) =>
+      prev.map((gp) => {
+        if (gp.project.id !== projectId) {
+          return gp;
+        }
+
+        return {
+          ...gp,
+          project: {
+            ...gp.project,
+            name: title,
+            updatedAt: now,
+          },
+        };
+      }),
+    );
+  }, []);
+
   const updateGuestTask = useCallback((taskId: string, updates: GuestTaskUpdates) => {
     const now = new Date().toISOString();
 
@@ -207,6 +229,7 @@ export function GuestProvider({ children }: { children: ReactNode }) {
         addGuestTimelineItem,
         updateGuestTimelineItem,
         removeGuestTimelineItem,
+        updateGuestProjectTitle,
         addGuestTask,
         updateGuestTask,
         removeGuestTask,

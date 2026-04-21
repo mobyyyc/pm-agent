@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
-import { deleteProject, getProjectById, getTasksByProjectId, updateProjectTimeline } from "@/lib/storage";
+import { deleteProject, getProjectById, getTasksByProjectId, updateProject } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
-import { updateProjectTimelineRequestSchema } from "@/lib/validators";
+import { updateProjectRequestSchema } from "@/lib/validators";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -88,8 +88,19 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const body = await request.json();
-    const parsed = updateProjectTimelineRequestSchema.parse(body);
-    const updatedProject = await updateProjectTimeline(id, parsed.timeline, isoNow());
+    const parsed = updateProjectRequestSchema.parse(body);
+    const updatedProject = await updateProject(
+      id,
+      {
+        name: parsed.name,
+        timeline: parsed.timeline,
+      },
+      isoNow(),
+    );
+
+    if (!updatedProject) {
+      return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ project: updatedProject });
   } catch (error) {

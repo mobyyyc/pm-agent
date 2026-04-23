@@ -6,8 +6,9 @@ import { signIn, useSession } from "next-auth/react";
 
 import { TeamProfile, TEAM_PROFILE_TABS, type TeamProfileTab } from "./TeamProfile";
 import GithubAccountSettings from "./GithubAccount";
+import PreferencesSettings from "./PreferencesSettings";
 
-type SettingsTab = TeamProfileTab | "github-account";
+type SettingsTab = TeamProfileTab | "github-account" | "preference-style";
 
 export default function Settings() {
   const { data: session, status } = useSession();
@@ -98,11 +99,29 @@ export default function Settings() {
               <p className="text-xs opacity-80">Link your Github account</p>
             </button>
           </nav>
+
+          <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">Perferences</p>
+          <nav className="space-y-1" aria-label="Preference sections">
+            <button
+              type="button"
+              onClick={() => setActiveTab("preference-style")}
+              className={`w-full rounded-xl px-3 py-2 text-left transition-colors cursor-pointer ${
+                activeTab === "preference-style"
+                  ? "bg-white/10 text-white"
+                  : "text-neutral-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <p className="text-sm font-semibold">Style</p>
+              <p className="text-xs opacity-80">Question style depth</p>
+            </button>
+          </nav>
         </aside>
 
         <section className="app-frame self-start rounded-2xl p-5 sm:p-6">
           {activeTab === "github-account" ? (
             <GithubAccountSettings />
+          ) : activeTab === "preference-style" ? (
+            <PreferencesSettings />
           ) : (
             <TeamProfile activeTab={activeTab} onChangeTab={handleTeamProfileTabChange} />
           )}

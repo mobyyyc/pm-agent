@@ -40,11 +40,18 @@ const QUESTION_STYLE_PRESETS: Record<number, QuestionStylePreset> = {
 
 const MIN_STYLE_LEVEL = 1;
 const MAX_STYLE_LEVEL = 5;
+const STYLE_LEVEL_MARKERS = Array.from({ length: MAX_STYLE_LEVEL - MIN_STYLE_LEVEL + 1 }, (_, index) => {
+  const level = MIN_STYLE_LEVEL + index;
+  const percent = (index / (MAX_STYLE_LEVEL - MIN_STYLE_LEVEL)) * 100;
+
+  return { level, percent };
+});
 
 export default function PreferencesSettings() {
   const [styleLevel, setStyleLevel] = useState(3);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(QUESTION_STYLE_STORAGE_KEY);
@@ -86,15 +93,39 @@ export default function PreferencesSettings() {
         </p>
 
         <div className="mt-5 px-1">
-          <div className="relative">
+          <div className="settings-style-slider-shell relative">
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white/10"
+              className="settings-style-slider-track pointer-events-none absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-white transition-[width] duration-300 ease-in-out"
+              className="settings-style-slider-fill pointer-events-none absolute left-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-white"
               style={{ width: `${sliderPercent}%` }}
+            />
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+              {STYLE_LEVEL_MARKERS.map((marker) => {
+                const isActive = styleLevel >= marker.level;
+
+                return (
+                  <span
+                    key={marker.level}
+                    className={`absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors duration-300 ease-in-out ${
+                      isActive ? "bg-white" : "bg-white/35"
+                    }`}
+                    style={{
+                      left: `clamp(calc(var(--settings-slider-track-height) / 2), ${marker.percent}%, calc(100% - (var(--settings-slider-track-height) / 2)))`,
+                    }}
+                  />
+                );
+              })}
+            </div>
+            <div
+              aria-hidden="true"
+              className={`settings-style-slider-thumb pointer-events-none absolute top-1/2 z-40 ${
+                isSliding ? "settings-style-slider-thumb-active" : ""
+              }`}
+              style={{ left: `${sliderPercent}%` }}
             />
             <input
               id="question-style"
@@ -104,7 +135,11 @@ export default function PreferencesSettings() {
               step={1}
               value={styleLevel}
               onChange={(event) => setStyleLevel(Number(event.target.value))}
-              className="settings-style-slider relative z-10 h-8 w-full appearance-none bg-transparent"
+              onPointerDown={() => setIsSliding(true)}
+              onPointerUp={() => setIsSliding(false)}
+              onPointerCancel={() => setIsSliding(false)}
+              onBlur={() => setIsSliding(false)}
+              className="settings-style-slider relative z-30 h-10 w-full appearance-none bg-transparent"
               aria-label="Question style level"
             />
           </div>
@@ -115,16 +150,20 @@ export default function PreferencesSettings() {
           </div>
         </div>
 
+        <div className={`mt-5 transition-all duration-300 ease-in-out ${isAnimating ? "opacity-85" : "opacity-100"}`}>
+          <p className="text-sm font-medium text-white">
+            Current style: <span className="font-bold">{preset.label}</span>
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-300">{preset.description}</p>
+        </div>
+
         <div
-          className={`mt-5 rounded-xl border border-white/10 bg-white/5 p-4 transition-all duration-300 ease-in-out ${
-            isAnimating ? "translate-y-0.5 opacity-80" : "translate-y-0 opacity-100"
+          className={`mt-3 rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
+            isAnimating ? "opacity-85" : "opacity-100"
           }`}
         >
-          <p className="text-sm font-semibold text-white">Current style: {preset.label}</p>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-300">{preset.description}</p>
-
-          <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">Example question</p>
-          <p className="mt-1 text-sm italic text-neutral-200">&quot;{preset.example}&quot;</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Example question</p>
+          <p className="mt-2 text-sm italic text-neutral-200">&quot;{preset.example}&quot;</p>
         </div>
       </div>
     </div>

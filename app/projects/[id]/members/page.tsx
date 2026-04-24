@@ -25,6 +25,8 @@ type ProjectResponse = {
   error?: string;
 };
 
+const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function formatDate(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -97,6 +99,11 @@ export default function ProjectMembersPage({ params }: PageProps) {
     const nextEmail = inviteeEmail.trim().toLowerCase();
     if (!nextEmail) {
       setInviteError("Invitee email is required.");
+      return;
+    }
+
+    if (!EMAIL_ADDRESS_PATTERN.test(nextEmail)) {
+      setInviteError("Please enter a valid email address, for example name@example.com.");
       return;
     }
 
@@ -197,13 +204,13 @@ export default function ProjectMembersPage({ params }: PageProps) {
 
       {isAddMemberModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-background p-6 shadow-2xl">
+          <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-background p-6 shadow-2xl">
             <h2 className="text-xl font-semibold text-white">Add Member</h2>
             <p className="mt-3 text-sm text-neutral-400">
               Enter the invitee&apos;s email address to send a project invitation.
             </p>
 
-            <form className="mt-5 space-y-4" onSubmit={handleInviteSubmit}>
+            <form className="mt-5 space-y-4" onSubmit={handleInviteSubmit} noValidate>
               <div>
                 <label htmlFor="invitee-email" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-400">
                   Invitee Email
@@ -212,15 +219,26 @@ export default function ProjectMembersPage({ params }: PageProps) {
                   id="invitee-email"
                   type="email"
                   value={inviteeEmail}
-                  onChange={(event) => setInviteeEmail(event.target.value)}
+                  onChange={(event) => {
+                    setInviteeEmail(event.target.value);
+                    if (inviteError) {
+                      setInviteError(null);
+                    }
+                  }}
                   placeholder="name@example.com"
-                  className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                  className={`w-full rounded-xl bg-white/5 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40 ${
+                    inviteError ? "border border-red-500/70" : "border border-white/15"
+                  }`}
                   disabled={isInviting}
-                  required
+                  aria-invalid={inviteError ? "true" : "false"}
                 />
               </div>
 
-              {inviteError ? <p className="text-sm text-red-400">{inviteError}</p> : null}
+              {inviteError ? (
+                <div className="invite-error-frame rounded-xl px-3 py-2.5">
+                  <p className="text-sm font-semibold text-current">{inviteError}</p>
+                </div>
+              ) : null}
 
               <div className="mt-6 flex justify-end gap-2">
                 <button

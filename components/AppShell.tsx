@@ -34,6 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarView, setSidebarView] = useState<"main" | "project">("main");
   const [projects, setProjects] = useState<Project[]>([]);
+  const [invitationCount, setInvitationCount] = useState(0);
   const [showProjectFadeTop, setShowProjectFadeTop] = useState(false);
   const [showProjectFadeBottom, setShowProjectFadeBottom] = useState(false);
   const pathname = usePathname();
@@ -52,9 +53,35 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       });
   }, [session?.user?.email]);
 
+  const fetchInvitationCount = useCallback(() => {
+    if (!session?.user?.email) {
+      setInvitationCount(0);
+      return;
+    }
+
+    fetch("/api/invitations")
+      .then((res) => (res.ok ? res.json() : { invitations: [] }))
+      .then((data: { invitations?: Array<{ id: string }> }) => {
+        setInvitationCount(Array.isArray(data.invitations) ? data.invitations.length : 0);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch invitations:", error);
+      });
+  }, [session?.user?.email]);
+
   useEffect(() => {
     fetchUserProjects();
   }, [fetchUserProjects]);
+
+  useEffect(() => {
+    const syncId = window.setTimeout(() => {
+      fetchInvitationCount();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(syncId);
+    };
+  }, [fetchInvitationCount]);
 
   useEffect(() => {
     const handleProjectTitleUpdated = (event: Event) => {
@@ -77,13 +104,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       fetchUserProjects();
     };
 
+    const handleInvitationsUpdated = () => {
+      fetchInvitationCount();
+    };
+
     window.addEventListener("project-title-updated", handleProjectTitleUpdated);
     window.addEventListener("projects-updated", handleProjectsUpdated);
+    window.addEventListener("invitations-updated", handleInvitationsUpdated);
     return () => {
       window.removeEventListener("project-title-updated", handleProjectTitleUpdated);
       window.removeEventListener("projects-updated", handleProjectsUpdated);
+      window.removeEventListener("invitations-updated", handleInvitationsUpdated);
     };
-  }, [fetchUserProjects]);
+  }, [fetchUserProjects, fetchInvitationCount]);
 
   // Combine: use DB projects for authed users, context projects for guests
   const displayProjects: Project[] = isGuest
@@ -344,11 +377,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="space-y-1">
               <Link
                 href="/invitation"
-                className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
                   pathname.startsWith("/invitation") ? "bg-white/10 text-white" : "text-neutral-400"
                 }`}
               >
-                Invitation
+                <span>Invitation</span>
+                {invitationCount > 0 ? (
+                  <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/15 text-[11px] font-semibold leading-none text-neutral-200">
+                    {invitationCount}
+                  </span>
+                ) : (
+                  <span className="ml-auto" />
+                )}
               </Link>
               <Link
                 href="/settings"

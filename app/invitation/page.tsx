@@ -99,6 +99,7 @@ export default function InvitationPage() {
       }
 
       setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId));
+      window.dispatchEvent(new Event("invitations-updated"));
 
       if (action === "accept") {
         window.dispatchEvent(new Event("projects-updated"));
@@ -157,28 +158,38 @@ export default function InvitationPage() {
           <ul className="space-y-3">
             {invitations.map((invitation) => (
               <li key={invitation.id} className="rounded-xl bg-white/5 p-4">
-                <p className="text-sm font-semibold text-white">{invitation.projectName}</p>
-                <p className="mt-1 text-xs text-neutral-400">Invited by {invitation.invitedBy}</p>
-                <p className="mt-1 text-xs text-neutral-500">Sent on {formatDate(invitation.invitedAt)}</p>
-                {invitation.role ? <p className="mt-1 text-xs text-neutral-400">Role: {invitation.role}</p> : null}
+                <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
+                  <div className="flex min-w-0 flex-col gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Inviter</p>
+                      <p className="mt-1 text-sm font-semibold text-white">{invitation.invitedBy}</p>
+                    </div>
 
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void respondToInvitation(invitation.id, "accept")}
-                    disabled={pendingInvitationId === invitation.id}
-                    className="cursor-pointer rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {pendingInvitationId === invitation.id ? "Working..." : "Accept"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void respondToInvitation(invitation.id, "decline")}
-                    disabled={pendingInvitationId === invitation.id}
-                    className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Decline
-                  </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void respondToInvitation(invitation.id, "accept")}
+                        disabled={pendingInvitationId === invitation.id}
+                        className="cursor-pointer min-w-24 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {pendingInvitationId === invitation.id ? "Working..." : "Accept"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void respondToInvitation(invitation.id, "decline")}
+                        disabled={pendingInvitationId === invitation.id}
+                        className="cursor-pointer min-w-24 rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 border-t border-white/10 pt-3 lg:border-l lg:border-t-0 lg:pt-0 lg:pl-5 lg:flex lg:flex-col lg:justify-center">
+                    <p className="text-sm font-semibold text-white">{invitation.projectName}</p>
+                    <p className="mt-1 text-xs text-neutral-500">Sent on {formatDate(invitation.invitedAt)}</p>
+                    {invitation.role ? <p className="mt-1 text-xs text-neutral-400">Role: {invitation.role}</p> : null}
+                  </div>
                 </div>
               </li>
             ))}

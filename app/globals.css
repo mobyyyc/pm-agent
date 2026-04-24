@@ -318,6 +318,12 @@ button:disabled,
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+.invite-error-frame {
+  border: 1px solid rgba(239, 68, 68, 0.46);
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fee2e2;
+}
+
 .settings-reset-button:hover:not(:disabled),
 .app-danger-button:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.3);
@@ -432,6 +438,12 @@ button:disabled,
 
 html[data-theme="light"] .settings-reset-button,
 html[data-theme="light"] .app-danger-button {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #7f1d1d;
+}
+
+html[data-theme="light"] .invite-error-frame {
+  border-color: rgba(239, 68, 68, 0.3);
   background-color: rgba(239, 68, 68, 0.2);
   color: #7f1d1d;
 }

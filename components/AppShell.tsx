@@ -341,9 +341,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="my-4 border-t border-white/10" />
             <div className="space-y-1">
               <Link
+                href="/invitation"
+                className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
+                  pathname.startsWith("/invitation") ? "bg-white/10 text-white" : "text-neutral-400"
+                }`}
+              >
+                Invitation
+              </Link>
+              <Link
                 href="/settings"
                 className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
-                  pathname === "/settings" ? "bg-white/10 text-white" : "text-neutral-400"
+                  pathname.startsWith("/settings") ? "bg-white/10 text-white" : "text-neutral-400"
                 }`}
               >
                 Settings

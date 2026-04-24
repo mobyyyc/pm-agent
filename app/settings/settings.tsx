@@ -22,12 +22,12 @@ export default function Settings() {
   };
 
   if (status === "loading") {
-    return <div className="mx-auto max-w-5xl p-8 text-neutral-300">Loading settings...</div>;
+    return <div className="mx-auto max-w-5xl px-3 py-6 text-neutral-300 sm:px-4 sm:py-8 md:px-6">Loading settings...</div>;
   }
 
   if (!session?.user?.email) {
     return (
-      <main className="mx-auto max-w-3xl p-8">
+      <main className="mx-auto max-w-3xl px-3 py-6 sm:px-4 sm:py-8 md:px-6">
         <div className="app-frame rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
           <h1 className="text-2xl font-semibold text-white">Settings</h1>
           <p className="mt-3 text-neutral-400">Sign in to manage your profile settings.</p>
@@ -43,7 +43,7 @@ export default function Settings() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:px-6">
       <header>
         <h1 className="text-3xl font-bold tracking-tight text-white">Settings</h1>
         <p className="mt-2 text-sm text-neutral-400">Manage your account settings and AI profile data.</p>

@@ -351,7 +351,7 @@ export default function CreateProjectPage() {
   const isReady = !isAnalyzing && currentAnalysis?.status === "ready";
 
   return (
-    <div className="flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center p-8 transition-colors duration-500 relative overflow-hidden isolate">
+    <div className="relative isolate flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center px-3 py-6 transition-colors duration-500 overflow-hidden sm:px-4 sm:py-8 md:px-6 md:py-10">
       <CodeRainBackground />
       <div className="w-full max-w-5xl flex flex-col items-center text-center space-y-8 justify-center relative z-10">
 

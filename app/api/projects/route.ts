@@ -27,8 +27,8 @@ export async function GET() {
 
     await upsertAppUser({
       userId: sessionEmail,
-      displayName: session.user?.name || null,
-      imageUrl: session.user?.image || null,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
       timestamp: isoNow(),
     });
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       updatedAt: timestamp,
     });
 
-    // For guests, don't persist to DB — return data for client-side storage
+    // For guests, don't persist to DB �?return data for client-side storage
     if (isGuest) {
       const totalMs = performance.now() - start;
       const response = NextResponse.json({ project, tasks, guest: true }, { status: 201 });

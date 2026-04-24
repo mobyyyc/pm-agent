@@ -27,8 +27,8 @@ export async function GET() {
 
     await upsertAppUser({
       userId: sessionUserId,
-      displayName: session.user?.name || null,
-      imageUrl: session.user?.image || null,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
       timestamp: isoNow(),
     });
 
@@ -74,8 +74,8 @@ export async function POST(request: Request) {
 
     await upsertAppUser({
       userId: sessionUserId,
-      displayName: session.user?.name || null,
-      imageUrl: session.user?.image || null,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
       timestamp,
     });
 
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
           projectId: invitation.projectId,
           projectName: project.name,
           inviteeEmail: inviteeUserId,
-          invitedBy: session.user?.name || sessionUserId,
+          invitedBy: session?.user?.name || sessionUserId,
           role: invitation.role,
           invitedAt: invitation.createdAt,
         },

@@ -22,8 +22,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     await upsertAppUser({
       userId: sessionUserId,
-      displayName: session.user?.name || null,
-      imageUrl: session.user?.image || null,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
       timestamp: isoNow(),
     });
 

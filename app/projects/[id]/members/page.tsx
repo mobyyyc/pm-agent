@@ -59,6 +59,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
   const members = isGuest
     ? []
     : dbMembers;
+  const currentUserId = session?.user?.email?.trim().toLowerCase() ?? null;
   const isPageLoading =
     sessionStatus === "loading" ||
     (!isGuest && !!session?.user?.email && !notFoundState && dbProject === null);
@@ -177,8 +178,15 @@ export default function ProjectMembersPage({ params }: PageProps) {
                     className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm"
                   >
                     <div>
-                      <p className="font-semibold text-white">{member.displayName || member.userId}</p>
-                      <p className="text-xs text-neutral-400">{member.userId}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-white">{member.displayName || member.userId}</p>
+                        {currentUserId && member.userId === currentUserId ? (
+                          <span className="inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
+                            You
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs text-neutral-400">{member.userId}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs uppercase tracking-wide text-neutral-400">{member.role}</p>

@@ -300,8 +300,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <ChevronLeftIcon className="h-6 w-6" />
         </button>
 
-        <div className="flex h-16 items-center justify-between px-4">
-          <div />
+        <div className="flex h-16 items-center justify-end px-4">
+          <div className="lg:hidden">
+            <ThemeToggleButton className="!border-0 !bg-transparent !px-0 hover:!bg-transparent" />
+          </div>
         </div>
 
         <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
@@ -522,10 +524,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <span className="text-white/95">VERSOR</span>
               <span className="ml-0.5 text-neutral-400">.AI</span>
             </span>
-          </div>
-
-          <div className="mr-1 lg:hidden">
-            <ThemeToggleButton className="!border-0 !bg-transparent !px-0 hover:!bg-transparent" />
           </div>
 
           <div className="hidden items-center gap-4 lg:flex">

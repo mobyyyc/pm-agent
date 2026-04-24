@@ -39,26 +39,22 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const projectScrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const fetchUserProjects = useCallback(() => {
     if (!session?.user?.email) return;
-
-    let active = true;
 
     fetch("/api/projects")
       .then((res) => (res.ok ? res.json() : { projects: [] }))
       .then((data: { projects: Project[] }) => {
-        if (!active) return;
         setProjects(data.projects || []);
       })
       .catch((error) => {
-        if (!active) return;
         console.error("Failed to fetch projects:", error);
       });
-
-    return () => {
-      active = false;
-    };
   }, [session?.user?.email]);
+
+  useEffect(() => {
+    fetchUserProjects();
+  }, [fetchUserProjects]);
 
   useEffect(() => {
     const handleProjectTitleUpdated = (event: Event) => {
@@ -77,11 +73,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       );
     };
 
+    const handleProjectsUpdated = () => {
+      fetchUserProjects();
+    };
+
     window.addEventListener("project-title-updated", handleProjectTitleUpdated);
+    window.addEventListener("projects-updated", handleProjectsUpdated);
     return () => {
       window.removeEventListener("project-title-updated", handleProjectTitleUpdated);
+      window.removeEventListener("projects-updated", handleProjectsUpdated);
     };
-  }, []);
+  }, [fetchUserProjects]);
 
   // Combine: use DB projects for authed users, context projects for guests
   const displayProjects: Project[] = isGuest

@@ -3,16 +3,25 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
-import { addTaskIdToProject, getProjectById, insertTask } from "@/lib/storage";
+import { addTaskIdToProject, getProjectById, isProjectMember, normalizeUserId, insertTask, upsertAppUser } from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createTaskRequestSchema, validateTask } from "@/lib/validators";
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email) {
+    const sessionUserId = session?.user?.email ? normalizeUserId(session.user.email) : null;
+
+    if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    await upsertAppUser({
+      userId: sessionUserId,
+      displayName: session.user?.name || null,
+      imageUrl: session.user?.image || null,
+      timestamp: isoNow(),
+    });
 
     const body = await request.json();
     const parsed = createTaskRequestSchema.parse(body);
@@ -22,7 +31,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
     }
 
-    if (project.userId !== session.user.email) {
+    const hasAccess = await isProjectMember(parsed.projectId, sessionUserId);
+    if (!hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

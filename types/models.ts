@@ -64,9 +64,43 @@ export const userTeamSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const appUserSchema = z.object({
+  userId: z.string().min(1),
+  displayName: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const projectMemberSchema = z.object({
+  projectId: z.string().min(1),
+  userId: z.string().min(1),
+  role: z.string().min(1),
+  joinedAt: z.string().datetime(),
+  displayName: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+});
+
+export const projectInvitationStatusSchema = z.enum(["pending", "accepted", "declined"]);
+
+export const projectInvitationSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  inviterUserId: z.string().min(1),
+  inviteeUserId: z.string().min(1),
+  role: z.string().nullable(),
+  status: projectInvitationStatusSchema,
+  createdAt: z.string().datetime(),
+  respondedAt: z.string().datetime().nullable(),
+});
+
 export type TeamKnowledge = z.infer<typeof teamKnowledgeSchema>;
 export type UserTeam = z.infer<typeof userTeamSchema>;
 export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
+export type AppUser = z.infer<typeof appUserSchema>;
+export type ProjectMember = z.infer<typeof projectMemberSchema>;
+export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
+export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),

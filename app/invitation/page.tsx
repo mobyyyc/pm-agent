@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type InvitationItem = {
   id: string;
+  projectId: string;
   projectName: string;
+  inviterUserId: string;
   invitedBy: string;
   role: string | null;
-  invitedAt: string | null;
+  invitedAt: string;
 };
 
 type InvitationResponse = {
@@ -16,11 +19,27 @@ type InvitationResponse = {
   error?: string;
 };
 
+function formatDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function InvitationPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [loadingInvitations, setLoadingInvitations] = useState(true);
   const [invitations, setInvitations] = useState<InvitationItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [pendingInvitationId, setPendingInvitationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -63,6 +82,35 @@ export default function InvitationPage() {
     };
   }, [status]);
 
+  const respondToInvitation = async (invitationId: string, action: "accept" | "decline") => {
+    setActionError(null);
+    setPendingInvitationId(invitationId);
+
+    try {
+      const response = await fetch(`/api/invitations/${invitationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) {
+        throw new Error(body.error || "Failed to update invitation.");
+      }
+
+      setInvitations((current) => current.filter((invitation) => invitation.id !== invitationId));
+
+      if (action === "accept") {
+        window.dispatchEvent(new Event("projects-updated"));
+        router.refresh();
+      }
+    } catch (actionError) {
+      setActionError(actionError instanceof Error ? actionError.message : "Failed to update invitation.");
+    } finally {
+      setPendingInvitationId(null);
+    }
+  };
+
   if (status === "loading") {
     return <div className="mx-auto max-w-5xl p-8 text-neutral-300">Loading invitation...</div>;
   }
@@ -95,6 +143,8 @@ export default function InvitationPage() {
       </header>
 
       <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+        {actionError ? <p className="mb-3 text-sm text-red-400">{actionError}</p> : null}
+
         {loadingInvitations ? (
           <p className="text-sm text-neutral-400">Loading invitations...</p>
         ) : error ? (
@@ -109,7 +159,27 @@ export default function InvitationPage() {
               <li key={invitation.id} className="rounded-xl bg-white/5 p-4">
                 <p className="text-sm font-semibold text-white">{invitation.projectName}</p>
                 <p className="mt-1 text-xs text-neutral-400">Invited by {invitation.invitedBy}</p>
+                <p className="mt-1 text-xs text-neutral-500">Sent on {formatDate(invitation.invitedAt)}</p>
                 {invitation.role ? <p className="mt-1 text-xs text-neutral-400">Role: {invitation.role}</p> : null}
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void respondToInvitation(invitation.id, "accept")}
+                    disabled={pendingInvitationId === invitation.id}
+                    className="cursor-pointer rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {pendingInvitationId === invitation.id ? "Working..." : "Accept"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void respondToInvitation(invitation.id, "decline")}
+                    disabled={pendingInvitationId === invitation.id}
+                    className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Decline
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

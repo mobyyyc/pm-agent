@@ -1,13 +1,140 @@
 import { sql } from "@/lib/db";
 import {
+  appUserSchema,
   projectSchema,
+  projectInvitationSchema,
+  projectMemberSchema,
   taskSchema,
   userTeamSchema,
+  type AppUser,
   type Project,
+  type ProjectInvitation,
+  type ProjectMember,
   type Task,
   type TeamKnowledge,
   type UserTeam,
 } from "@/types/models";
+
+export function normalizeUserId(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+let collaborationSchemaReady: Promise<void> | null = null;
+
+async function initializeCollaborationSchema(): Promise<void> {
+  const bootstrapTimestamp = new Date().toISOString();
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS app_users (
+      user_id TEXT PRIMARY KEY,
+      display_name TEXT,
+      image_url TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_members (
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member',
+      joined_at TEXT NOT NULL,
+      PRIMARY KEY (project_id, user_id)
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_invitations (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      inviter_user_id TEXT NOT NULL,
+      invitee_user_id TEXT NOT NULL,
+      role TEXT,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+      created_at TEXT NOT NULL,
+      responded_at TEXT
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_members_user_id ON project_members(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON project_members(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_inviter_user_id ON project_invitations(inviter_user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_invitee_user_id ON project_invitations(invitee_user_id)`;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
+    ON project_invitations(project_id, invitee_user_id)
+    WHERE status = 'pending'
+  `;
+
+  await sql`
+    INSERT INTO app_users (user_id, display_name, image_url, created_at, updated_at)
+    SELECT DISTINCT LOWER(source.user_id), NULL, NULL, ${bootstrapTimestamp}, ${bootstrapTimestamp}
+    FROM (
+      SELECT user_id FROM projects
+      UNION
+      SELECT user_id FROM teams
+      UNION
+      SELECT user_id FROM github_links
+    ) AS source
+    WHERE source.user_id IS NOT NULL
+    ON CONFLICT (user_id) DO NOTHING
+  `;
+
+  await sql`
+    INSERT INTO project_members (project_id, user_id, role, joined_at)
+    SELECT id, LOWER(user_id), 'owner', created_at
+    FROM projects
+    WHERE user_id IS NOT NULL
+    ON CONFLICT (project_id, user_id) DO NOTHING
+  `;
+}
+
+export async function ensureCollaborationSchema(): Promise<void> {
+  if (!collaborationSchemaReady) {
+    collaborationSchemaReady = initializeCollaborationSchema().catch((error) => {
+      collaborationSchemaReady = null;
+      throw error;
+    });
+  }
+
+  await collaborationSchemaReady;
+}
+
+function mapAppUserRow(row: Record<string, unknown>): AppUser {
+  return appUserSchema.parse({
+    userId: String(row.user_id),
+    displayName: typeof row.display_name === "string" ? row.display_name : null,
+    imageUrl: typeof row.image_url === "string" ? row.image_url : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  });
+}
+
+function mapProjectMemberRow(row: Record<string, unknown>): ProjectMember {
+  return projectMemberSchema.parse({
+    projectId: String(row.project_id),
+    userId: String(row.user_id),
+    role: String(row.role || "member"),
+    joinedAt: String(row.joined_at),
+    displayName: typeof row.display_name === "string" ? row.display_name : null,
+    imageUrl: typeof row.image_url === "string" ? row.image_url : null,
+  });
+}
+
+function mapProjectInvitationRow(row: Record<string, unknown>): ProjectInvitation {
+  return projectInvitationSchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    inviterUserId: String(row.inviter_user_id),
+    inviteeUserId: String(row.invitee_user_id),
+    role: typeof row.role === "string" ? row.role : null,
+    status: row.status,
+    createdAt: String(row.created_at),
+    respondedAt: typeof row.responded_at === "string" ? row.responded_at : null,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Team profile knowledge
@@ -83,6 +210,49 @@ export async function readTeamKnowledge(userId?: string): Promise<TeamKnowledge>
   }
 
   return userTeam.team;
+}
+
+// ---------------------------------------------------------------------------
+// Application users
+// ---------------------------------------------------------------------------
+
+export async function getAppUserById(userId: string): Promise<AppUser | null> {
+  await ensureCollaborationSchema();
+
+  const normalizedUserId = normalizeUserId(userId);
+  const rows = await sql`SELECT * FROM app_users WHERE user_id = ${normalizedUserId} LIMIT 1`;
+  if (rows.length === 0) return null;
+
+  return mapAppUserRow(rows[0] as Record<string, unknown>);
+}
+
+export async function upsertAppUser(input: {
+  userId: string;
+  displayName: string | null;
+  imageUrl: string | null;
+  timestamp: string;
+}): Promise<AppUser> {
+  await ensureCollaborationSchema();
+
+  const normalizedUserId = normalizeUserId(input.userId);
+  const rows = await sql`
+    INSERT INTO app_users (user_id, display_name, image_url, created_at, updated_at)
+    VALUES (
+      ${normalizedUserId},
+      ${input.displayName},
+      ${input.imageUrl},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT (user_id)
+    DO UPDATE SET
+      display_name = COALESCE(EXCLUDED.display_name, app_users.display_name),
+      image_url = COALESCE(EXCLUDED.image_url, app_users.image_url),
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  return mapAppUserRow(rows[0] as Record<string, unknown>);
 }
 
 // ---------------------------------------------------------------------------
@@ -201,7 +371,16 @@ export async function getProjects(): Promise<Project[]> {
 }
 
 export async function getProjectsByUserId(userId: string): Promise<Project[]> {
-  const rows = await sql`SELECT * FROM projects WHERE user_id = ${userId} ORDER BY created_at DESC`;
+  await ensureCollaborationSchema();
+
+  const normalizedUserId = normalizeUserId(userId);
+  const rows = await sql`
+    SELECT p.*
+    FROM projects p
+    INNER JOIN project_members pm ON pm.project_id = p.id
+    WHERE pm.user_id = ${normalizedUserId}
+    ORDER BY p.created_at DESC
+  `;
   return rows.map((row) =>
     projectSchema.parse({
       id: row.id,
@@ -235,11 +414,15 @@ export async function getProjectById(projectId: string): Promise<Project | null>
 }
 
 export async function insertProject(project: Project): Promise<void> {
+  await ensureCollaborationSchema();
+
+  const ownerUserId = normalizeUserId(project.userId);
+
   await sql`
     INSERT INTO projects (id, user_id, name, idea, guideline, timeline, task_ids, created_at, updated_at)
     VALUES (
       ${project.id},
-      ${project.userId},
+      ${ownerUserId},
       ${project.name},
       ${project.idea},
       ${project.guideline},
@@ -248,6 +431,12 @@ export async function insertProject(project: Project): Promise<void> {
       ${project.createdAt},
       ${project.updatedAt}
     )
+  `;
+
+  await sql`
+    INSERT INTO project_members (project_id, user_id, role, joined_at)
+    VALUES (${project.id}, ${ownerUserId}, 'owner', ${project.createdAt})
+    ON CONFLICT (project_id, user_id) DO NOTHING
   `;
 }
 
@@ -369,6 +558,212 @@ export async function addTaskIdToProject(
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
+}
+
+export async function isProjectMember(projectId: string, userId: string): Promise<boolean> {
+  await ensureCollaborationSchema();
+
+  const normalizedUserId = normalizeUserId(userId);
+  const rows = await sql`
+    SELECT 1
+    FROM project_members
+    WHERE project_id = ${projectId} AND user_id = ${normalizedUserId}
+    LIMIT 1
+  `;
+
+  return rows.length > 0;
+}
+
+export async function addProjectMember(input: {
+  projectId: string;
+  userId: string;
+  role: string;
+  joinedAt: string;
+}): Promise<void> {
+  await ensureCollaborationSchema();
+
+  const normalizedUserId = normalizeUserId(input.userId);
+  await sql`
+    INSERT INTO project_members (project_id, user_id, role, joined_at)
+    VALUES (${input.projectId}, ${normalizedUserId}, ${input.role}, ${input.joinedAt})
+    ON CONFLICT (project_id, user_id)
+    DO UPDATE SET
+      role = project_members.role
+  `;
+}
+
+export async function getProjectMembers(projectId: string): Promise<ProjectMember[]> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT
+      pm.project_id,
+      pm.user_id,
+      pm.role,
+      pm.joined_at,
+      au.display_name,
+      au.image_url
+    FROM project_members pm
+    LEFT JOIN app_users au ON au.user_id = pm.user_id
+    WHERE pm.project_id = ${projectId}
+    ORDER BY
+      CASE WHEN pm.role = 'owner' THEN 0 ELSE 1 END,
+      pm.joined_at ASC
+  `;
+
+  return rows.map((row) => mapProjectMemberRow(row as Record<string, unknown>));
+}
+
+export type PendingProjectInvitation = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  inviterUserId: string;
+  inviterDisplayName: string | null;
+  role: string | null;
+  invitedAt: string;
+};
+
+export async function getProjectInvitationById(invitationId: string): Promise<ProjectInvitation | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`SELECT * FROM project_invitations WHERE id = ${invitationId} LIMIT 1`;
+  if (rows.length === 0) return null;
+
+  return mapProjectInvitationRow(rows[0] as Record<string, unknown>);
+}
+
+export async function getPendingProjectInvitationByProjectAndInvitee(
+  projectId: string,
+  inviteeUserId: string,
+): Promise<ProjectInvitation | null> {
+  await ensureCollaborationSchema();
+
+  const normalizedInvitee = normalizeUserId(inviteeUserId);
+  const rows = await sql`
+    SELECT *
+    FROM project_invitations
+    WHERE
+      project_id = ${projectId} AND
+      invitee_user_id = ${normalizedInvitee} AND
+      status = 'pending'
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectInvitationRow(rows[0] as Record<string, unknown>);
+}
+
+export async function createProjectInvitation(input: {
+  id: string;
+  projectId: string;
+  inviterUserId: string;
+  inviteeUserId: string;
+  role: string | null;
+  createdAt: string;
+}): Promise<ProjectInvitation> {
+  await ensureCollaborationSchema();
+
+  const inviterUserId = normalizeUserId(input.inviterUserId);
+  const inviteeUserId = normalizeUserId(input.inviteeUserId);
+
+  const rows = await sql`
+    INSERT INTO project_invitations (
+      id,
+      project_id,
+      inviter_user_id,
+      invitee_user_id,
+      role,
+      status,
+      created_at,
+      responded_at
+    )
+    VALUES (
+      ${input.id},
+      ${input.projectId},
+      ${inviterUserId},
+      ${inviteeUserId},
+      ${input.role},
+      'pending',
+      ${input.createdAt},
+      NULL
+    )
+    RETURNING *
+  `;
+
+  return mapProjectInvitationRow(rows[0] as Record<string, unknown>);
+}
+
+export async function getPendingProjectInvitationsByInvitee(inviteeUserId: string): Promise<PendingProjectInvitation[]> {
+  await ensureCollaborationSchema();
+
+  const normalizedInvitee = normalizeUserId(inviteeUserId);
+  const rows = await sql`
+    SELECT
+      pi.id,
+      pi.project_id,
+      pi.inviter_user_id,
+      pi.role,
+      pi.created_at,
+      p.name AS project_name,
+      au.display_name AS inviter_display_name
+    FROM project_invitations pi
+    INNER JOIN projects p ON p.id = pi.project_id
+    LEFT JOIN app_users au ON au.user_id = pi.inviter_user_id
+    WHERE pi.invitee_user_id = ${normalizedInvitee} AND pi.status = 'pending'
+    ORDER BY pi.created_at DESC
+  `;
+
+  return rows.map((row) => ({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    projectName: String(row.project_name),
+    inviterUserId: String(row.inviter_user_id),
+    inviterDisplayName: typeof row.inviter_display_name === "string" ? row.inviter_display_name : null,
+    role: typeof row.role === "string" ? row.role : null,
+    invitedAt: String(row.created_at),
+  }));
+}
+
+export async function respondToProjectInvitation(input: {
+  invitationId: string;
+  inviteeUserId: string;
+  action: "accept" | "decline";
+  respondedAt: string;
+}): Promise<ProjectInvitation | null> {
+  await ensureCollaborationSchema();
+
+  const normalizedInvitee = normalizeUserId(input.inviteeUserId);
+  const nextStatus = input.action === "accept" ? "accepted" : "declined";
+
+  const rows = await sql`
+    UPDATE project_invitations
+    SET
+      status = ${nextStatus},
+      responded_at = ${input.respondedAt}
+    WHERE
+      id = ${input.invitationId} AND
+      invitee_user_id = ${normalizedInvitee} AND
+      status = 'pending'
+    RETURNING *
+  `;
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const invitation = mapProjectInvitationRow(rows[0] as Record<string, unknown>);
+
+  if (nextStatus === "accepted") {
+    await addProjectMember({
+      projectId: invitation.projectId,
+      userId: invitation.inviteeUserId,
+      role: invitation.role || "member",
+      joinedAt: input.respondedAt,
+    });
+  }
+
+  return invitation;
 }
 
 // ---------------------------------------------------------------------------

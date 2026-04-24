@@ -58,6 +58,16 @@ export const updateTaskRequestSchema = z.object({
   status: taskStatusSchema,
 });
 
+export const createInvitationRequestSchema = z.object({
+  projectId: z.string().min(1, "Project ID is required."),
+  inviteeEmail: z.string().trim().email("A valid invitee email is required."),
+  role: z.string().trim().min(1).optional(),
+});
+
+export const respondInvitationRequestSchema = z.object({
+  action: z.enum(["accept", "decline"]),
+});
+
 const arrayFromStringSchema = z
   .union([z.array(z.string()), z.string()])
   .transform((value) => {

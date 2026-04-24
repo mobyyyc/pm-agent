@@ -3,7 +3,16 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
-import { deleteTaskById, getProjectById, getTaskById, removeTaskIdFromProject, updateTaskDetails } from "@/lib/storage";
+import {
+  deleteTaskById,
+  getProjectById,
+  getTaskById,
+  isProjectMember,
+  normalizeUserId,
+  removeTaskIdFromProject,
+  updateTaskDetails,
+  upsertAppUser,
+} from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { updateTaskRequestSchema } from "@/lib/validators";
 
@@ -14,9 +23,18 @@ type RouteContext = {
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email) {
+    const sessionUserId = session?.user?.email ? normalizeUserId(session.user.email) : null;
+
+    if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    await upsertAppUser({
+      userId: sessionUserId,
+      displayName: session.user?.name || null,
+      imageUrl: session.user?.image || null,
+      timestamp: isoNow(),
+    });
 
     const { taskId } = await context.params;
     const body = await request.json();
@@ -28,7 +46,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const project = await getProjectById(task.projectId);
-    if (!project || project.userId !== session.user.email) {
+    if (!project) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const hasAccess = await isProjectMember(project.id, sessionUserId);
+    if (!hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -53,9 +76,18 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || !session.user?.email) {
+    const sessionUserId = session?.user?.email ? normalizeUserId(session.user.email) : null;
+
+    if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    await upsertAppUser({
+      userId: sessionUserId,
+      displayName: session.user?.name || null,
+      imageUrl: session.user?.image || null,
+      timestamp: isoNow(),
+    });
 
     const { taskId } = await context.params;
     const task = await getTaskById(taskId);
@@ -65,7 +97,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     const project = await getProjectById(task.projectId);
-    if (!project || project.userId !== session.user.email) {
+    if (!project) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const hasAccess = await isProjectMember(project.id, sessionUserId);
+    if (!hasAccess) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

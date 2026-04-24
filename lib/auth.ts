@@ -1,6 +1,8 @@
 
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { normalizeUserId, upsertAppUser } from "@/lib/storage";
+import { isoNow } from "@/lib/utils";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -13,6 +15,24 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user }) {
+      if (!user?.email) {
+        return false;
+      }
+
+      try {
+        await upsertAppUser({
+          userId: normalizeUserId(user.email),
+          displayName: user.name || null,
+          imageUrl: user.image || null,
+          timestamp: isoNow(),
+        });
+      } catch (error) {
+        console.error("Failed to sync signed-in user:", error);
+      }
+
+      return true;
+    },
     async session({ session }) {
       if (session?.user) {
         // Add additional user info to session if needed

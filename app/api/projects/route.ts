@@ -4,7 +4,14 @@ import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { generateProjectPlanWithGemini } from "@/lib/gemini";
-import { getProjectsByUserId, readTeamKnowledge, insertProject, insertTasks } from "@/lib/storage";
+import {
+  getProjectsByUserId,
+  insertProject,
+  insertTasks,
+  normalizeUserId,
+  readTeamKnowledge,
+  upsertAppUser,
+} from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createProjectRequestSchema, validateProject, validateTask } from "@/lib/validators";
 import type { Project, Task } from "@/types/models";
@@ -13,12 +20,20 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.email) {
+    const sessionEmail = session?.user?.email ? normalizeUserId(session.user.email) : null;
+    if (!sessionEmail) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userProjects = await getProjectsByUserId(session.user.email);
-    
+    await upsertAppUser({
+      userId: sessionEmail,
+      displayName: session.user?.name || null,
+      imageUrl: session.user?.image || null,
+      timestamp: isoNow(),
+    });
+
+    const userProjects = await getProjectsByUserId(sessionEmail);
+
     return NextResponse.json({ projects: userProjects });
   } catch (error) {
     return NextResponse.json(
@@ -39,18 +54,19 @@ export async function POST(request: Request) {
 
     const authStart = performance.now();
     const session = await getServerSession(authOptions);
-    const isGuest = !session?.user?.email;
+    const sessionEmail = session?.user?.email ? normalizeUserId(session.user.email) : null;
+    const isGuest = !sessionEmail;
     authMs = performance.now() - authStart;
 
     // Allow both authenticated users and guests
-    const userId = session?.user?.email || `guest:${crypto.randomUUID()}`;
+    const userId = sessionEmail || `guest:${crypto.randomUUID()}`;
 
     const parseStart = performance.now();
     const body = await request.json();
     const parsed = createProjectRequestSchema.parse(body);
     parseMs = performance.now() - parseStart;
 
-    const userEmail = session?.user?.email ?? undefined;
+    const userEmail = sessionEmail ?? undefined;
     const teamStart = performance.now();
     const teamKnowledge = await readTeamKnowledge(userEmail);
     teamMs = performance.now() - teamStart;
@@ -109,6 +125,13 @@ export async function POST(request: Request) {
       );
       return response;
     }
+
+    await upsertAppUser({
+      userId,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
+      timestamp,
+    });
 
     const dbStart = performance.now();
     await insertProject(project);

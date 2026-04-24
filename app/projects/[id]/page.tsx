@@ -608,11 +608,11 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-8 px-6 py-12">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
       <header className="flex flex-col gap-2">
         <div className="relative min-h-10 w-full">
-          <div className={`inline-flex items-start gap-2 ${isEditingProjectTitle ? "invisible" : ""}`}>
-            <h1 className="text-3xl font-bold tracking-tight text-white">{project.name || "Project Dashboard"}</h1>
+          <div className={`inline-flex max-w-full items-start gap-2 ${isEditingProjectTitle ? "invisible" : ""}`}>
+            <h1 className="break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">{project.name || "Project Dashboard"}</h1>
             <button
               type="button"
               onClick={handleProjectTitleEditStart}
@@ -652,7 +652,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                   handleProjectTitleEditCancel();
                 }
               }}
-              className="project-title-underline absolute left-0 top-0 w-full border-b bg-transparent p-0 text-3xl font-bold tracking-tight text-white outline-none"
+              className="project-title-underline absolute left-0 top-0 w-full border-b bg-transparent p-0 text-2xl font-bold tracking-tight text-white outline-none sm:text-3xl"
               aria-label="Project title"
               disabled={isSavingProjectTitle}
             />
@@ -670,12 +670,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         </p>
       ) : null}
 
-      <section className="app-frame app-frame-hover rounded-2xl bg-white/5 p-6 transition-all hover:bg-white/10">
+      <section className="app-frame app-frame-hover rounded-2xl bg-white/5 p-4 transition-all hover:bg-white/10 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Guideline</h2>
         <p className="text-base text-neutral-300 leading-relaxed">{project.guideline}</p>
       </section>
 
-      <section className="app-frame rounded-2xl bg-white/5 p-6">
+      <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
         {renderedTimeline.length === 0 ? (
           <p className="text-sm text-neutral-400">No timeline items available.</p>
@@ -800,19 +800,19 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="app-frame rounded-2xl bg-white/5 p-6">
+      <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
-          <div className="flex items-center gap-4 text-[13px] font-medium sm:gap-5">
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
+          <div className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5 sm:text-[13px]">
+            <span className="inline-flex items-center gap-2 text-white">
               <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
               To do: {todoCount}
             </span>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
+            <span className="inline-flex items-center gap-2 text-white">
               <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
               In progress: {inProgressCount}
             </span>
-            <span className="inline-flex items-center gap-2 whitespace-nowrap text-white">
+            <span className="inline-flex items-center gap-2 text-white">
               <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
               Done: {doneCount}
             </span>
@@ -845,7 +845,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                       <p className="text-sm leading-relaxed text-neutral-400">{taskView.description}</p>
                     </div>
 
-                    <div className="shrink-0 pt-1">
+                    <div className="w-full pt-1 sm:w-auto sm:shrink-0">
                       {!isEditing ? (
                         <TaskStatusSelect
                           taskId={task.id}
@@ -854,7 +854,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           onStatusChange={handleStatusChange}
                         />
                       ) : (
-                        <div aria-hidden="true" className="min-w-70 rounded-xl p-1 opacity-0">
+                        <div aria-hidden="true" className="w-full rounded-xl p-1 opacity-0 sm:min-w-70 sm:w-auto">
                           <div className="grid grid-cols-3 gap-1">
                             <span className="h-8 rounded-lg" />
                             <span className="h-8 rounded-lg" />

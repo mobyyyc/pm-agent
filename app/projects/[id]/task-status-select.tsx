@@ -89,7 +89,7 @@ export function TaskStatusSelect({
   };
 
   return (
-    <div className="flex min-w-70 flex-col gap-1">
+    <div className="flex w-full flex-col gap-1 sm:min-w-70 sm:w-auto">
       <div className="rounded-xl bg-linear-to-l from-(--status-frame-gradient-from) to-transparent p-1">
         <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Task status">
           {statusOptions.map((option) => {
@@ -104,7 +104,7 @@ export function TaskStatusSelect({
                 aria-checked={isActive}
                 disabled={isPending}
                 onClick={() => onChange(option.value)}
-                className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[13px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition sm:text-[13px] disabled:cursor-not-allowed disabled:opacity-60 ${
                   isActive ? theme.active : theme.inactive
                 }`}
               >

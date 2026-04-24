@@ -64,6 +64,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-nunito), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: clip;
 }
 
 .theme-toggle-button {
@@ -527,4 +532,11 @@ html[data-theme="light"] .settings-style-slider-thumb-active {
 
 html[data-theme="light"] .project-title-underline {
   border-bottom-color: rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 639px) {
+  .theme-toggle-button {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.7rem;
+  }
 }

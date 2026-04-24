@@ -3,6 +3,7 @@
 
 import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -39,6 +40,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const [showProjectFadeBottom, setShowProjectFadeBottom] = useState(false);
   const pathname = usePathname();
   const projectScrollRef = useRef<HTMLDivElement>(null);
+  const previousPathnameRef = useRef(pathname);
+  const isDesktopViewport = () => window.matchMedia("(min-width: 1024px)").matches;
 
   const fetchUserProjects = useCallback(() => {
     if (!session?.user?.email) return;
@@ -186,6 +189,45 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [updateProjectScrollFades]);
 
+  useEffect(() => {
+    if (!sidebarOpen || isDesktopViewport()) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    const didRouteChange = previousPathnameRef.current !== pathname;
+    previousPathnameRef.current = pathname;
+    if (!(didRouteChange && sidebarOpen && !isDesktopViewport())) return;
+
+    const closeSidebarSyncId = window.setTimeout(() => {
+      setSidebarOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(closeSidebarSyncId);
+    };
+  }, [pathname, sidebarOpen]);
+
   const deleteProject = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -221,25 +263,34 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const displayName = isGuest ? "Guest" : session?.user?.name || "User";
 
   return (
-    <div className="flex h-screen w-full bg-black text-white overflow-hidden">
+    <div className="flex min-h-screen w-full bg-black text-white overflow-x-clip">
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-6 top-3 z-60 cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white"
+        className="fixed left-3 top-3 z-[70] cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white lg:left-6"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />
       </button>
 
+      <button
+        type="button"
+        aria-label="Close sidebar overlay"
+        onClick={() => setSidebarOpen(false)}
+        className={`fixed inset-0 z-[45] bg-black/45 transition-opacity duration-300 lg:hidden ${
+          sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-neutral-900 transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-[50] w-72 max-w-[85vw] transform bg-neutral-900 transition-transform duration-300 ease-in-out lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <button
           onClick={() => setSidebarView("main")}
-          className={`absolute left-16 top-3 z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 ${
+          className={`absolute left-14 top-3 z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 lg:left-16 ${
             isProjectSidebar
               ? "cursor-pointer translate-x-0 opacity-100 hover:bg-white/10 hover:text-white"
               : "pointer-events-none -translate-x-1 opacity-0"
@@ -375,6 +426,34 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <div className="px-4 pb-4">
             <div className="my-4 border-t border-white/10" />
             <div className="space-y-1">
+              <div className="space-y-1 lg:hidden">
+                <div className="flex items-center justify-between gap-3 px-0.5 py-1">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-white">{displayName}</p>
+                    {isGuest ? <p className="text-xs text-neutral-500">Temporary session</p> : null}
+                  </div>
+                  {session?.user?.image ? (
+                    <Image
+                      src={session.user.image}
+                      alt={`${displayName} avatar`}
+                      width={30}
+                      height={30}
+                      className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/15"
+                    />
+                  ) : (
+                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white/90 ring-1 ring-white/15">
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full cursor-pointer rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                >
+                  {isGuest ? "Exit" : "Sign out"}
+                </button>
+                <div className="my-4 border-t border-white/10" />
+              </div>
               <Link
                 href="/invitation"
                 className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
@@ -435,17 +514,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "ml-64" : ""}`}>
+      <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
         {/* Top Navbar */}
-        <header className="flex h-16 items-center justify-between bg-black px-4 shadow-sm">
-          <div className={`flex items-center gap-4 transition-all duration-300 ${sidebarOpen ? "pl-2" : "pl-16"}`}>
-            <span className="text-xl font-semibold tracking-tight">
+        <header className="flex h-16 items-center justify-between bg-black px-3 shadow-sm sm:px-4">
+          <div className={`flex min-w-0 items-center transition-all duration-300 ${sidebarOpen ? "pl-11 lg:pl-2" : "pl-11 lg:pl-16"}`}>
+            <span className="truncate text-xl font-semibold tracking-tight">
               <span className="text-white/95">VERSOR</span>
               <span className="ml-0.5 text-neutral-400">.AI</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="mr-1 lg:hidden">
+            <ThemeToggleButton className="!border-0 !bg-transparent !px-0 hover:!bg-transparent" />
+          </div>
+
+          <div className="hidden items-center gap-4 lg:flex">
             <ThemeToggleButton />
             <div className="text-sm text-right">
                 <p className="text-white font-medium">{displayName}</p>
@@ -461,7 +544,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto bg-black p-6 relative">
+        <main className="relative flex-1 overflow-auto bg-black p-3 sm:p-4 md:p-6">
             {children}
         </main>
       </div>

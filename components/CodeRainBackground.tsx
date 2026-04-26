@@ -17,36 +17,36 @@ export default function CodeRainBackground() {
     let animationFrameId: number;
 
     const resize = () => {
-      if (canvas.parentElement) {
-        canvas.width = canvas.parentElement.offsetWidth;
-        canvas.height = canvas.parentElement.offsetHeight;
-      } else {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-      }
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
     
     window.addEventListener('resize', resize);
     resize();
 
     const isLightMode = resolvedTheme === 'light';
-    const particleRgb = isLightMode ? '51, 65, 85' : '255, 255, 255';
-    const opacityMultiplier = isLightMode ? 0.75 : 1;
+    const particleRgb = isLightMode ? '37, 52, 78' : '255, 255, 255';
+    const opacityMultiplier = isLightMode ? 1.15 : 1;
+
+    const shortestSide = Math.min(canvas.width, canvas.height);
+    const isMobileViewport = canvas.width < 640;
+    const innerRadius = Math.max(110, Math.min(shortestSide * 0.22, 240));
+    const minSpeed = isMobileViewport ? 0.9 : 1.5;
+    const speedRange = isMobileViewport ? 1.6 : 3;
 
     // Define radial lines
     const lineCount = Math.floor((canvas.width * canvas.height) / 15000);
     const lines: { angle: number; distance: number; length: number; speed: number; width: number; opacity: number; fadeIn: number }[] = [];
-    const innerRadius = 300; // start roughly around the center block
 
     for (let i = 0; i < lineCount; i++) {
         const distance = innerRadius + Math.random() * Math.max(canvas.width, canvas.height);
         lines.push({
             angle: Math.random() * Math.PI * 2,
             distance: distance,
-            length: Math.random() * 150 + 50,
-            speed: Math.random() * 3 + 1.5,
-            width: Math.random() * 2 + 1,
-            opacity: Math.random() * 0.4 + 0.1,
+            length: Math.random() * 180 + 70,
+            speed: Math.random() * speedRange + minSpeed,
+            width: Math.random() * 2.2 + 1.1,
+            opacity: Math.random() * 0.45 + 0.16,
             fadeIn: 1, // Start fully visible for initial ones 
         });
     }
@@ -91,7 +91,7 @@ export default function CodeRainBackground() {
         if (line.distance > maxDist) {
           line.distance = innerRadius;
           line.angle = Math.random() * Math.PI * 2;
-          line.speed = Math.random() * 3 + 1.5;
+          line.speed = Math.random() * speedRange + minSpeed;
           line.fadeIn = 0; // smoothly fade in when respawned
         }
       }
@@ -110,7 +110,7 @@ export default function CodeRainBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-50"
+      className="fixed inset-0 h-screen w-screen pointer-events-none opacity-65"
       style={{ background: 'transparent' }}
     />
   );

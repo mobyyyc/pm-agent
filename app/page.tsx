@@ -5,9 +5,9 @@ import CodeRainBackground from "../components/CodeRainBackground";
 
 export default function HomePage() {
   return (
-    <div className="relative isolate flex min-h-[calc(100dvh-8rem)] w-full flex-col items-center justify-center overflow-hidden p-4 text-center sm:p-6 md:p-8">
+    <div className="app-shell-bleed relative isolate flex min-h-full w-full flex-col items-center justify-center overflow-hidden text-center">
       <CodeRainBackground />
-      <div className="relative z-10 flex flex-col items-center">
+      <div className="relative z-10 flex flex-col items-center p-4 sm:p-6 md:p-8">
         <h1 className="home-hero-heading mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
           This page is under development...
         </h1>

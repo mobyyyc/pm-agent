@@ -538,6 +538,7 @@ html[data-theme="light"] .project-title-underline {
   --page-edge-fade-top-offset: 20px;
   --page-edge-fade-top-size: 88px;
   --page-edge-fade-bottom-size: 88px;
+  scrollbar-gutter: stable;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0,
@@ -554,6 +555,43 @@ html[data-theme="light"] .project-title-underline {
     black calc(100% - var(--page-edge-fade-bottom-size)),
     transparent 100%
   );
+}
+
+.app-shell-bleed {
+  margin-top: -5rem;
+  margin-right: -0.75rem;
+  margin-bottom: -2rem;
+  margin-left: -0.75rem;
+  padding-top: 5rem;
+  padding-right: 0.75rem;
+  padding-bottom: 2rem;
+  padding-left: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .app-shell-bleed {
+    margin-top: -5.5rem;
+    margin-right: -1rem;
+    margin-bottom: -2.5rem;
+    margin-left: -1rem;
+    padding-top: 5.5rem;
+    padding-right: 1rem;
+    padding-bottom: 2.5rem;
+    padding-left: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-shell-bleed {
+    margin-top: -6rem;
+    margin-right: -1.5rem;
+    margin-bottom: -3rem;
+    margin-left: -1.5rem;
+    padding-top: 6rem;
+    padding-right: 1.5rem;
+    padding-bottom: 3rem;
+    padding-left: 1.5rem;
+  }
 }
 
 @media (max-width: 639px) {

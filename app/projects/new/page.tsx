@@ -351,9 +351,9 @@ export default function CreateProjectPage() {
   const isReady = !isAnalyzing && currentAnalysis?.status === "ready";
 
   return (
-    <div className="relative isolate flex w-full min-h-[calc(100dvh-8rem)] flex-col items-center justify-center px-3 py-6 transition-colors duration-500 overflow-hidden sm:px-4 sm:py-8 md:px-6 md:py-10">
+    <div className="app-shell-bleed relative isolate flex min-h-full w-full flex-col items-center justify-center overflow-hidden transition-colors duration-500">
       <CodeRainBackground />
-      <div className="w-full max-w-5xl flex flex-col items-center text-center space-y-8 justify-center relative z-10">
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-center space-y-8 px-3 py-6 text-center sm:px-4 sm:py-8 md:px-6 md:py-10">
 
         {/* --- Loading View --- */}
         {isAnalyzing && (

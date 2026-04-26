@@ -31,11 +31,12 @@ export default function CodeRainBackground() {
     const shortestSide = Math.min(canvas.width, canvas.height);
     const isMobileViewport = canvas.width < 640;
     const innerRadius = Math.max(110, Math.min(shortestSide * 0.22, 240));
-    const minSpeed = isMobileViewport ? 0.9 : 1.5;
-    const speedRange = isMobileViewport ? 1.6 : 3;
+    const minSpeed = isMobileViewport ? 0.55 : 1.5;
+    const speedRange = isMobileViewport ? 1.05 : 3;
+    const densityDivisor = isMobileViewport ? 12500 : 15000;
 
     // Define radial lines
-    const lineCount = Math.floor((canvas.width * canvas.height) / 15000);
+    const lineCount = Math.floor((canvas.width * canvas.height) / densityDivisor);
     const lines: { angle: number; distance: number; length: number; speed: number; width: number; opacity: number; fadeIn: number }[] = [];
 
     for (let i = 0; i < lineCount; i++) {
@@ -47,7 +48,7 @@ export default function CodeRainBackground() {
             speed: Math.random() * speedRange + minSpeed,
             width: Math.random() * 2.2 + 1.1,
             opacity: Math.random() * 0.45 + 0.16,
-            fadeIn: 1, // Start fully visible for initial ones 
+            fadeIn: Math.random() * 0.45,
         });
     }
 
@@ -67,7 +68,7 @@ export default function CodeRainBackground() {
 
         // Fade in effect when spawning
         if (line.fadeIn < 1) {
-            line.fadeIn = Math.min(1, line.fadeIn + 0.05);
+            line.fadeIn = Math.min(1, line.fadeIn + 0.025);
         }
 
         // Draw the line with a gradient
@@ -89,7 +90,7 @@ export default function CodeRainBackground() {
         // Reset if it goes off screen (distance > max diagonal)
         const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
         if (line.distance > maxDist) {
-          line.distance = innerRadius;
+          line.distance = innerRadius + Math.random() * 24;
           line.angle = Math.random() * Math.PI * 2;
           line.speed = Math.random() * speedRange + minSpeed;
           line.fadeIn = 0; // smoothly fade in when respawned

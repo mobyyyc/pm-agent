@@ -550,7 +550,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="page-edge-fade relative min-h-0 flex-1 overflow-auto bg-black p-3 sm:p-4 md:p-6">
+        <main className="page-edge-fade relative min-h-0 flex-1 overflow-auto bg-black px-3 pt-20 pb-8 sm:px-4 sm:pt-22 sm:pb-10 md:px-6 md:pt-24 md:pb-12">
             {children}
         </main>
       </div>

@@ -534,6 +534,28 @@ html[data-theme="light"] .project-title-underline {
   border-bottom-color: rgba(0, 0, 0, 0.5);
 }
 
+.page-edge-fade {
+  --page-edge-fade-top-offset: 20px;
+  --page-edge-fade-top-size: 88px;
+  --page-edge-fade-bottom-size: 88px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent var(--page-edge-fade-top-offset),
+    black calc(var(--page-edge-fade-top-offset) + var(--page-edge-fade-top-size)),
+    black calc(100% - var(--page-edge-fade-bottom-size)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent var(--page-edge-fade-top-offset),
+    black calc(var(--page-edge-fade-top-offset) + var(--page-edge-fade-top-size)),
+    black calc(100% - var(--page-edge-fade-bottom-size)),
+    transparent 100%
+  );
+}
+
 @media (max-width: 639px) {
   .theme-toggle-button {
     padding: 0.35rem 0.6rem;

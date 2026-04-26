@@ -263,7 +263,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const displayName = isGuest ? "Guest" : session?.user?.name || "User";
 
   return (
-    <div className="flex min-h-screen w-full bg-black text-white overflow-x-clip">
+    <div className="flex h-screen w-full overflow-hidden bg-black text-white overflow-x-clip">
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -516,17 +516,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className={`flex flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
+      <div className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
         {/* Top Navbar */}
-        <header className="flex h-16 items-center justify-between bg-black px-3 shadow-sm sm:px-4">
-          <div className={`flex min-w-0 items-center transition-all duration-300 ${sidebarOpen ? "pl-11 lg:pl-2" : "pl-11 lg:pl-16"}`}>
+        <header
+          className={`pointer-events-none fixed top-0 right-0 z-40 flex h-16 items-center justify-between px-3 sm:px-4 transition-all duration-300 ${
+            sidebarOpen ? "left-0 lg:left-64" : "left-0"
+          }`}
+        >
+          <div
+            className={`pointer-events-auto flex min-w-0 items-center transition-all duration-300 ${
+              sidebarOpen ? "pl-11 lg:pl-2" : "pl-11 lg:pl-16"
+            }`}
+          >
             <span className="truncate text-xl font-semibold tracking-tight">
               <span className="text-white/95">VERSOR</span>
               <span className="ml-0.5 text-neutral-400">.AI</span>
             </span>
           </div>
 
-          <div className="hidden items-center gap-4 lg:flex">
+          <div className="pointer-events-auto hidden items-center gap-4 lg:flex">
             <ThemeToggleButton />
             <div className="text-sm text-right">
                 <p className="text-white font-medium">{displayName}</p>
@@ -542,7 +550,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="relative flex-1 overflow-auto bg-black p-3 sm:p-4 md:p-6">
+        <main className="page-edge-fade relative min-h-0 flex-1 overflow-auto bg-black p-3 sm:p-4 md:p-6">
             {children}
         </main>
       </div>

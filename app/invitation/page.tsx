@@ -157,7 +157,10 @@ export default function InvitationPage() {
         ) : (
           <ul className="space-y-3">
             {invitations.map((invitation) => (
-              <li key={invitation.id} className="rounded-xl bg-white/5 p-4">
+              <li
+                key={invitation.id}
+                className="app-frame-item app-frame-hover rounded-xl p-4 transition-all duration-300 ease-in-out"
+              >
                 <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-stretch">
                   <div className="flex min-w-0 flex-col gap-3">
                     <div>

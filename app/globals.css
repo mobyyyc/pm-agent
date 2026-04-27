@@ -41,10 +41,10 @@ html[data-theme="light"] {
   --theme-toggle-background: rgba(15, 23, 42, 0.06);
   --theme-toggle-hover: rgba(15, 23, 42, 0.12);
   --theme-toggle-text: #0f172a;
-  --frame-surface: var(--surface-soft);
-  --frame-surface-item: var(--surface-soft);
-  --frame-surface-hover: rgba(15, 23, 42, 0.1);
-  --frame-surface-item-hover: rgba(15, 23, 42, 0.09);
+  --frame-surface: rgba(255, 255, 255, 0.78);
+  --frame-surface-item: rgba(255, 255, 255, 0.68);
+  --frame-surface-hover: rgba(255, 255, 255, 0.88);
+  --frame-surface-item-hover: rgba(255, 255, 255, 0.8);
   --frame-shadow-lg: 0 24px 46px -28px rgba(42, 74, 114, 0.34), 0 10px 24px -16px rgba(42, 74, 114, 0.22);
   --frame-shadow-md: 0 18px 34px -26px rgba(42, 74, 114, 0.3), 0 8px 20px -16px rgba(42, 74, 114, 0.2);
   --frame-shadow-hover: 0 30px 56px -30px rgba(42, 74, 114, 0.4), 0 14px 28px -16px rgba(42, 74, 114, 0.26);
@@ -122,15 +122,15 @@ html[data-theme="light"] [class~="bg-neutral-900"] {
 }
 
 html[data-theme="light"] [class~="bg-black/20"] {
-  background-color: rgba(15, 23, 42, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.52) !important;
 }
 
 html[data-theme="light"] [class~="bg-black/25"] {
-  background-color: rgba(15, 23, 42, 0.06) !important;
+  background-color: rgba(255, 255, 255, 0.58) !important;
 }
 
 html[data-theme="light"] [class~="bg-black/30"] {
-  background-color: rgba(15, 23, 42, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.64) !important;
 }
 
 html[data-theme="light"] [class~="bg-white"] {
@@ -285,6 +285,22 @@ html[data-theme="light"] [class~="focus:border-white/40"]:focus {
 
 html[data-theme="light"] [class~="focus-visible:outline-white"]:focus-visible {
   outline-color: #0f172a !important;
+}
+
+html[data-theme="light"] .app-frame[class~="bg-white/5"] {
+  background-color: var(--frame-surface) !important;
+}
+
+html[data-theme="light"] .app-frame-item:not([class~="bg-white/10"]) {
+  background-color: var(--frame-surface-item) !important;
+}
+
+html[data-theme="light"] .app-frame.app-frame-hover:hover {
+  background-color: var(--frame-surface-hover) !important;
+}
+
+html[data-theme="light"] .app-frame-item.app-frame-hover:not([class~="bg-white/10"]):hover {
+  background-color: var(--frame-surface-item-hover) !important;
 }
 
 html[data-theme="light"] [class~="placeholder:text-white/20"]::placeholder {

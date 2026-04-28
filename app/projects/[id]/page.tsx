@@ -224,7 +224,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   const frameEditButtonClass =
-    "pointer-events-none inline-flex h-7 shrink-0 translate-y-1 items-center rounded-full bg-white/15 px-4 text-xs font-semibold text-white opacity-0 transition-all duration-300 group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex h-7 shrink-0 items-center rounded-full bg-white/15 px-4 text-xs font-semibold text-white transition-all duration-300 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60 sm:pointer-events-none sm:translate-y-1 sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:translate-y-0 sm:group-hover:opacity-100";
   const framePrimaryActionButtonClass =
     "inline-flex h-9 items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black shadow-lg transition-colors duration-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60";
 

@@ -576,6 +576,68 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     }
   };
 
+  const handleClaimTask = async (task: Task) => {
+    if (!currentUserMember) {
+      return;
+    }
+
+    const claimedAssignee = currentUserMember.userId;
+    if (normalizeAssigneeKey(task.suggestedAssignee) === normalizeAssigneeKey(claimedAssignee)) {
+      return;
+    }
+
+    const previousTasks = renderedTasks;
+    const nextTasks = renderedTasks.map((currentTask) =>
+      currentTask.id === task.id ? { ...currentTask, suggestedAssignee: claimedAssignee } : currentTask,
+    );
+
+    setRenderedTasks(nextTasks);
+    setPendingTaskId(task.id);
+    setFrameActionError(null);
+
+    try {
+      if (isGuest) {
+        updateGuestTask(task.id, { suggestedAssignee: claimedAssignee });
+      } else {
+        const response = await fetch(`/api/tasks/${task.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: task.title,
+            description: task.description,
+            deadline: task.deadline,
+            suggestedAssignee: claimedAssignee,
+            status: task.status,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await getResponseErrorMessage(response, "Failed to claim task."));
+        }
+
+        const data = (await response.json()) as { task?: Task };
+        if (data.task) {
+          setDbTasks((currentTasks) => currentTasks.map((currentTask) => (currentTask.id === task.id ? data.task as Task : currentTask)));
+          setRenderedTasks((currentTasks) =>
+            currentTasks.map((currentTask) => (currentTask.id === task.id ? data.task as Task : currentTask)),
+          );
+        }
+      }
+
+      if (editingTaskId === task.id && taskDraft) {
+        setTaskDraft({
+          ...taskDraft,
+          suggestedAssignee: claimedAssignee,
+        });
+      }
+    } catch (error) {
+      setRenderedTasks(previousTasks);
+      setFrameActionError(error instanceof Error ? error.message : "Failed to claim task.");
+    } finally {
+      setPendingTaskId(null);
+    }
+  };
+
   const handleRemoveTask = async (taskId: string) => {
     const previousTasks = renderedTasks;
     const nextTasks = renderedTasks.filter((task) => task.id !== taskId);
@@ -988,16 +1050,32 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                         </span>
                       </span>
                     </div>
-                    <div className="flex h-7 w-16 shrink-0 items-end justify-end">
-                      {!isEditing && taskEditCooldownId !== task.id ? (
-                        <button
-                          type="button"
-                          onClick={() => handleTaskEditStart(task)}
-                          disabled={isPending}
-                          className={frameEditButtonClass}
-                        >
-                          Edit
-                        </button>
+                    <div className="flex h-7 shrink-0 items-end justify-end gap-2">
+                      {!isEditing ? (
+                        <>
+                          {!isTaskAssignedToCurrentUser(task) ? (
+                            <button
+                              type="button"
+                              onClick={() => void handleClaimTask(task)}
+                              disabled={isPending || !currentUserMember}
+                              className={frameEditButtonClass}
+                            >
+                              Claim
+                            </button>
+                          ) : null}
+                          {taskEditCooldownId !== task.id ? (
+                            <button
+                              type="button"
+                              onClick={() => handleTaskEditStart(task)}
+                              disabled={isPending}
+                              className={frameEditButtonClass}
+                            >
+                              Edit
+                            </button>
+                          ) : (
+                            <span aria-hidden="true" className="inline-flex h-7 w-16" />
+                          )}
+                        </>
                       ) : (
                         <span aria-hidden="true" className="inline-flex h-7 w-full" />
                       )}

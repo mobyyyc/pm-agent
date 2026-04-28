@@ -60,6 +60,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [taskListMode, setTaskListMode] = useState<"mine" | "all">("all");
+  const [taskStatusFilter, setTaskStatusFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
   const [timelineEditCooldownIndex, setTimelineEditCooldownIndex] = useState<number | null>(null);
   const [taskEditCooldownId, setTaskEditCooldownId] = useState<string | null>(null);
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false);
@@ -210,12 +211,15 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     return normalizeAssigneeKey(member?.userId || "") === normalizeAssigneeKey(currentUserMember.userId);
   };
 
-  const visibleTasks =
+  const filteredByAssignee =
     taskListMode === "mine" && currentUserMember ? renderedTasks.filter(isTaskAssignedToCurrentUser) : renderedTasks;
 
-  const todoCount = renderedTasks.filter((task) => task.status === "todo").length;
-  const inProgressCount = renderedTasks.filter((task) => task.status === "in_progress").length;
-  const doneCount = renderedTasks.filter((task) => task.status === "done").length;
+  const visibleTasks =
+    taskStatusFilter === "all" ? filteredByAssignee : filteredByAssignee.filter((task) => task.status === taskStatusFilter);
+
+  const todoCount = filteredByAssignee.filter((task) => task.status === "todo").length;
+  const inProgressCount = filteredByAssignee.filter((task) => task.status === "in_progress").length;
+  const doneCount = filteredByAssignee.filter((task) => task.status === "done").length;
 
   const statusCardStyles: Record<Task["status"], string> = {
     todo: "bg-linear-to-l from-sky-500/18 to-transparent",
@@ -931,59 +935,123 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <div className="mb-4 flex flex-col gap-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
-            <div className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5 sm:text-[13px]">
-              <span className="inline-flex items-center gap-2 text-white">
-                <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
-                To do: {todoCount}
-              </span>
-              <span className="inline-flex items-center gap-2 text-white">
-                <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
-                In progress: {inProgressCount}
-              </span>
-              <span className="inline-flex items-center gap-2 text-white">
-                <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
-                Done: {doneCount}
-              </span>
+          <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
+          
+          {/* Desktop: Side by side toggles, Mobile: Stacked rows */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            {/* Status Filter Toggle - First row on mobile, left on desktop */}
+            <div className="flex justify-start">
+              <div
+                className="relative flex h-8 w-full min-w-96 flex-nowrap overflow-hidden rounded-full bg-white/15 p-1"
+                role="tablist"
+                aria-label="Task status filter"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
+                    taskStatusFilter === "all"
+                      ? "left-1 right-[calc(75%+0.125rem)]"
+                      : taskStatusFilter === "todo"
+                        ? "left-[calc(25%+0.125rem)] right-[calc(50%+0.125rem)]"
+                        : taskStatusFilter === "in_progress"
+                          ? "left-[calc(50%+0.125rem)] right-[calc(25%+0.125rem)]"
+                          : "left-[calc(75%+0.125rem)] right-1"
+                  }`}
+                />
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskStatusFilter === "all"}
+                  onClick={() => setTaskStatusFilter("all")}
+                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskStatusFilter === "all" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskStatusFilter === "todo"}
+                  onClick={() => setTaskStatusFilter("todo")}
+                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskStatusFilter === "todo" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
+                    TD ({todoCount})
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskStatusFilter === "in_progress"}
+                  onClick={() => setTaskStatusFilter("in_progress")}
+                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskStatusFilter === "in_progress" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
+                    IP ({inProgressCount})
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskStatusFilter === "done"}
+                  onClick={() => setTaskStatusFilter("done")}
+                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskStatusFilter === "done" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                    <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
+                    D ({doneCount})
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="flex justify-start">
-            <div
-              className="relative flex h-8 w-full min-w-55 overflow-hidden rounded-full bg-white/15 p-1 sm:max-w-64"
-              role="tablist"
-              aria-label="Task list filter"
-            >
-              <span
-                aria-hidden="true"
-                className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
-                  taskListMode === "all"
-                    ? "left-[calc(50%+0.125rem)] right-1"
-                    : "left-1 right-[calc(50%+0.125rem)]"
-                }`}
-              />
-              <button
-                type="button"
-                role="tab"
-                aria-selected={taskListMode === "mine"}
-                onClick={() => setTaskListMode("mine")}
-                className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
-                  taskListMode === "mine" ? "text-black" : "text-white/80 hover:text-white"
-                }`}
+
+            {/* Assignee Filter Toggle - Second row on mobile, right on desktop */}
+            <div className="flex justify-start">
+              <div
+                className="relative flex h-8 w-full min-w-55 overflow-hidden rounded-full bg-white/15 p-1 sm:max-w-64"
+                role="tablist"
+                aria-label="Task list filter"
               >
-                Your task
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={taskListMode === "all"}
-                onClick={() => setTaskListMode("all")}
-                className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
-                  taskListMode === "all" ? "text-black" : "text-white/80 hover:text-white"
-                }`}
-              >
-                All task
-              </button>
+                <span
+                  aria-hidden="true"
+                  className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
+                    taskListMode === "all"
+                      ? "left-[calc(50%+0.125rem)] right-1"
+                      : "left-1 right-[calc(50%+0.125rem)]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskListMode === "mine"}
+                  onClick={() => setTaskListMode("mine")}
+                  className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskListMode === "mine" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  Your task
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={taskListMode === "all"}
+                  onClick={() => setTaskListMode("all")}
+                  className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    taskListMode === "all" ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  All task
+                </button>
+              </div>
             </div>
           </div>
         </div>

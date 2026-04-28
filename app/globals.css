@@ -52,7 +52,7 @@ html[data-theme="light"] {
   color-scheme: light;
 }
 
-@theme inline {
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-nunito), Arial, Helvetica, sans-serif;

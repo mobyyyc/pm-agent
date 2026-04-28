@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, use } from "react";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useGuest } from "@/components/GuestContext";
 import { TaskStatusSelect } from "./task-status-select";
-import type { Project, Task } from "@/types/models";
+import type { Project, ProjectMember, Task } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -15,6 +15,11 @@ type PageProps = {
 type TimelineDraft = Project["timeline"][number];
 type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">;
 type ProjectTitleUpdatedDetail = { projectId: string; name: string };
+type ProjectResponse = {
+  project?: Project;
+  tasks?: Task[];
+  members?: ProjectMember[];
+};
 
 const COLLAPSE_ANIMATION_MS = 320;
 
@@ -40,6 +45,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   const [dbProject, setDbProject] = useState<Project | null>(null);
   const [dbTasks, setDbTasks] = useState<Task[]>([]);
+  const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
   const [renderedTimeline, setRenderedTimeline] = useState<Project["timeline"]>([]);
   const [renderedTasks, setRenderedTasks] = useState<Task[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
@@ -84,17 +90,18 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     // Authenticated user: fetch from API
     if (session?.user?.email) {
       fetch(`/api/projects/${id}`)
-        .then((res) => {
+        .then(async (res) => {
           if (!res.ok) {
             setNotFoundState(true);
             return null;
           }
-          return res.json();
+          return (await res.json()) as ProjectResponse;
         })
         .then((data) => {
           if (data) {
-            setDbProject(data.project);
+            setDbProject(data.project ?? null);
             setDbTasks(data.tasks || []);
+            setDbMembers(Array.isArray(data.members) ? data.members : []);
           }
         })
         .catch(() => setNotFoundState(true));
@@ -146,6 +153,44 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     notFound();
   }
 
+  const ownerMemberFallback: ProjectMember = {
+    projectId: project.id,
+    userId: project.userId,
+    role: "owner",
+    joinedAt: project.createdAt,
+    displayName: session?.user?.name || null,
+    imageUrl: session?.user?.image || null,
+  };
+
+  const ownerMember =
+    dbMembers.find((member) => member.role === "owner") || dbMembers[0] || ownerMemberFallback;
+  const projectMembers = dbMembers.length > 0 ? dbMembers : [ownerMember];
+
+  const normalizeAssigneeKey = (value: string) => value.trim().toLowerCase();
+  const getMemberLabel = (member: ProjectMember) => member.displayName?.trim() || member.userId;
+  const findMemberByAssigneeValue = (value?: string | null) => {
+    if (!value) return null;
+
+    const normalizedValue = normalizeAssigneeKey(value);
+    return (
+      projectMembers.find((member) => {
+        const memberUserId = normalizeAssigneeKey(member.userId);
+        const memberDisplayName = member.displayName ? normalizeAssigneeKey(member.displayName) : null;
+
+        return memberUserId === normalizedValue || memberDisplayName === normalizedValue;
+      }) || null
+    );
+  };
+  const getAssigneeLabel = (value?: string | null) => {
+    const member = findMemberByAssigneeValue(value);
+    if (member) {
+      return getMemberLabel(member);
+    }
+
+    return value?.trim() || "Unassigned";
+  };
+  const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || ownerMember.userId;
+
   const todoCount = renderedTasks.filter((task) => task.status === "todo").length;
   const inProgressCount = renderedTasks.filter((task) => task.status === "in_progress").length;
   const doneCount = renderedTasks.filter((task) => task.status === "done").length;
@@ -174,7 +219,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     title: `New Task ${renderedTasks.length + 1}`,
     description: "Describe what this task needs to deliver.",
     deadline: getTodayDate(),
-    suggestedAssignee: "Unassigned",
+    suggestedAssignee: ownerMember.userId,
     status: "todo",
   });
 
@@ -440,7 +485,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       title: task.title,
       description: task.description,
       deadline: task.deadline,
-      suggestedAssignee: task.suggestedAssignee,
+      suggestedAssignee: getAssigneeValue(task.suggestedAssignee),
       status: task.status,
     });
     setFrameActionError(null);
@@ -612,7 +657,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       <header className="flex flex-col gap-2">
         <div className="relative min-h-10 w-full">
           <div className={`inline-flex max-w-full items-start gap-2 ${isEditingProjectTitle ? "invisible" : ""}`}>
-            <h1 className="break-words text-2xl font-bold tracking-tight text-white sm:text-3xl">{project.name || "Project Dashboard"}</h1>
+            <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-white sm:text-3xl">{project.name || "Project Dashboard"}</h1>
             <button
               type="button"
               onClick={handleProjectTitleEditStart}
@@ -871,7 +916,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                         Deadline: {taskView.deadline}
                       </span>
                       <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
-                        Assignee: {taskView.suggestedAssignee}
+                        Assignee: {getAssigneeLabel(taskView.suggestedAssignee)}
                       </span>
                     </div>
                     <div className="flex h-7 w-16 shrink-0 items-end justify-end">
@@ -926,12 +971,23 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                         </label>
                         <label className="space-y-1 text-xs text-neutral-400">
                           <span>Assignee</span>
-                          <input
-                            type="text"
-                            value={taskDraft?.suggestedAssignee || ""}
-                            onChange={(event) => handleTaskDraftChange("suggestedAssignee", event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
-                          />
+                          <div className="relative">
+                            <select
+                              value={taskDraft?.suggestedAssignee || ownerMember.userId}
+                              onChange={(event) => handleTaskDraftChange("suggestedAssignee", event.target.value)}
+                              className="w-full appearance-none rounded-xl border border-white/15 bg-black/25 px-3 py-2 pr-10 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            >
+                              {projectMembers.map((member) => (
+                                <option key={member.userId} value={member.userId}>
+                                  {getMemberLabel(member)}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDownIcon
+                              className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+                              aria-hidden="true"
+                            />
+                          </div>
                         </label>
                         <label className="space-y-1 text-xs text-neutral-400">
                           <span>Status</span>

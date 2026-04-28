@@ -267,7 +267,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-3 top-3 z-[70] cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white lg:left-6"
+        className="fixed left-3 top-3 z-70 cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white lg:left-6"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />
@@ -277,14 +277,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         type="button"
         aria-label="Close sidebar overlay"
         onClick={() => setSidebarOpen(false)}
-        className={`fixed inset-0 z-[45] bg-black/45 transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-45 bg-black/45 transition-opacity duration-300 lg:hidden ${
           sidebarOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-[50] w-72 max-w-[85vw] transform bg-neutral-900 transition-transform duration-300 ease-in-out lg:w-64 ${
+        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform bg-neutral-900 transition-transform duration-300 ease-in-out lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -302,7 +302,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="flex h-16 items-center justify-end px-4">
           <div className="lg:hidden">
-            <ThemeToggleButton className="!border-0 !bg-transparent !px-0 hover:!bg-transparent" />
+            <ThemeToggleButton className="border-0! bg-transparent! px-0! hover:bg-transparent!" />
           </div>
         </div>
 

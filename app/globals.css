@@ -209,6 +209,10 @@ html[data-theme="light"] [class~="text-neutral-500"] {
   color: #6f8097 !important;
 }
 
+html[data-theme="light"] .task-assignee-you-badge {
+  color: #009643 !important;
+}
+
 html[data-theme="light"] [class~="text-neutral-600"] {
   color: #7d8da1 !important;
 }

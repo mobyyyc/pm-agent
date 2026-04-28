@@ -59,6 +59,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [taskDraft, setTaskDraft] = useState<TaskDraft | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const [isAddingTask, setIsAddingTask] = useState(false);
+  const [taskListMode, setTaskListMode] = useState<"mine" | "all">("all");
   const [timelineEditCooldownIndex, setTimelineEditCooldownIndex] = useState<number | null>(null);
   const [taskEditCooldownId, setTaskEditCooldownId] = useState<string | null>(null);
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false);
@@ -117,6 +118,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   }, [tasks]);
 
   useEffect(() => {
+    if (!isGuest && session?.user?.email) {
+      setTaskListMode("mine");
+    }
+  }, [isGuest, session?.user?.email]);
+
+  useEffect(() => {
     if (isEditingProjectTitle) return;
     setProjectTitleDraft(project?.name || "");
   }, [isEditingProjectTitle, project?.name]);
@@ -168,6 +175,10 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   const normalizeAssigneeKey = (value: string) => value.trim().toLowerCase();
   const getMemberLabel = (member: ProjectMember) => member.displayName?.trim() || member.userId;
+  const currentUserKey = session?.user?.email ? normalizeAssigneeKey(session.user.email) : null;
+  const currentUserMember = currentUserKey
+    ? projectMembers.find((member) => normalizeAssigneeKey(member.userId) === currentUserKey) || null
+    : null;
   const findMemberByAssigneeValue = (value?: string | null) => {
     if (!value) return null;
 
@@ -190,6 +201,17 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     return value?.trim() || "Unassigned";
   };
   const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || ownerMember.userId;
+  const isTaskAssignedToCurrentUser = (task: Task) => {
+    if (!currentUserMember) {
+      return false;
+    }
+
+    const member = findMemberByAssigneeValue(task.suggestedAssignee);
+    return normalizeAssigneeKey(member?.userId || "") === normalizeAssigneeKey(currentUserMember.userId);
+  };
+
+  const visibleTasks =
+    taskListMode === "mine" && currentUserMember ? renderedTasks.filter(isTaskAssignedToCurrentUser) : renderedTasks;
 
   const todoCount = renderedTasks.filter((task) => task.status === "todo").length;
   const inProgressCount = renderedTasks.filter((task) => task.status === "in_progress").length;
@@ -846,28 +868,68 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       </section>
 
       <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
-          <div className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5 sm:text-[13px]">
-            <span className="inline-flex items-center gap-2 text-white">
-              <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
-              To do: {todoCount}
-            </span>
-            <span className="inline-flex items-center gap-2 text-white">
-              <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
-              In progress: {inProgressCount}
-            </span>
-            <span className="inline-flex items-center gap-2 text-white">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
-              Done: {doneCount}
-            </span>
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs font-medium sm:gap-5 sm:text-[13px]">
+              <span className="inline-flex items-center gap-2 text-white">
+                <span className="h-2 w-2 rounded-full bg-sky-300" aria-hidden="true" />
+                To do: {todoCount}
+              </span>
+              <span className="inline-flex items-center gap-2 text-white">
+                <span className="h-2 w-2 rounded-full bg-amber-300" aria-hidden="true" />
+                In progress: {inProgressCount}
+              </span>
+              <span className="inline-flex items-center gap-2 text-white">
+                <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden="true" />
+                Done: {doneCount}
+              </span>
+            </div>
+          </div>
+          <div className="flex justify-start">
+            <div
+              className="relative flex h-8 w-full min-w-55 overflow-hidden rounded-full bg-white/15 p-1 sm:max-w-64"
+              role="tablist"
+              aria-label="Task list filter"
+            >
+              <span
+                aria-hidden="true"
+                className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
+                  taskListMode === "all"
+                    ? "left-[calc(50%+0.125rem)] right-1"
+                    : "left-1 right-[calc(50%+0.125rem)]"
+                }`}
+              />
+              <button
+                type="button"
+                role="tab"
+                aria-selected={taskListMode === "mine"}
+                onClick={() => setTaskListMode("mine")}
+                className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                  taskListMode === "mine" ? "text-black" : "text-white/80 hover:text-white"
+                }`}
+              >
+                Your task
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={taskListMode === "all"}
+                onClick={() => setTaskListMode("all")}
+                className={`relative z-10 flex-1 rounded-full px-3 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                  taskListMode === "all" ? "text-black" : "text-white/80 hover:text-white"
+                }`}
+              >
+                All task
+              </button>
+            </div>
           </div>
         </div>
-        {renderedTasks.length === 0 ? (
+        {visibleTasks.length === 0 ? (
           <p className="text-sm text-neutral-400">No tasks generated.</p>
         ) : (
           <ul className="space-y-3">
-            {renderedTasks.map((task, index) => {
+            {visibleTasks.map((task, index) => {
               const isEditing = editingTaskId === task.id;
               const isPending = pendingTaskId === task.id;
               const taskView = isEditing && taskDraft ? { ...task, ...taskDraft } : task;
@@ -916,7 +978,14 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                         Deadline: {taskView.deadline}
                       </span>
                       <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
-                        Assignee: {getAssigneeLabel(taskView.suggestedAssignee)}
+                        Assignee: <span className="inline-flex items-center gap-2">
+                          <span>{getAssigneeLabel(taskView.suggestedAssignee)}</span>
+                          {currentUserMember && isTaskAssignedToCurrentUser(taskView) ? (
+                            <span className="task-assignee-you-badge inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
+                              You
+                            </span>
+                          ) : null}
+                        </span>
                       </span>
                     </div>
                     <div className="flex h-7 w-16 shrink-0 items-end justify-end">

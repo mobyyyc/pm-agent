@@ -9,6 +9,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bars3Icon,
   ChevronLeftIcon,
+  FolderIcon,
   PlusIcon,
   Squares2X2Icon,
   UserGroupIcon,
@@ -134,10 +135,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     ? displayProjects.find((project) => project.id === selectedProjectId)
     : null;
   const isMembersTab = !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/members`);
+  const isRepositoriesTab =
+    !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/repositories`);
   const isDashboardTab =
     !!selectedProjectId &&
     (pathname === `/projects/${selectedProjectId}` ||
-      (!isMembersTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
+      (!isMembersTab && !isRepositoriesTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
 
   useEffect(() => {
     const nextView = isProjectRoute ? "project" : "main";
@@ -419,6 +422,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <UserGroupIcon className="h-4 w-4" />
                   Members
+                </Link>
+                <Link
+                  href={`/projects/${selectedProjectId}/repositories`}
+                  className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 ${
+                    isRepositoriesTab ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  <FolderIcon className="h-4 w-4" />
+                  Repositories
                 </Link>
               </div>
             )}

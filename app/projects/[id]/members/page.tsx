@@ -187,7 +187,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-white">{member.displayName || member.userId}</p>
                         {currentUserId && member.userId === currentUserId ? (
-                          <span className="inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
+                          <span className="app-you-badge px-2 py-0.5">
                             You
                           </span>
                         ) : null}

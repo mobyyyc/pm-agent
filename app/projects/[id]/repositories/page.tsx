@@ -1,12 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
 import { useGuest } from "@/components/GuestContext";
-import type { Project, ProjectRepository, RepositoryVisibility } from "@/types/models";
+import type { Project, ProjectMember, ProjectRepository, RepositoryVisibility } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -14,6 +15,7 @@ type PageProps = {
 
 type ProjectResponse = {
   project?: Project;
+  members?: ProjectMember[];
 };
 
 type RepositoryResponse = {
@@ -46,6 +48,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const { isGuest, getGuestProject } = useGuest();
 
   const [dbProject, setDbProject] = useState<Project | null>(null);
+  const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
   const [repository, setRepository] = useState<ProjectRepository | null>(null);
   const [notFoundState, setNotFoundState] = useState(false);
   const [canManage, setCanManage] = useState(false);
@@ -99,6 +102,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           }
 
           setDbProject(projectBody.project);
+          setDbMembers(Array.isArray(projectBody.members) ? projectBody.members : []);
 
           const repositoryBody = (await repositoryRes.json().catch(() => null)) as RepositoryResponse | { error?: string } | null;
           if (!repositoryRes.ok) {
@@ -128,6 +132,16 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     setManualDefaultBranch(repository.defaultBranch);
     setManualVisibility(repository.visibility);
   }, [repository, githubLogin]);
+
+  const repositoryCreator = repository
+    ? dbMembers.find((member) => member.userId === repository.createdByUserId) || null
+    : null;
+
+  const getMemberLabel = (member: ProjectMember | null) => {
+    if (!member) return null;
+
+    return member.displayName?.trim() || member.userId;
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -315,7 +329,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Repositories</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">Repository</h1>
         <p className="max-w-2xl text-base leading-relaxed text-neutral-400">
           Connect or create a repository for this project.
         </p>
@@ -356,6 +370,27 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
             </p>
             <p>
               <span className="text-neutral-400">Default branch:</span> {repository.defaultBranch}
+            </p>
+            <p>
+              <span className="text-neutral-400">Linked by:</span>{" "}
+              {repositoryCreator ? (
+                <Link
+                  href={`/projects/${id}/members`}
+                  className="inline-flex items-center gap-1 rounded-full bg-white/5 px-1.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                >
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold leading-none text-white/90">
+                    {getMemberLabel(repositoryCreator)?.charAt(0).toUpperCase() || "?"}
+                  </span>
+                  <span className="px-1 leading-none">{getMemberLabel(repositoryCreator)}</span>
+                  {repositoryCreator.userId === session?.user?.email?.trim().toLowerCase() ? (
+                    <span className="app-you-badge px-2 py-0.5">
+                      You
+                    </span>
+                  ) : null}
+                </Link>
+              ) : (
+                <span className="text-neutral-300">{repository.createdByUserId}</span>
+              )}
             </p>
           </div>
           {loadError ? <p className="mt-3 text-sm text-red-400">{loadError}</p> : null}

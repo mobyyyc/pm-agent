@@ -241,6 +241,23 @@ html[data-theme="light"] [class~="text-white"] {
   color: #0f172a !important;
 }
 
+.app-you-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html[data-theme="light"] .app-you-badge {
+  background-color: rgba(0, 255, 157, 0.322) !important;
+  color: #007740 !important;
+}
+
 html[data-theme="light"] [class~="text-white/95"] {
   color: #0f172a !important;
 }

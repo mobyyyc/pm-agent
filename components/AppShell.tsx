@@ -430,7 +430,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <FolderIcon className="h-4 w-4" />
-                  Repositories
+                  Repository
                 </Link>
               </div>
             )}

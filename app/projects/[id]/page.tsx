@@ -741,7 +741,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl min-w-0 flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
       <header className="flex flex-col gap-2">
         <div className="relative min-h-10 w-full">
           <div className={`inline-flex max-w-full items-start gap-2 ${isEditingProjectTitle ? "invisible" : ""}`}>
@@ -804,7 +804,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         <p className="text-base text-neutral-300 leading-relaxed">{project.guideline}</p>
       </section>
 
-      <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
+      <section className="app-frame min-w-0 rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
         {renderedTimeline.length === 0 ? (
           <p className="text-sm text-neutral-400">No timeline items available.</p>
@@ -934,11 +934,11 @@ export default function ProjectDashboardPage({ params }: PageProps) {
           <h2 className="text-xl font-semibold tracking-tight text-white">Task List</h2>
           
           {/* Desktop: Side by side toggles, Mobile: Stacked rows */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4">
             {/* Status Filter Toggle - First row on mobile, left on desktop */}
-            <div className="flex justify-start">
+            <div className="flex min-w-0 justify-start">
               <div
-                className="relative flex h-8 w-full min-w-96 flex-nowrap overflow-hidden rounded-full bg-white/15 p-1"
+                className="relative flex h-8 w-full min-w-0 max-w-full flex-nowrap overflow-hidden rounded-full bg-white/15 p-1"
                 role="tablist"
                 aria-label="Task status filter"
               >
@@ -1011,9 +1011,9 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             </div>
 
             {/* Assignee Filter Toggle - Second row on mobile, right on desktop */}
-            <div className="flex justify-start">
+            <div className="flex min-w-0 justify-start sm:justify-end">
               <div
-                className="relative flex h-8 w-full min-w-55 overflow-hidden rounded-full bg-white/15 p-1 sm:max-w-64"
+                className="relative flex h-8 w-full min-w-0 max-w-full overflow-hidden rounded-full bg-white/15 p-1 sm:max-w-64"
                 role="tablist"
                 aria-label="Task list filter"
               >

@@ -2,10 +2,10 @@
 
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 import { useGuest } from "@/components/GuestContext";
-import type { Project } from "@/types/models";
+import type { Project, ProjectRepository, RepositoryVisibility } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -15,13 +15,54 @@ type ProjectResponse = {
   project?: Project;
 };
 
+type RepositoryResponse = {
+  repository: ProjectRepository | null;
+  canManage: boolean;
+  github: {
+    linked: boolean;
+    login: string | null;
+  };
+};
+
+type ApiErrorBody = {
+  error?: string;
+  issues?: string[];
+};
+
+function formatApiError(body: ApiErrorBody | null | undefined, fallback: string): string {
+  if (!body) return fallback;
+  if (Array.isArray(body.issues) && body.issues.length > 0) {
+    return body.issues.join(" ");
+  }
+  return body.error || fallback;
+}
+
 export default function ProjectRepositoriesPage({ params }: PageProps) {
   const { id } = use(params);
   const { data: session, status: sessionStatus } = useSession();
   const { isGuest, getGuestProject } = useGuest();
 
   const [dbProject, setDbProject] = useState<Project | null>(null);
+  const [repository, setRepository] = useState<ProjectRepository | null>(null);
   const [notFoundState, setNotFoundState] = useState(false);
+  const [canManage, setCanManage] = useState(false);
+  const [githubLinked, setGithubLinked] = useState(false);
+  const [githubLogin, setGithubLogin] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [isSavingManual, setIsSavingManual] = useState(false);
+  const [isCreatingGithubRepo, setIsCreatingGithubRepo] = useState(false);
+
+  const [manualOwnerLogin, setManualOwnerLogin] = useState("");
+  const [manualRepoName, setManualRepoName] = useState("");
+  const [manualHtmlUrl, setManualHtmlUrl] = useState("");
+  const [manualDefaultBranch, setManualDefaultBranch] = useState("main");
+  const [manualVisibility, setManualVisibility] = useState<RepositoryVisibility>("private");
+
+  const [createRepoName, setCreateRepoName] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createVisibility, setCreateVisibility] = useState<RepositoryVisibility>("private");
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
   const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
@@ -35,22 +76,52 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     if (isGuest) return;
 
     if (session?.user?.email) {
-      fetch(`/api/projects/${id}`)
-        .then(async (res) => {
-          if (!res.ok) {
+      Promise.all([
+        fetch(`/api/projects/${id}`),
+        fetch(`/api/projects/${id}/repository`, { cache: "no-store" }),
+      ])
+        .then(async ([projectRes, repositoryRes]) => {
+          if (!projectRes.ok) {
             setNotFoundState(true);
-            return null;
+            return;
           }
-          return (await res.json()) as ProjectResponse;
-        })
-        .then((data) => {
-          if (data?.project) {
-            setDbProject(data.project);
+
+          const projectBody = (await projectRes.json()) as ProjectResponse;
+          if (!projectBody?.project) {
+            setNotFoundState(true);
+            return;
           }
+
+          setDbProject(projectBody.project);
+
+          const repositoryBody = (await repositoryRes.json().catch(() => null)) as RepositoryResponse | { error?: string } | null;
+          if (!repositoryRes.ok) {
+            setLoadError(repositoryBody && "error" in repositoryBody ? repositoryBody.error || "Failed to load repository." : "Failed to load repository.");
+            return;
+          }
+
+          const typedRepositoryBody = repositoryBody as RepositoryResponse;
+          setRepository(typedRepositoryBody.repository || null);
+          setCanManage(typedRepositoryBody.canManage);
+          setGithubLinked(typedRepositoryBody.github.linked);
+          setGithubLogin(typedRepositoryBody.github.login);
         })
         .catch(() => setNotFoundState(true));
     }
   }, [id, isGuest, session?.user?.email, sessionStatus]);
+
+  useEffect(() => {
+    if (!repository) {
+      setManualOwnerLogin(githubLogin || "");
+      return;
+    }
+
+    setManualOwnerLogin(repository.ownerLogin);
+    setManualRepoName(repository.repoName);
+    setManualHtmlUrl(repository.htmlUrl);
+    setManualDefaultBranch(repository.defaultBranch);
+    setManualVisibility(repository.visibility);
+  }, [repository, githubLogin]);
 
   if (isPageLoading) {
     return (
@@ -67,6 +138,114 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     notFound();
   }
 
+  const handleManualLinkSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setActionError(null);
+    setActionSuccess(null);
+
+    const normalizedOwner = manualOwnerLogin.trim();
+    const normalizedRepo = manualRepoName.trim();
+    const normalizedUrl = manualHtmlUrl.trim();
+    const normalizedBranch = manualDefaultBranch.trim();
+
+    if (!normalizedOwner || !normalizedRepo || !normalizedUrl || !normalizedBranch) {
+      setActionError("Owner, repository name, URL, and default branch are required.");
+      return;
+    }
+
+    setIsSavingManual(true);
+
+    try {
+      const response = await fetch(`/api/projects/${id}/repository`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerLogin: normalizedOwner,
+          repoName: normalizedRepo,
+          htmlUrl: normalizedUrl,
+          defaultBranch: normalizedBranch,
+          visibility: manualVisibility,
+        }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as {
+        repository?: ProjectRepository;
+        error?: string;
+        issues?: string[];
+      };
+
+      if (!response.ok || !body.repository) {
+        throw new Error(formatApiError(body, "Failed to save repository settings."));
+      }
+
+      setRepository(body.repository);
+      setActionSuccess("Repository settings saved.");
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Failed to save repository settings.");
+    } finally {
+      setIsSavingManual(false);
+    }
+  };
+
+  const handleCreateGithubRepository = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setActionError(null);
+    setActionSuccess(null);
+
+    const normalizedRepoName = createRepoName.trim();
+    if (!normalizedRepoName) {
+      setActionError("Repository name is required.");
+      return;
+    }
+
+    if (!githubLogin) {
+      setActionError("Linked Github login is missing. Refresh this page and try again.");
+      return;
+    }
+
+    setIsCreatingGithubRepo(true);
+
+    try {
+      const response = await fetch(`/api/projects/${id}/repository`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerLogin: githubLogin,
+          repoName: normalizedRepoName,
+          description: createDescription.trim(),
+          visibility: createVisibility,
+          autoInit: true,
+        }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as {
+        repository?: ProjectRepository;
+        error?: string;
+        issues?: string[];
+      };
+
+      if (!response.ok || !body.repository) {
+        throw new Error(formatApiError(body, "Failed to create Github repository."));
+      }
+
+      setRepository(body.repository);
+      setManualOwnerLogin(body.repository.ownerLogin);
+      setManualRepoName(body.repository.repoName);
+      setManualHtmlUrl(body.repository.htmlUrl);
+      setManualDefaultBranch(body.repository.defaultBranch);
+      setManualVisibility(body.repository.visibility);
+      setCreateRepoName("");
+      setCreateDescription("");
+      setActionSuccess("Github repository created and linked to this project.");
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Failed to create Github repository.");
+    } finally {
+      setIsCreatingGithubRepo(false);
+    }
+  };
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
       <header className="flex flex-col gap-2">
@@ -77,19 +256,147 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         <p className="text-sm text-neutral-500">Project: {project.name || project.idea}</p>
       </header>
 
-      <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Create Repository</h2>
-        <p className="text-sm text-neutral-400">
-          Repository setup is coming soon. You will be able to create or link a remote repository from this page.
-        </p>
-        <button
-          type="button"
-          disabled
-          className="mt-5 cursor-not-allowed rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-neutral-400"
-        >
-          Create Repository (Coming Soon)
-        </button>
-      </section>
+      {isGuest ? (
+        <section className="app-frame app-frame-hover rounded-2xl border border-amber-200/25 bg-amber-100/5 p-6 transition-colors">
+          <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Sign In Required</h2>
+          <p className="text-sm text-neutral-300">
+            Repository management requires a signed-in account. Guest projects cannot create or link remote repositories.
+          </p>
+          <button
+            type="button"
+            onClick={() => signIn("google", { callbackUrl: `/projects/${id}/repositories` })}
+            className="mt-5 cursor-pointer rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90"
+          >
+            Sign in to Manage Repositories
+          </button>
+        </section>
+      ) : null}
+
+      {!isGuest ? (
+        <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+          <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Current Repository</h2>
+          {repository ? (
+            <div className="space-y-1 text-sm text-neutral-300">
+              <p>
+                <span className="text-neutral-400">Full name:</span> {repository.fullName}
+              </p>
+              <p>
+                <span className="text-neutral-400">URL:</span>{" "}
+                <a className="text-blue-300 underline-offset-2 hover:underline" href={repository.htmlUrl} target="_blank" rel="noreferrer">
+                  {repository.htmlUrl}
+                </a>
+              </p>
+              <p>
+                <span className="text-neutral-400">Visibility:</span> {repository.visibility}
+              </p>
+              <p>
+                <span className="text-neutral-400">Default branch:</span> {repository.defaultBranch}
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-400">No repository linked yet.</p>
+          )}
+          {loadError ? <p className="mt-3 text-sm text-red-400">{loadError}</p> : null}
+          {actionError ? <p className="mt-3 text-sm text-red-400">{actionError}</p> : null}
+          {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
+          {!canManage ? (
+            <p className="mt-3 text-xs text-neutral-500">Only the project owner can change repository settings.</p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {!isGuest && canManage ? (
+        <section className="grid gap-6 md:grid-cols-2">
+          <form
+            onSubmit={(event) => void handleCreateGithubRepository(event)}
+            className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors"
+          >
+            <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Create in Github</h2>
+            {githubLinked ? (
+              <p className="mb-3 text-xs text-neutral-400">Creating under @{githubLogin}</p>
+            ) : (
+              <p className="mb-3 text-xs text-amber-300">Link your Github account in Settings to create repos.</p>
+            )}
+            <div className="space-y-3">
+              <input
+                value={createRepoName}
+                onChange={(event) => setCreateRepoName(event.target.value)}
+                placeholder="Repository name (letters, numbers, ., _, -)"
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <textarea
+                value={createDescription}
+                onChange={(event) => setCreateDescription(event.target.value)}
+                placeholder="Description (optional)"
+                className="min-h-20 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <select
+                value={createVisibility}
+                onChange={(event) => setCreateVisibility(event.target.value as RepositoryVisibility)}
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 focus:border-white/30"
+              >
+                <option value="private">Private</option>
+                <option value="public">Public</option>
+              </select>
+              <button
+                type="submit"
+                disabled={!githubLinked || isCreatingGithubRepo}
+                className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCreatingGithubRepo ? "Creating..." : "Create and Link Repository"}
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={(event) => void handleManualLinkSubmit(event)}
+            className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors"
+          >
+            <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Link Existing Repository</h2>
+            <div className="space-y-3">
+              <input
+                value={manualOwnerLogin}
+                onChange={(event) => setManualOwnerLogin(event.target.value)}
+                placeholder="Owner login"
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <input
+                value={manualRepoName}
+                onChange={(event) => setManualRepoName(event.target.value)}
+                placeholder="Repository name"
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <input
+                value={manualHtmlUrl}
+                onChange={(event) => setManualHtmlUrl(event.target.value)}
+                placeholder="https://github.com/owner/repo"
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <input
+                value={manualDefaultBranch}
+                onChange={(event) => setManualDefaultBranch(event.target.value)}
+                placeholder="Default branch"
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+              />
+              <select
+                value={manualVisibility}
+                onChange={(event) => setManualVisibility(event.target.value as RepositoryVisibility)}
+                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 focus:border-white/30"
+              >
+                <option value="private">Private</option>
+                <option value="public">Public</option>
+              </select>
+              <button
+                type="submit"
+                disabled={isSavingManual}
+                className="cursor-pointer rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingManual ? "Saving..." : "Save Repository Link"}
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
     </main>
   );
 }

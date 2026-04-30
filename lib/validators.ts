@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   aiPlanSchema,
+  repositoryVisibilitySchema,
   teamImportAnalysisSchema,
   teamKnowledgeSchema,
   projectSchema,
@@ -66,6 +67,32 @@ export const createInvitationRequestSchema = z.object({
 
 export const respondInvitationRequestSchema = z.object({
   action: z.enum(["accept", "decline"]),
+});
+
+export const upsertProjectRepositoryRequestSchema = z.object({
+  provider: z.literal("github").default("github"),
+  ownerLogin: z.string().trim().min(1, "Owner login is required."),
+  repoName: z
+    .string()
+    .trim()
+    .min(1, "Repository name is required.")
+    .regex(/^[A-Za-z0-9_.-]+$/, "Repository name can include letters, numbers, dots, underscores, and hyphens."),
+  htmlUrl: z.string().trim().url("A valid repository URL is required."),
+  defaultBranch: z.string().trim().min(1, "Default branch is required.").default("main"),
+  visibility: repositoryVisibilitySchema.default("private"),
+  externalId: z.string().trim().optional(),
+});
+
+export const createGithubRepositoryRequestSchema = z.object({
+  ownerLogin: z.string().trim().min(1, "Owner login is required."),
+  repoName: z
+    .string()
+    .trim()
+    .min(1, "Repository name is required.")
+    .regex(/^[A-Za-z0-9_.-]+$/, "Repository name can include letters, numbers, dots, underscores, and hyphens."),
+  description: z.string().trim().max(500, "Description must be 500 characters or less.").optional(),
+  visibility: repositoryVisibilitySchema.default("private"),
+  autoInit: z.boolean().optional().default(true),
 });
 
 const arrayFromStringSchema = z

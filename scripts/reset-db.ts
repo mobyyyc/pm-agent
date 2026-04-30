@@ -8,6 +8,7 @@ const sql = neon(process.env.DATABASE_URL!);
 async function main() {
   console.log("Dropping old tables...");
   await sql`DROP TABLE IF EXISTS project_invitations CASCADE`;
+  await sql`DROP TABLE IF EXISTS project_repositories CASCADE`;
   await sql`DROP TABLE IF EXISTS project_members CASCADE`;
   await sql`DROP TABLE IF EXISTS app_users CASCADE`;
   await sql`DROP TABLE IF EXISTS github_links CASCADE`;
@@ -111,6 +112,24 @@ async function main() {
   `;
   console.log("  ✓ project_invitations");
 
+  await sql`
+    CREATE TABLE project_repositories (
+      project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      owner_login TEXT NOT NULL,
+      repo_name TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      html_url TEXT NOT NULL,
+      default_branch TEXT NOT NULL,
+      visibility TEXT NOT NULL,
+      external_id TEXT NOT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+  console.log("  ✓ project_repositories");
+
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_teams_user_id ON teams(user_id)`;
@@ -121,6 +140,7 @@ async function main() {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_inviter_user_id ON project_invitations(inviter_user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_invitee_user_id ON project_invitations(invitee_user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)

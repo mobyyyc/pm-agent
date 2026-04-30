@@ -2,12 +2,14 @@ import { sql } from "@/lib/db";
 import {
   appUserSchema,
   projectSchema,
+  projectRepositorySchema,
   projectInvitationSchema,
   projectMemberSchema,
   taskSchema,
   userTeamSchema,
   type AppUser,
   type Project,
+  type ProjectRepository,
   type ProjectInvitation,
   type ProjectMember,
   type Task,
@@ -57,11 +59,29 @@ async function initializeCollaborationSchema(): Promise<void> {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_repositories (
+      project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      owner_login TEXT NOT NULL,
+      repo_name TEXT NOT NULL,
+      full_name TEXT NOT NULL,
+      html_url TEXT NOT NULL,
+      default_branch TEXT NOT NULL,
+      visibility TEXT NOT NULL,
+      external_id TEXT NOT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_user_id ON project_members(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON project_members(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_inviter_user_id ON project_invitations(inviter_user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_invitee_user_id ON project_invitations(invitee_user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)
@@ -133,6 +153,23 @@ function mapProjectInvitationRow(row: Record<string, unknown>): ProjectInvitatio
     status: row.status,
     createdAt: String(row.created_at),
     respondedAt: typeof row.responded_at === "string" ? row.responded_at : null,
+  });
+}
+
+function mapProjectRepositoryRow(row: Record<string, unknown>): ProjectRepository {
+  return projectRepositorySchema.parse({
+    projectId: String(row.project_id),
+    provider: row.provider,
+    ownerLogin: String(row.owner_login),
+    repoName: String(row.repo_name),
+    fullName: String(row.full_name),
+    htmlUrl: String(row.html_url),
+    defaultBranch: String(row.default_branch),
+    visibility: row.visibility,
+    externalId: String(row.external_id),
+    createdByUserId: String(row.created_by_user_id),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
   });
 }
 
@@ -347,6 +384,88 @@ export async function upsertGithubLinkByUserId(input: {
 
 export async function deleteGithubLinkByUserId(userId: string): Promise<void> {
   await sql`DELETE FROM github_links WHERE user_id = ${userId}`;
+}
+
+// ---------------------------------------------------------------------------
+// Project repositories
+// ---------------------------------------------------------------------------
+
+export async function getProjectRepositoryByProjectId(projectId: string): Promise<ProjectRepository | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_repositories
+    WHERE project_id = ${projectId}
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectRepositoryRow(rows[0] as Record<string, unknown>);
+}
+
+export async function upsertProjectRepository(input: {
+  projectId: string;
+  provider: "github";
+  ownerLogin: string;
+  repoName: string;
+  fullName: string;
+  htmlUrl: string;
+  defaultBranch: string;
+  visibility: "public" | "private";
+  externalId: string;
+  createdByUserId: string;
+  timestamp: string;
+}): Promise<ProjectRepository> {
+  await ensureCollaborationSchema();
+
+  const createdByUserId = normalizeUserId(input.createdByUserId);
+
+  const rows = await sql`
+    INSERT INTO project_repositories (
+      project_id,
+      provider,
+      owner_login,
+      repo_name,
+      full_name,
+      html_url,
+      default_branch,
+      visibility,
+      external_id,
+      created_by_user_id,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${input.projectId},
+      ${input.provider},
+      ${input.ownerLogin},
+      ${input.repoName},
+      ${input.fullName},
+      ${input.htmlUrl},
+      ${input.defaultBranch},
+      ${input.visibility},
+      ${input.externalId},
+      ${createdByUserId},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT (project_id)
+    DO UPDATE SET
+      provider = EXCLUDED.provider,
+      owner_login = EXCLUDED.owner_login,
+      repo_name = EXCLUDED.repo_name,
+      full_name = EXCLUDED.full_name,
+      html_url = EXCLUDED.html_url,
+      default_branch = EXCLUDED.default_branch,
+      visibility = EXCLUDED.visibility,
+      external_id = EXCLUDED.external_id,
+      created_by_user_id = EXCLUDED.created_by_user_id,
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  return mapProjectRepositoryRow(rows[0] as Record<string, unknown>);
 }
 
 // ---------------------------------------------------------------------------

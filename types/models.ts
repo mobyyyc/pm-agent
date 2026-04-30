@@ -94,6 +94,23 @@ export const projectInvitationSchema = z.object({
   respondedAt: z.string().datetime().nullable(),
 });
 
+export const repositoryVisibilitySchema = z.enum(["public", "private"]);
+
+export const projectRepositorySchema = z.object({
+  projectId: z.string().min(1),
+  provider: z.literal("github"),
+  ownerLogin: z.string().min(1),
+  repoName: z.string().min(1),
+  fullName: z.string().min(1),
+  htmlUrl: z.string().url(),
+  defaultBranch: z.string().min(1),
+  visibility: repositoryVisibilitySchema,
+  externalId: z.string().min(1),
+  createdByUserId: z.string().min(1),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
 export type TeamKnowledge = z.infer<typeof teamKnowledgeSchema>;
 export type UserTeam = z.infer<typeof userTeamSchema>;
 export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
@@ -101,6 +118,8 @@ export type AppUser = z.infer<typeof appUserSchema>;
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
 export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
 export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
+export type RepositoryVisibility = z.infer<typeof repositoryVisibilitySchema>;
+export type ProjectRepository = z.infer<typeof projectRepositorySchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),

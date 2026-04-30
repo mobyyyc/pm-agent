@@ -249,11 +249,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
                     />
                   </div>
 
-                  {inviteError ? (
-                    <div className="invite-error-frame rounded-xl px-3 py-2.5">
-                      <p className="text-sm font-semibold text-current">{inviteError}</p>
-                    </div>
-                  ) : null}
+                  {inviteError ? <div className="error-msg px-3 py-2.5 text-sm font-semibold">{inviteError}</div> : null}
 
                   <div className="mt-6 flex justify-end gap-2">
                     <button

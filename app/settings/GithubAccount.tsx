@@ -118,9 +118,9 @@ export default function GithubAccountSettings() {
           Link your Versor account to your Github account to manage repositories for group projects.
         </p>
 
-        {linkStatusMessage ? <p className="mt-3 text-sm text-red-400">{linkStatusMessage}</p> : null}
-        {loadError ? <p className="mt-3 text-sm text-red-400">{loadError}</p> : null}
-        {actionError ? <p className="mt-3 text-sm text-red-400">{actionError}</p> : null}
+        {linkStatusMessage ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{linkStatusMessage}</div> : null}
+        {loadError ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{loadError}</div> : null}
+        {actionError ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{actionError}</div> : null}
         {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
 
         {linkedAccount ? (

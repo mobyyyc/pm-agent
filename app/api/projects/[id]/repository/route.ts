@@ -344,7 +344,12 @@ export async function DELETE(request: Request, context: RouteContext) {
         return NextResponse.json(
           {
             error: deleteBody.message || "Failed to delete Github repository.",
-            detail: deleteResponse.status === 401 || deleteResponse.status === 403 ? "Check Github permissions." : null,
+            detail:
+              deleteResponse.status === 403
+                ? "Must have admin rights to Repository."
+                : deleteResponse.status === 401
+                  ? "Check Github permissions."
+                  : null,
           },
           { status: deleteResponse.status || 500 },
         );

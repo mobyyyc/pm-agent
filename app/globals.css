@@ -197,6 +197,21 @@ html {
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
+.error-msg {
+  display: block;
+  border: 1px solid rgba(248, 113, 113, 0.46);
+  border-radius: 0.75rem;
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #fff1f2;
+  box-shadow: 0 10px 24px -16px rgba(239, 68, 68, 0.6);
+}
+
+html[data-theme="light"] .error-msg {
+  border-color: rgba(185, 28, 28, 0.45);
+  background-color: rgba(239, 68, 68, 0.22);
+  color: #7f1d1d;
+}
+
 html[data-theme="light"] [class~="bg-black"] {
   background-color: var(--background) !important;
 }
@@ -477,12 +492,6 @@ button:disabled,
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.invite-error-frame {
-  border: 1px solid rgba(239, 68, 68, 0.46);
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #fee2e2;
-}
-
 .settings-reset-button:hover:not(:disabled),
 .app-danger-button:hover:not(:disabled),
 .app-destructive-button:hover:not(:disabled) {
@@ -599,12 +608,6 @@ button:disabled,
 html[data-theme="light"] .settings-reset-button,
 html[data-theme="light"] .app-danger-button,
 html[data-theme="light"] .app-destructive-button {
-  background-color: rgba(239, 68, 68, 0.2);
-  color: #7f1d1d;
-}
-
-html[data-theme="light"] .invite-error-frame {
-  border-color: rgba(239, 68, 68, 0.3);
   background-color: rgba(239, 68, 68, 0.2);
   color: #7f1d1d;
 }

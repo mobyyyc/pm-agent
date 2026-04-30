@@ -797,11 +797,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         )}
       </header>
 
-      {frameActionError ? (
-        <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm text-red-200">
-          {frameActionError}
-        </p>
-      ) : null}
+      {frameActionError ? <div className="error-msg px-4 py-2 text-sm font-semibold">{frameActionError}</div> : null}
 
       <section className="app-frame app-frame-hover rounded-2xl bg-white/5 p-4 transition-all hover:bg-white/10 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Guideline</h2>

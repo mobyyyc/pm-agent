@@ -144,12 +144,12 @@ export default function InvitationPage() {
       </header>
 
       <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
-        {actionError ? <p className="mb-3 text-sm text-red-400">{actionError}</p> : null}
+        {actionError ? <div className="error-msg mb-3 px-4 py-2 text-sm font-semibold">{actionError}</div> : null}
 
         {loadingInvitations ? (
           <p className="text-sm text-neutral-400">Loading invitations...</p>
         ) : error ? (
-          <p className="text-sm text-red-400">{error}</p>
+          <div className="error-msg px-4 py-2 text-sm font-semibold">{error}</div>
         ) : invitations.length === 0 ? (
           <p className="text-sm text-neutral-400">
             No invitation yet. When someone invites you to a group project, it will show up here.

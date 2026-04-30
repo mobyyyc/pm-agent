@@ -257,7 +257,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
 
   return (
     <>
-      {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
+      {error && <div className="error-msg mb-4 px-4 py-2 text-sm font-semibold">{error}</div>}
 
       {activeTab === "overview" && (
         <div className="space-y-4">

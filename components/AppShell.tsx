@@ -383,7 +383,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="px-3 text-xs text-neutral-500 mb-2">Guest projects are temporary.</p>
                 <button
                   onClick={() => signIn("google", { callbackUrl: "/" })}
-                  className="w-full rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 transition-all cursor-pointer"
+                  className="normal-button w-full rounded-full px-3 py-2 text-sm transition-all cursor-pointer"
                 >
                   Sign in to save projects
                 </button>
@@ -462,7 +462,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="w-full cursor-pointer rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+                  className="normal-button w-full cursor-pointer rounded-full px-3 py-2 text-sm font-semibold transition-colors"
                 >
                   {isGuest ? "Exit" : "Sign out"}
                 </button>
@@ -554,7 +554,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <button
               onClick={handleSignOut}
-              className="cursor-pointer rounded-full bg-white/10 px-3 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+                className="normal-button cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold"
             >
               {isGuest ? "Exit" : "Sign out"}
             </button>

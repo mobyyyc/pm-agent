@@ -7,6 +7,7 @@ import {
   getGithubLinkByUserId,
   getProjectById,
   getProjectRepositoryByProjectId,
+  deleteProjectRepositoryByProjectId,
   isProjectMember,
   normalizeUserId,
   upsertAppUser,
@@ -30,6 +31,10 @@ type GithubCreateRepositoryResponse = {
   default_branch?: string;
   private?: boolean;
   visibility?: "public" | "private";
+  message?: string;
+};
+
+type GithubDeleteRepositoryResponse = {
   message?: string;
 };
 
@@ -280,6 +285,81 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json(
       { error: "Failed to create Github repository.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request, context: RouteContext) {
+  try {
+    const session = await getServerSession(authOptions);
+    const sessionUserId = session?.user?.email ? normalizeUserId(session.user.email) : null;
+
+    if (!sessionUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await upsertAppUser({
+      userId: sessionUserId,
+      displayName: session?.user?.name || null,
+      imageUrl: session?.user?.image || null,
+      timestamp: isoNow(),
+    });
+
+    const { id } = await context.params;
+    const accessResult = await getAuthorizedProject(id, sessionUserId);
+    if ("error" in accessResult) {
+      return accessResult.error;
+    }
+
+    if (!accessResult.canManage) {
+      return NextResponse.json({ error: "Only the project owner can unlink a repository." }, { status: 403 });
+    }
+
+    const repository = await getProjectRepositoryByProjectId(id);
+    if (!repository) {
+      return NextResponse.json({ error: "No repository linked to this project." }, { status: 404 });
+    }
+
+    const body = (await request.json().catch(() => ({}))) as { action?: string };
+    const action = body.action === "unlink_and_delete" ? "unlink_and_delete" : "unlink_only";
+
+    if (action === "unlink_and_delete") {
+      const githubLink = await getGithubLinkByUserId(sessionUserId);
+      if (!githubLink) {
+        return NextResponse.json({ error: "Link your Github account before deleting the repository." }, { status: 400 });
+      }
+
+      const deleteResponse = await fetch(`https://api.github.com/repos/${repository.fullName}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${githubLink.accessToken}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "versor-ai",
+        },
+      });
+
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        const deleteBody = (await deleteResponse.json().catch(() => ({}))) as GithubDeleteRepositoryResponse;
+        return NextResponse.json(
+          {
+            error: deleteBody.message || "Failed to delete Github repository.",
+            detail: deleteResponse.status === 401 || deleteResponse.status === 403 ? "Check Github permissions." : null,
+          },
+          { status: deleteResponse.status || 500 },
+        );
+      }
+    }
+
+    await deleteProjectRepositoryByProjectId(id);
+
+    return NextResponse.json({
+      success: true,
+      deletedGithubRepository: action === "unlink_and_delete",
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to unlink repository.", detail: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }

@@ -274,7 +274,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               <button
                 type="button"
                 onClick={() => onChangeTab("import")}
-                className="mt-4 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20 cursor-pointer"
+                className="normal-button mt-4 rounded-full px-4 py-2 text-sm font-semibold cursor-pointer"
               >
                 Go to Import
               </button>
@@ -366,7 +366,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               <button
                 onClick={confirmImport}
                 disabled={saving || analyzing}
-                className="mt-4 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black disabled:opacity-50 cursor-pointer"
+                className="key-button mt-4 rounded-full px-6 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer"
               >
                 {saving ? "Confirming..." : "Confirm Import"}
               </button>
@@ -392,7 +392,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               </button>
             ))}
           </div>
-
+                  mode === inputMode ? "key-button" : "normal-button"
           {mode === "text" && (
             <div className="space-y-3">
               <textarea
@@ -404,7 +404,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               <button
                 onClick={() => analyzeImport("text", rawText)}
                 disabled={!rawText.trim() || saving || analyzing}
-                className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black disabled:opacity-50 cursor-pointer"
+                className="key-button rounded-full px-6 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer"
               >
                 {analyzing ? "Analyzing..." : "Import from Text"}
               </button>
@@ -454,7 +454,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
                   analyzeImport(pendingFileInputType, pendingFileContent);
                 }}
                 disabled={!pendingFileContent || !pendingFileInputType || saving || analyzing}
-                className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black disabled:opacity-50 cursor-pointer"
+                className="key-button rounded-full px-6 py-2 text-sm font-semibold disabled:opacity-50 cursor-pointer"
               >
                 {analyzing ? "Analyzing..." : "Import File"}
               </button>

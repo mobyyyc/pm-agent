@@ -33,7 +33,7 @@ export default function Settings() {
           <p className="mt-3 text-neutral-400">Sign in to manage your profile settings.</p>
           <button
             onClick={() => signIn("google", { callbackUrl: "/settings" })}
-            className="mt-6 rounded-full bg-white px-6 py-2 text-sm font-semibold text-black hover:bg-white/90 cursor-pointer"
+            className="key-button mt-6 rounded-full px-6 py-2 text-sm font-semibold cursor-pointer"
           >
             Sign in with Google
           </button>

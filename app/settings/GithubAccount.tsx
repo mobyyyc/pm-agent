@@ -155,7 +155,7 @@ export default function GithubAccountSettings() {
           type="button"
           onClick={() => void handleUnlinkGithub()}
           disabled={loading || unlinking}
-          className="app-danger-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+          className="app-destructive-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
         >
           {unlinking ? "Unlinking..." : "Unlink Github Account"}
         </button>
@@ -168,7 +168,7 @@ export default function GithubAccountSettings() {
             window.location.assign("/api/github/link/start");
           }}
           disabled={loading || unlinking}
-          className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+          className="key-button rounded-full px-6 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
         >
           {loading ? "Checking..." : "Link Github Account"}
         </button>

@@ -91,6 +91,67 @@ html {
   background: var(--theme-toggle-hover);
 }
 
+.normal-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.normal-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.key-button {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 12px 24px -18px rgba(0, 0, 0, 0.65);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.key-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
+  box-shadow: 0 18px 30px -20px rgba(0, 0, 0, 0.72);
+}
+
+.sub-button {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.sub-button:hover:not(:disabled) {
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+
+.normal-button {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.normal-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.key-button {
+  background-color: #ffffff;
+  color: #000000;
+  box-shadow: 0 12px 24px -18px rgba(0, 0, 0, 0.65);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.key-button:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
+  box-shadow: 0 18px 30px -20px rgba(0, 0, 0, 0.72);
+}
+
 .app-frame {
   background-color: var(--frame-surface) !important;
   border: none !important;
@@ -320,6 +381,38 @@ html[data-theme="light"] .new-project-heading {
   color: transparent !important;
 }
 
+html[data-theme="light"] .normal-button {
+  background-color: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+}
+
+html[data-theme="light"] .normal-button:hover:not(:disabled) {
+  background-color: rgba(15, 23, 42, 0.14);
+  color: #0f172a;
+}
+
+html[data-theme="light"] .key-button {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+html[data-theme="light"] .key-button:hover:not(:disabled) {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+html[data-theme="light"] .sub-button {
+  background-color: transparent;
+  border-color: rgba(15, 23, 42, 0.16);
+  color: #0f172a;
+}
+
+html[data-theme="light"] .sub-button:hover:not(:disabled) {
+  background-color: transparent;
+  border-color: rgba(15, 23, 42, 0.28);
+  color: #0f172a;
+}
+
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 a[href] {
@@ -337,7 +430,8 @@ button:disabled,
 }
 
 .settings-reset-button,
-.app-danger-button {
+.app-danger-button,
+.app-destructive-button {
   background-color: rgba(239, 68, 68, 0.2);
   color: #fee2e2;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -350,7 +444,8 @@ button:disabled,
 }
 
 .settings-reset-button:hover:not(:disabled),
-.app-danger-button:hover:not(:disabled) {
+.app-danger-button:hover:not(:disabled),
+.app-destructive-button:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.3);
   color: #fff1f2;
 }
@@ -462,7 +557,8 @@ button:disabled,
 }
 
 html[data-theme="light"] .settings-reset-button,
-html[data-theme="light"] .app-danger-button {
+html[data-theme="light"] .app-danger-button,
+html[data-theme="light"] .app-destructive-button {
   background-color: rgba(239, 68, 68, 0.2);
   color: #7f1d1d;
 }
@@ -474,7 +570,8 @@ html[data-theme="light"] .invite-error-frame {
 }
 
 html[data-theme="light"] .settings-reset-button:hover:not(:disabled),
-html[data-theme="light"] .app-danger-button:hover:not(:disabled) {
+html[data-theme="light"] .app-danger-button:hover:not(:disabled),
+html[data-theme="light"] .app-destructive-button:hover:not(:disabled) {
   background-color: rgba(239, 68, 68, 0.3);
   color: #7f1d1d;
 }

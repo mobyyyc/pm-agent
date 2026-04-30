@@ -18,7 +18,7 @@ export default function HomePage() {
         <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
           <Link
             href="/projects/new"
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black shadow-lg transition-colors duration-200 hover:bg-white/90 sm:w-auto"
+            className="key-button inline-flex h-11 w-full items-center justify-center rounded-full border border-transparent px-6 text-sm font-semibold leading-none shadow-lg transition-colors duration-200 sm:w-auto"
           >
             Create New Project
           </Link>

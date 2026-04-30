@@ -29,6 +29,8 @@ type ApiErrorBody = {
   issues?: string[];
 };
 
+type UnlinkAction = "unlink_only" | "unlink_and_delete";
+
 function formatApiError(body: ApiErrorBody | null | undefined, fallback: string): string {
   if (!body) return fallback;
   if (Array.isArray(body.issues) && body.issues.length > 0) {
@@ -51,6 +53,8 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false);
+  const [unlinkingAction, setUnlinkingAction] = useState<UnlinkAction | null>(null);
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [isCreatingGithubRepo, setIsCreatingGithubRepo] = useState(false);
 
@@ -246,6 +250,62 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     }
   };
 
+  const handleOpenUnlinkModal = () => {
+    setActionError(null);
+    setActionSuccess(null);
+    setIsUnlinkModalOpen(true);
+  };
+
+  const handleCloseUnlinkModal = () => {
+    if (unlinkingAction) return;
+    setIsUnlinkModalOpen(false);
+  };
+
+  const handleUnlinkRepository = async (action: UnlinkAction) => {
+    setActionError(null);
+    setActionSuccess(null);
+    setUnlinkingAction(action);
+
+    try {
+      const response = await fetch(`/api/projects/${id}/repository`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+
+      const body = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        deletedGithubRepository?: boolean;
+        error?: string;
+        issues?: string[];
+      };
+
+      if (!response.ok || !body.success) {
+        throw new Error(formatApiError(body, "Failed to unlink repository."));
+      }
+
+      setRepository(null);
+      setGithubLinked(Boolean(githubLogin));
+      setCreateRepoName("");
+      setCreateDescription("");
+      setManualOwnerLogin(githubLogin || "");
+      setManualRepoName("");
+      setManualHtmlUrl("");
+      setManualDefaultBranch("main");
+      setManualVisibility("private");
+      setActionSuccess(
+        body.deletedGithubRepository
+          ? "Repository unlinked and Github repo deleted."
+          : "Repository unlinked. The Github repo still exists.",
+      );
+      setIsUnlinkModalOpen(false);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Failed to unlink repository.");
+    } finally {
+      setUnlinkingAction(null);
+    }
+  };
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
       <header className="flex flex-col gap-2">
@@ -265,47 +325,51 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: `/projects/${id}/repositories` })}
-            className="mt-5 cursor-pointer rounded-full bg-white px-5 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90"
+            className="key-button mt-5 cursor-pointer rounded-full px-5 py-2 text-sm font-semibold transition-colors"
           >
             Sign in to Manage Repositories
           </button>
         </section>
       ) : null}
 
-      {!isGuest ? (
+      {!isGuest && repository ? (
         <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
           <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Current Repository</h2>
-          {repository ? (
-            <div className="space-y-1 text-sm text-neutral-300">
-              <p>
-                <span className="text-neutral-400">Full name:</span> {repository.fullName}
-              </p>
-              <p>
-                <span className="text-neutral-400">URL:</span>{" "}
-                <a className="text-blue-300 underline-offset-2 hover:underline" href={repository.htmlUrl} target="_blank" rel="noreferrer">
-                  {repository.htmlUrl}
-                </a>
-              </p>
-              <p>
-                <span className="text-neutral-400">Visibility:</span> {repository.visibility}
-              </p>
-              <p>
-                <span className="text-neutral-400">Default branch:</span> {repository.defaultBranch}
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-neutral-400">No repository linked yet.</p>
-          )}
+          <div className="space-y-1 text-sm text-neutral-300">
+            <p>
+              <span className="text-neutral-400">Full name:</span> {repository.fullName}
+            </p>
+            <p>
+              <span className="text-neutral-400">URL:</span>{" "}
+              <a className="text-blue-300 underline-offset-2 hover:underline" href={repository.htmlUrl} target="_blank" rel="noreferrer">
+                {repository.htmlUrl}
+              </a>
+            </p>
+            <p>
+              <span className="text-neutral-400">Visibility:</span> {repository.visibility}
+            </p>
+            <p>
+              <span className="text-neutral-400">Default branch:</span> {repository.defaultBranch}
+            </p>
+          </div>
           {loadError ? <p className="mt-3 text-sm text-red-400">{loadError}</p> : null}
           {actionError ? <p className="mt-3 text-sm text-red-400">{actionError}</p> : null}
           {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
-          {!canManage ? (
+          {canManage ? (
+            <button
+              type="button"
+              onClick={handleOpenUnlinkModal}
+              className="normal-button mt-4 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors"
+            >
+              Unlink Repo
+            </button>
+          ) : (
             <p className="mt-3 text-xs text-neutral-500">Only the project owner can change repository settings.</p>
-          ) : null}
+          )}
         </section>
       ) : null}
 
-      {!isGuest && canManage ? (
+      {!isGuest && canManage && !repository ? (
         <section className="grid gap-6 md:grid-cols-2">
           <form
             onSubmit={(event) => void handleCreateGithubRepository(event)}
@@ -341,7 +405,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
               <button
                 type="submit"
                 disabled={!githubLinked || isCreatingGithubRepo}
-                className="cursor-pointer rounded-full bg-white px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="key-button cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isCreatingGithubRepo ? "Creating..." : "Create and Link Repository"}
               </button>
@@ -389,13 +453,55 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
               <button
                 type="submit"
                 disabled={isSavingManual}
-                className="cursor-pointer rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="normal-button cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSavingManual ? "Saving..." : "Save Repository Link"}
               </button>
             </div>
           </form>
         </section>
+      ) : null}
+
+      {isUnlinkModalOpen ? (
+        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="app-frame w-full max-w-xl rounded-2xl border border-white/15 bg-background p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-white">Unlink Repository</h2>
+            <p className="mt-3 text-sm text-neutral-400">
+              Choose whether to keep the Github repository or delete it as well. This only affects the current project link unless you choose the delete option.
+            </p>
+
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => void handleUnlinkRepository("unlink_only")}
+                disabled={unlinkingAction !== null}
+                className="normal-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="text-sm font-semibold text-white">Unlink only</span>
+                <span className="mt-1 text-xs text-neutral-400">Remove the repository from this project. The Github repo will still exist.</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleUnlinkRepository("unlink_and_delete")}
+                disabled={unlinkingAction !== null}
+                className="app-destructive-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="text-sm font-semibold text-current">Unlink and delete repo</span>
+                <span className="mt-1 text-xs text-current/80">Remove the project link and permanently delete the Github repository.</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCloseUnlinkModal}
+                disabled={unlinkingAction !== null}
+                className="sub-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="text-sm font-semibold text-white">Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </main>
   );

@@ -393,7 +393,7 @@ export default function CreateProjectPage() {
                 <button
                     onClick={() => handleSend()}
                     disabled={!inputValue.trim()}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white text-black rounded-full hover:bg-white/90 disabled:opacity-0 disabled:pointer-events-none transition-all duration-300 shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
+                  className="key-button absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 disabled:opacity-0 disabled:pointer-events-none transition-all duration-300 shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                 >
                     <ArrowRight className="h-5 w-5" />
                 </button>
@@ -416,7 +416,7 @@ export default function CreateProjectPage() {
                           <button
                             key={i}
                             onClick={() => handleSend(opt)}
-                            className="rounded-full bg-white/5 px-5 py-2 text-base text-white/90 transition-all hover:bg-white/10 hover:text-white cursor-pointer"
+                            className="normal-button rounded-full px-5 py-2 text-base transition-all cursor-pointer"
                           >
                             {opt}
                           </button>
@@ -448,14 +448,14 @@ export default function CreateProjectPage() {
                           nonsenseStreakRef.current = 0;
                         setProgressWarning("");
                       }}
-                      className="rounded-full bg-white/5 px-6 py-3 text-base text-white/60 transition-all hover:bg-white/10 hover:text-white cursor-pointer"
+                      className="normal-button rounded-full px-6 py-3 text-base transition-all cursor-pointer"
                   >
                       Cancel
                   </button>
                   <button
                       onClick={() => handleSend()}
                       disabled={!inputValue.trim()}
-                      className="px-6 py-3 bg-white text-black rounded-full font-medium text-base hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer"
+                      className="key-button flex items-center gap-2 rounded-full px-6 py-3 text-base font-medium disabled:cursor-not-allowed disabled:opacity-50 transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer"
                   >
                       <span>Continue</span>
                       <ArrowRight className="h-4 w-4" />
@@ -484,7 +484,7 @@ export default function CreateProjectPage() {
                 <button
                     onClick={handleCreateProject}
                     disabled={isGenerating}
-                  className="flex w-full items-center justify-center gap-3 rounded-full bg-white py-5 text-xl font-bold text-black shadow-lg transition-all hover:bg-white/90 hover:shadow-xl active:scale-[0.98] cursor-pointer"
+                  className="key-button flex w-full items-center justify-center gap-3 rounded-full py-5 text-xl font-bold shadow-lg transition-all hover:shadow-xl active:scale-[0.98] cursor-pointer"
                 >
                     {isGenerating ? (
                         <>
@@ -502,7 +502,7 @@ export default function CreateProjectPage() {
                     onClick={() => {
                         window.location.reload();
                     }}
-                    className="mt-6 text-white/40 hover:text-white text-sm transition-colors cursor-pointer"
+                  className="normal-button mt-6 rounded-full px-4 py-2 text-sm transition-colors cursor-pointer"
                 >
                     Start Over
                 </button>

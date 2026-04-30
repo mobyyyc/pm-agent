@@ -43,13 +43,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         <p className="text-white/60">Please sign in to access your projects.</p>
         <button
             onClick={() => signIn("google", { callbackUrl: "/" })}
-          className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black shadow-sm hover:bg-neutral-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white cursor-pointer"
+          className="key-button rounded-full px-6 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white cursor-pointer"
         >
             Sign in with Google
         </button>
         <button
             onClick={enterGuestMode}
-          className="rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-all cursor-pointer"
+          className="normal-button rounded-full px-6 py-3 text-sm font-semibold transition-all cursor-pointer"
         >
             Continue without signing in
         </button>

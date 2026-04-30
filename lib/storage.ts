@@ -468,6 +468,12 @@ export async function upsertProjectRepository(input: {
   return mapProjectRepositoryRow(rows[0] as Record<string, unknown>);
 }
 
+export async function deleteProjectRepositoryByProjectId(projectId: string): Promise<void> {
+  await ensureCollaborationSchema();
+
+  await sql`DELETE FROM project_repositories WHERE project_id = ${projectId}`;
+}
+
 // ---------------------------------------------------------------------------
 // Projects
 // ---------------------------------------------------------------------------

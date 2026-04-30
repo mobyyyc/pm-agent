@@ -201,7 +201,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
           <button
             type="button"
             onClick={handleOpenInviteModal}
-            className="cursor-pointer self-start rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+            className="key-button cursor-pointer self-start rounded-full px-4 py-2 text-sm font-semibold"
           >
             Add Member
           </button>
@@ -252,14 +252,14 @@ export default function ProjectMembersPage({ params }: PageProps) {
                 <button
                   type="button"
                   onClick={() => setIsAddMemberModalOpen(false)}
-                  className="cursor-pointer rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white hover:bg-white/20"
+                  className="normal-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold"
                   disabled={isInviting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-full bg-white px-4 py-1.5 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="key-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isInviting}
                 >
                   {isInviting ? "Sending..." : "Send Invitation"}

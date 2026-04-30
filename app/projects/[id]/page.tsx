@@ -228,9 +228,9 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   const frameEditButtonClass =
-    "inline-flex h-7 shrink-0 items-center rounded-full bg-white/15 px-4 text-xs font-semibold text-white transition-all duration-300 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60 sm:pointer-events-none sm:translate-y-1 sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:translate-y-0 sm:group-hover:opacity-100";
+    "normal-button inline-flex h-7 shrink-0 items-center rounded-full px-4 text-xs font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 sm:pointer-events-none sm:translate-y-1 sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:translate-y-0 sm:group-hover:opacity-100";
   const framePrimaryActionButtonClass =
-    "inline-flex h-9 items-center justify-center rounded-full border border-transparent bg-white px-6 text-sm font-semibold leading-none text-black shadow-lg transition-colors duration-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60";
+    "key-button inline-flex h-9 items-center justify-center rounded-full border border-transparent px-6 text-sm font-semibold leading-none shadow-lg transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60";
 
   const getTodayDate = () => new Date().toISOString().slice(0, 10);
 
@@ -901,7 +901,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleRemoveTimeline(index)}
                           disabled={isPending}
-                          className="app-danger-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-destructive-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Remove
                         </button>
@@ -909,7 +909,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleSaveTimeline()}
                           disabled={isPending}
-                          className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="key-button rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isPending ? "Saving..." : "Save"}
                         </button>
@@ -1222,7 +1222,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleRemoveTask(task.id)}
                           disabled={isPending}
-                          className="app-danger-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-destructive-button rounded-full px-4 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Remove
                         </button>
@@ -1230,7 +1230,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleSaveTask()}
                           disabled={isPending}
-                          className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-all duration-300 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="key-button rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isPending ? "Saving..." : "Save"}
                         </button>

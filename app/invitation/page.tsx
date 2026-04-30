@@ -125,7 +125,7 @@ export default function InvitationPage() {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/invitation" })}
-            className="mt-6 cursor-pointer rounded-full bg-white px-6 py-2 text-sm font-semibold text-black hover:bg-white/90"
+            className="key-button mt-6 cursor-pointer rounded-full px-6 py-2 text-sm font-semibold"
           >
             Sign in with Google
           </button>
@@ -173,7 +173,7 @@ export default function InvitationPage() {
                         type="button"
                         onClick={() => void respondToInvitation(invitation.id, "accept")}
                         disabled={pendingInvitationId === invitation.id}
-                        className="cursor-pointer min-w-24 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="key-button cursor-pointer min-w-24 rounded-full px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {pendingInvitationId === invitation.id ? "Working..." : "Accept"}
                       </button>
@@ -181,7 +181,7 @@ export default function InvitationPage() {
                         type="button"
                         onClick={() => void respondToInvitation(invitation.id, "decline")}
                         disabled={pendingInvitationId === invitation.id}
-                        className="cursor-pointer min-w-24 rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="normal-button cursor-pointer min-w-24 rounded-full px-5 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Decline
                       </button>

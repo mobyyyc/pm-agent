@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -53,6 +54,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [isInviting, setIsInviting] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
   const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
@@ -86,6 +88,10 @@ export default function ProjectMembersPage({ params }: PageProps) {
         .catch(() => setNotFoundState(true));
     }
   }, [id, isGuest, session?.user?.email, sessionStatus]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleOpenInviteModal = () => {
     setInviteeEmail("");
@@ -210,66 +216,68 @@ export default function ProjectMembersPage({ params }: PageProps) {
         </div>
       </section>
 
-      {isAddMemberModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-4">
-          <div className="w-full max-w-xl rounded-2xl border border-white/15 bg-background p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-white">Add Member</h2>
-            <p className="mt-3 text-sm text-neutral-400">
-              Enter the invitee&apos;s email address to send a project invitation.
-            </p>
+      {isMounted && isAddMemberModalOpen
+        ? createPortal(
+            <div className="popup-backdrop">
+              <div className="popup-window">
+                <h2 className="text-xl font-semibold text-white">Add Member</h2>
+                <p className="mt-3 text-sm text-neutral-400">
+                  Enter the invitee&apos;s email address to send a project invitation.
+                </p>
 
-            <form className="mt-5 space-y-4" onSubmit={handleInviteSubmit} noValidate>
-              <div>
-                <label htmlFor="invitee-email" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                  Invitee Email
-                </label>
-                <input
-                  id="invitee-email"
-                  type="email"
-                  value={inviteeEmail}
-                  onChange={(event) => {
-                    setInviteeEmail(event.target.value);
-                    if (inviteError) {
-                      setInviteError(null);
-                    }
-                  }}
-                  placeholder="name@example.com"
-                  className={`w-full rounded-xl bg-white/5 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40 ${
-                    inviteError ? "border border-red-500/70" : "border border-white/15"
-                  }`}
-                  disabled={isInviting}
-                  aria-invalid={inviteError ? "true" : "false"}
-                />
+                <form className="mt-5 space-y-4" onSubmit={handleInviteSubmit} noValidate>
+                  <div>
+                    <label htmlFor="invitee-email" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                      Invitee Email
+                    </label>
+                    <input
+                      id="invitee-email"
+                      type="email"
+                      value={inviteeEmail}
+                      onChange={(event) => {
+                        setInviteeEmail(event.target.value);
+                        if (inviteError) {
+                          setInviteError(null);
+                        }
+                      }}
+                      placeholder="name@example.com"
+                      className={`w-full rounded-xl bg-white/5 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40 ${
+                        inviteError ? "border border-red-500/70" : "border border-white/15"
+                      }`}
+                      disabled={isInviting}
+                      aria-invalid={inviteError ? "true" : "false"}
+                    />
+                  </div>
+
+                  {inviteError ? (
+                    <div className="invite-error-frame rounded-xl px-3 py-2.5">
+                      <p className="text-sm font-semibold text-current">{inviteError}</p>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-6 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddMemberModalOpen(false)}
+                      className="normal-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold"
+                      disabled={isInviting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="key-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isInviting}
+                    >
+                      {isInviting ? "Sending..." : "Send Invitation"}
+                    </button>
+                  </div>
+                </form>
               </div>
-
-              {inviteError ? (
-                <div className="invite-error-frame rounded-xl px-3 py-2.5">
-                  <p className="text-sm font-semibold text-current">{inviteError}</p>
-                </div>
-              ) : null}
-
-              <div className="mt-6 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAddMemberModalOpen(false)}
-                  className="normal-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold"
-                  disabled={isInviting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="key-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isInviting}
-                >
-                  {isInviting ? "Sending..." : "Send Invitation"}
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </main>
   );
 }

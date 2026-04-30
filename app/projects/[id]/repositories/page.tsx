@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
@@ -63,6 +64,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const [manualHtmlUrl, setManualHtmlUrl] = useState("");
   const [manualDefaultBranch, setManualDefaultBranch] = useState("main");
   const [manualVisibility, setManualVisibility] = useState<RepositoryVisibility>("private");
+  const [isMounted, setIsMounted] = useState(false);
 
   const [createRepoName, setCreateRepoName] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -126,6 +128,10 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     setManualDefaultBranch(repository.defaultBranch);
     setManualVisibility(repository.visibility);
   }, [repository, githubLogin]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (isPageLoading) {
     return (
@@ -462,47 +468,50 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      {isUnlinkModalOpen ? (
-        <div className="fixed inset-0 z-120 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="app-frame w-full max-w-xl rounded-2xl border border-white/15 bg-background p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-white">Unlink Repository</h2>
-            <p className="mt-3 text-sm text-neutral-400">
-              Choose whether to keep the Github repository or delete it as well. This only affects the current project link unless you choose the delete option.
-            </p>
+      {isMounted && isUnlinkModalOpen
+        ? createPortal(
+            <div className="popup-backdrop">
+              <div className="popup-window app-frame">
+                <h2 className="text-xl font-semibold text-white">Unlink Repository</h2>
+                <p className="mt-3 text-sm text-neutral-400">
+                  Choose whether to keep the Github repository or delete it as well. This only affects the current project link unless you choose the delete option.
+                </p>
 
-            <div className="mt-6 space-y-3">
-              <button
-                type="button"
-                onClick={() => void handleUnlinkRepository("unlink_only")}
-                disabled={unlinkingAction !== null}
-                className="normal-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="text-sm font-semibold text-white">Unlink only</span>
-                <span className="mt-1 text-xs text-neutral-400">Remove the repository from this project. The Github repo will still exist.</span>
-              </button>
+                <div className="mt-6 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleUnlinkRepository("unlink_only")}
+                    disabled={unlinkingAction !== null}
+                    className="normal-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="text-sm font-semibold text-white">Unlink only</span>
+                    <span className="mt-1 text-xs text-neutral-400">Remove the repository from this project. The Github repo will still exist.</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => void handleUnlinkRepository("unlink_and_delete")}
-                disabled={unlinkingAction !== null}
-                className="app-destructive-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="text-sm font-semibold text-current">Unlink and delete repo</span>
-                <span className="mt-1 text-xs text-current/80">Remove the project link and permanently delete the Github repository.</span>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleUnlinkRepository("unlink_and_delete")}
+                    disabled={unlinkingAction !== null}
+                    className="app-destructive-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="text-sm font-semibold text-current">Unlink and delete repo</span>
+                    <span className="mt-1 text-xs text-current/80">Remove the project link and permanently delete the Github repository.</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={handleCloseUnlinkModal}
-                disabled={unlinkingAction !== null}
-                className="sub-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="text-sm font-semibold text-white">Cancel</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+                  <button
+                    type="button"
+                    onClick={handleCloseUnlinkModal}
+                    disabled={unlinkingAction !== null}
+                    className="sub-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="text-sm font-semibold text-white">Cancel</span>
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </main>
   );
 }

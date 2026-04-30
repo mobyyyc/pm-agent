@@ -174,6 +174,29 @@ html {
   box-shadow: var(--frame-shadow-hover);
 }
 
+.popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+}
+
+.popup-window {
+  width: 100%;
+  max-width: 36rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--background);
+  padding: 1.5rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
 html[data-theme="light"] [class~="bg-black"] {
   background-color: var(--background) !important;
 }

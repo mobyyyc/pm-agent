@@ -29,6 +29,7 @@ type RepositoryResponse = {
 
 type ApiErrorBody = {
   error?: string;
+  detail?: string | null;
   issues?: string[];
 };
 
@@ -39,7 +40,12 @@ function formatApiError(body: ApiErrorBody | null | undefined, fallback: string)
   if (Array.isArray(body.issues) && body.issues.length > 0) {
     return body.issues.join(" ");
   }
-  return body.error || fallback;
+
+  if (body.error && body.detail) {
+    return `${body.error} ${body.detail}`;
+  }
+
+  return body.error || body.detail || fallback;
 }
 
 export default function ProjectRepositoriesPage({ params }: PageProps) {
@@ -297,6 +303,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         success?: boolean;
         deletedGithubRepository?: boolean;
         error?: string;
+        detail?: string | null;
         issues?: string[];
       };
 

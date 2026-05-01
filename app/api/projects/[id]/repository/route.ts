@@ -36,6 +36,7 @@ type GithubCreateRepositoryResponse = {
 
 type GithubDeleteRepositoryResponse = {
   message?: string;
+  documentation_url?: string;
 };
 
 function buildRepositoryPayload(input: {
@@ -341,15 +342,18 @@ export async function DELETE(request: Request, context: RouteContext) {
 
       if (!deleteResponse.ok && deleteResponse.status !== 404) {
         const deleteBody = (await deleteResponse.json().catch(() => ({}))) as GithubDeleteRepositoryResponse;
+        const githubDetail = deleteBody.message || null;
+        const permissionsDetail =
+          deleteResponse.status === 403
+            ? "GitHub refused the delete request. This usually means the token lacks repo admin permission, the repository is in an organization with additional restrictions, or the app authorization needs to be refreshed."
+            : deleteResponse.status === 401
+              ? "Check Github permissions."
+              : null;
+
         return NextResponse.json(
           {
-            error: deleteBody.message || "Failed to delete Github repository.",
-            detail:
-              deleteResponse.status === 403
-                ? "Must have admin rights to Repository."
-                : deleteResponse.status === 401
-                  ? "Check Github permissions."
-                  : null,
+            error: githubDetail || "Failed to delete Github repository.",
+            detail: permissionsDetail,
           },
           { status: deleteResponse.status || 500 },
         );

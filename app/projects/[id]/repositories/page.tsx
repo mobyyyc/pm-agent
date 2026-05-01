@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { notFound } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
@@ -64,6 +64,8 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [unlinkingAction, setUnlinkingAction] = useState<UnlinkAction | null>(null);
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [isCreatingGithubRepo, setIsCreatingGithubRepo] = useState(false);
@@ -78,6 +80,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const [createRepoName, setCreateRepoName] = useState("");
   const [createDescription, setCreateDescription] = useState("");
   const [createVisibility, setCreateVisibility] = useState<RepositoryVisibility>("private");
+  const deleteConfirmInputRef = useRef<HTMLInputElement | null>(null);
 
   const guestProjectBundle = isGuest ? getGuestProject(id) : null;
   const project = isGuest ? (guestProjectBundle?.project || null) : dbProject;
@@ -152,6 +155,13 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isUnlinkModalOpen || !showDeleteConfirm) return;
+
+    deleteConfirmInputRef.current?.focus();
+    deleteConfirmInputRef.current?.select();
+  }, [isUnlinkModalOpen, showDeleteConfirm]);
 
   if (isPageLoading) {
     return (
@@ -279,15 +289,33 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const handleOpenUnlinkModal = () => {
     setActionError(null);
     setActionSuccess(null);
+    setShowDeleteConfirm(false);
+    setDeleteConfirmText("");
     setIsUnlinkModalOpen(true);
   };
 
   const handleCloseUnlinkModal = () => {
     if (unlinkingAction) return;
+    setShowDeleteConfirm(false);
+    setDeleteConfirmText("");
     setIsUnlinkModalOpen(false);
   };
 
+  const handleOpenDeleteConfirm = () => {
+    setActionError(null);
+    setActionSuccess(null);
+    setShowDeleteConfirm(true);
+    setDeleteConfirmText("");
+  };
+
+  const canConfirmGithubDelete = deleteConfirmText.trim() === "DELETE";
+
   const handleUnlinkRepository = async (action: UnlinkAction) => {
+    if (action === "unlink_and_delete" && !canConfirmGithubDelete) {
+      setActionError('Type DELETE to confirm permanent repository deletion.');
+      return;
+    }
+
     setActionError(null);
     setActionSuccess(null);
     setUnlinkingAction(action);
@@ -320,6 +348,8 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
       setManualHtmlUrl("");
       setManualDefaultBranch("main");
       setManualVisibility("private");
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText("");
       setActionSuccess(
         body.deletedGithubRepository
           ? "Repository unlinked and Github repo deleted."
@@ -513,7 +543,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
       {isMounted && isUnlinkModalOpen
         ? createPortal(
             <div className="popup-backdrop">
-              <div className="popup-window app-frame">
+              <div className={`popup-window app-frame w-full max-h-[calc(100dvh-2rem)] overflow-y-auto transition-all duration-300 ease-in-out ${showDeleteConfirm ? "sm:max-w-[42rem]" : "sm:max-w-[36rem]"}`}>
                 <h2 className="text-xl font-semibold text-white">Unlink Repository</h2>
                 <p className="mt-3 text-sm text-neutral-400">
                   Choose whether to keep the Github repository or delete it as well. This only affects the current project link unless you choose the delete option.
@@ -534,13 +564,58 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
                   <button
                     type="button"
-                    onClick={() => void handleUnlinkRepository("unlink_and_delete")}
-                    disabled={unlinkingAction !== null}
+                    onClick={handleOpenDeleteConfirm}
+                    disabled={unlinkingAction !== null || showDeleteConfirm}
                     className="app-destructive-button flex w-full cursor-pointer flex-col items-start rounded-xl px-4 py-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span className="text-sm font-semibold text-current">Unlink and delete repo</span>
                     <span className="mt-1 text-xs text-current/80">Remove the project link and permanently delete the Github repository.</span>
                   </button>
+
+                  <div
+                    className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-in-out ${
+                      showDeleteConfirm ? "mt-4 max-h-72 opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-sm font-semibold text-white">Type DELETE to continue</p>
+                      <p className="mt-1 text-xs text-neutral-400">
+                        This permanently deletes the Github repository and cannot be undone.
+                      </p>
+                      <input
+                        ref={deleteConfirmInputRef}
+                        value={deleteConfirmText}
+                        onChange={(event) => setDeleteConfirmText(event.target.value)}
+                        placeholder="DELETE"
+                        spellCheck={false}
+                        autoComplete="off"
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+                      />
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <button
+                          type="button"
+                          onClick={() => void handleUnlinkRepository("unlink_and_delete")}
+                          disabled={!canConfirmGithubDelete || unlinkingAction !== null}
+                          className="app-destructive-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {unlinkingAction === "unlink_and_delete" ? "Deleting..." : "Delete repository"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (unlinkingAction !== null) return;
+                            setShowDeleteConfirm(false);
+                            setDeleteConfirmText("");
+                            setActionError(null);
+                          }}
+                          disabled={unlinkingAction !== null}
+                          className="sub-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Back
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   <button
                     type="button"

@@ -195,6 +195,10 @@ html {
   background: var(--background);
   padding: 1.5rem;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  transform-origin: center;
+  transition: max-width 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .error-msg {

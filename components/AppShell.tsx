@@ -264,6 +264,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   const displayName = isGuest ? "Guest" : session?.user?.name || "User";
+  const userAvatar = session?.user?.image ? (
+    <Image
+      src={session.user.image}
+      alt={`${displayName} avatar`}
+      width={30}
+      height={30}
+      className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-white/15"
+    />
+  ) : (
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white/90 ring-1 ring-white/15">
+      {displayName.charAt(0).toUpperCase()}
+    </span>
+  );
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-black text-white overflow-x-clip">
@@ -548,9 +561,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
           <div className="pointer-events-auto hidden items-center gap-4 lg:flex">
             <ThemeToggleButton />
-            <div className="text-sm text-right">
+            <div className="flex items-center gap-3 text-sm text-right">
+                {userAvatar}
+                <div>
                 <p className="text-white font-medium">{displayName}</p>
                 {isGuest && <p className="text-xs text-neutral-500">Temporary session</p>}
+                </div>
             </div>
             <button
               onClick={handleSignOut}

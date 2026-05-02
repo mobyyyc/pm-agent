@@ -61,20 +61,35 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
     <div className="mt-6">
       <h3 className="mb-3 text-lg font-semibold tracking-tight text-white">Recent Commits</h3>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
-      <ul className="space-y-3">
-        {commits.map((c) => (
-          <li key={c.sha} className="rounded-xl border border-white/6 bg-black/20 p-3">
-            <a href={c.htmlUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-white hover:underline">
-              {c.message.split('\n')[0] || "(no message)"}
-            </a>
-            <div className="mt-1 text-xs text-neutral-400">
-              {c.authorName ? `${c.authorName} • ` : ""}
-              {c.date ? new Date(c.date).toLocaleString() : ""}
-            </div>
-            <div className="mt-2 text-xs text-neutral-500">{c.sha.slice(0, 7)}</div>
-          </li>
-        ))}
-      </ul>
+
+      <div className="relative">
+        {/* Vertical line behind the commit items */}
+        <div className="absolute left-4 top-0 bottom-0 w-px commit-card-line" />
+
+        <ul className="space-y-6">
+          {commits.map((c) => (
+            <li key={c.sha} className="relative pl-12">
+              {/* Commit symbol */}
+              <span className="absolute left-0 top-3 flex h-8 w-8 items-center justify-center">
+                <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-full commit-node commit-card-border">
+                  <span className="block h-2.5 w-2.5 rounded-full bg-white" />
+                </span>
+              </span>
+
+              <div className="commit-card rounded-xl p-3">
+                <a href={c.htmlUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-white hover:underline">
+                  {c.message.split('\n')[0] || "(no message)"}
+                </a>
+                <div className="mt-1 text-xs text-neutral-400">
+                  {c.authorName ? `${c.authorName} • ` : ""}
+                  {c.date ? new Date(c.date).toLocaleString() : ""}
+                </div>
+                <div className="mt-2 text-xs text-neutral-500">{c.sha.slice(0, 7)}</div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="mt-4 flex items-center gap-3">
         <button

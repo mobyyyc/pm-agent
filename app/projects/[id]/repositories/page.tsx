@@ -8,6 +8,7 @@ import { signIn, useSession } from "next-auth/react";
 
 import { useGuest } from "@/components/GuestContext";
 import type { Project, ProjectMember, ProjectRepository, RepositoryVisibility } from "@/types/models";
+import RepoCommits from "@/components/RepoCommits";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -444,6 +445,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           ) : (
             <p className="mt-3 text-xs text-neutral-500">Only the project owner can change repository settings.</p>
           )}
+          <RepoCommits projectId={id} owner={repository.ownerLogin} repo={repository.repoName} />
         </section>
       ) : null}
 

@@ -9,6 +9,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useGuest } from "@/components/GuestContext";
 import type { Project, ProjectMember, ProjectRepository, RepositoryVisibility } from "@/types/models";
 import RepoCommits from "@/components/RepoCommits";
+import GithubRepoPicker from "@/components/GithubRepoPicker";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -492,53 +493,16 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
             </div>
           </form>
 
-          <form
-            onSubmit={(event) => void handleManualLinkSubmit(event)}
-            className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors"
-          >
-            <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Link Existing Repository</h2>
-            <div className="space-y-3">
-              <input
-                value={manualOwnerLogin}
-                onChange={(event) => setManualOwnerLogin(event.target.value)}
-                placeholder="Owner login"
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
-              />
-              <input
-                value={manualRepoName}
-                onChange={(event) => setManualRepoName(event.target.value)}
-                placeholder="Repository name"
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
-              />
-              <input
-                value={manualHtmlUrl}
-                onChange={(event) => setManualHtmlUrl(event.target.value)}
-                placeholder="https://github.com/owner/repo"
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
-              />
-              <input
-                value={manualDefaultBranch}
-                onChange={(event) => setManualDefaultBranch(event.target.value)}
-                placeholder="Default branch"
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
-              />
-              <select
-                value={manualVisibility}
-                onChange={(event) => setManualVisibility(event.target.value as RepositoryVisibility)}
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 focus:border-white/30"
-              >
-                <option value="private">Private</option>
-                <option value="public">Public</option>
-              </select>
-              <button
-                type="submit"
-                disabled={isSavingManual}
-                className="normal-button cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSavingManual ? "Saving..." : "Save Repository Link"}
-              </button>
-            </div>
-          </form>
+          {canManage ? (
+            githubLinked ? (
+              <GithubRepoPicker projectId={id} onLinked={(repo) => setRepository(repo)} />
+            ) : (
+              <div className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+                <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Link Existing Repository</h2>
+                <p className="text-sm text-amber-300">Link your Github account in Settings to choose a repository.</p>
+              </div>
+            )
+          ) : null}
         </section>
       ) : null}
 

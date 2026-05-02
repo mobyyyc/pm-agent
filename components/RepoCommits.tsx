@@ -8,6 +8,7 @@ type Commit = {
   authorName: string | null;
   date: string | null;
   htmlUrl: string;
+  verified: boolean;
 };
 
 export default function RepoCommits({ projectId, owner, repo }: { projectId: string; owner: string; repo: string }) {
@@ -31,7 +32,7 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/projects/${projectId}/repository/commits?page=${page}&per_page=20`);
+        const res = await fetch(`/api/projects/${projectId}/repository/commits?page=${page}&per_page=10`);
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error((body && (body.error || body.message)) || `Status ${res.status}`);
@@ -41,7 +42,7 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
         if (cancelled) return;
         const newCommits: Commit[] = Array.isArray(body.commits) ? body.commits : [];
         setCommits((prev) => (page === 1 ? newCommits : prev.concat(newCommits)));
-        setHasMore(newCommits.length >= 20);
+        setHasMore(newCommits.length >= 10);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load commits.");
       } finally {
@@ -58,8 +59,8 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
   if (!owner || !repo) return null;
 
   return (
-    <div className="mt-6">
-      <h3 className="mb-3 text-lg font-semibold tracking-tight text-white">Recent Commits</h3>
+    <div>
+      <h3 className="mb-3 text-xl font-semibold tracking-tight text-white">Recent Commits</h3>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
 
       <div className="relative">
@@ -77,9 +78,19 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
               </span>
 
               <div className="commit-card rounded-xl p-3">
-                <a href={c.htmlUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-white hover:underline">
-                  {c.message.split('\n')[0] || "(no message)"}
-                </a>
+                <div className="flex items-start justify-between gap-3">
+                  <a href={c.htmlUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-white hover:underline">
+                    {c.message.split('\n')[0] || "(no message)"}
+                  </a>
+                  {c.verified ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/12 px-2 py-0.5 text-[11px] font-semibold verified-commit-badge">
+                      <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3 fill-current">
+                        <path d="M8 1.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 0 0 0-13Zm3.03 5.22-3.4 3.4a.75.75 0 0 1-1.06 0L4.97 8.48a.75.75 0 1 1 1.06-1.06l1.06 1.06 2.87-2.87a.75.75 0 1 1 1.06 1.06Z" />
+                      </svg>
+                      Verified
+                    </span>
+                  ) : null}
+                </div>
                 <div className="mt-1 text-xs text-neutral-400">
                   {c.authorName ? `${c.authorName} • ` : ""}
                   {c.date ? new Date(c.date).toLocaleString() : ""}

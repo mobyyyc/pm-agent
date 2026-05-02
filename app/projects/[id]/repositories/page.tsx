@@ -392,6 +392,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
       ) : null}
 
       {!isGuest && repository ? (
+        <>
         <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
           <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Current Repository</h2>
           <div className="space-y-1 text-sm text-neutral-300">
@@ -446,8 +447,12 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           ) : (
             <p className="mt-3 text-xs text-neutral-500">Only the project owner can change repository settings.</p>
           )}
+        </section>
+
+        <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
           <RepoCommits projectId={id} owner={repository.ownerLogin} repo={repository.repoName} />
         </section>
+        </>
       ) : null}
 
       {!isGuest && canManage && !repository ? (
@@ -509,7 +514,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
       {isMounted && isUnlinkModalOpen
         ? createPortal(
             <div className="popup-backdrop">
-              <div className={`popup-window app-frame w-full max-h-[calc(100dvh-2rem)] overflow-y-auto transition-all duration-300 ease-in-out ${showDeleteConfirm ? "sm:max-w-[42rem]" : "sm:max-w-[36rem]"}`}>
+              <div className={`popup-window app-frame w-full max-h-[calc(100dvh-2rem)] overflow-y-auto transition-all duration-300 ease-in-out ${showDeleteConfirm ? "sm:max-w-2xl" : "sm:max-w-xl"}`}>
                 <h2 className="text-xl font-semibold text-white">Unlink Repository</h2>
                 <p className="mt-3 text-sm text-neutral-400">
                   Choose whether to keep the Github repository or delete it as well. This only affects the current project link unless you choose the delete option.

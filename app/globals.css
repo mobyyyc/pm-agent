@@ -313,6 +313,14 @@ html[data-theme="light"] .app-you-badge {
   color: #007740 !important;
 }
 
+.verified-commit-badge {
+  color: #6ee7b7;
+}
+
+html[data-theme="light"] .verified-commit-badge {
+  color: #007740;
+}
+
 html[data-theme="light"] [class~="text-white/95"] {
   color: #0f172a !important;
 }

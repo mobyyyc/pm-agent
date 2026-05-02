@@ -73,6 +73,7 @@ export async function GET(_request: Request, context: RouteContext) {
       authorName: (c.commit && c.commit.author && c.commit.author.name) || (c.author && c.author.login) || null,
       date: c.commit?.author?.date || null,
       htmlUrl: c.html_url || `https://github.com/${owner}/${repo}/commit/${c.sha}`,
+      verified: Boolean(c.commit?.verification?.verified),
     }));
 
     return NextResponse.json({ commits, fetchedAt: isoNow() });

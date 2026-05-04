@@ -818,7 +818,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
               return (
                 <li
                   key={`${item.phase}-${index}`}
-                  className={`app-frame-item app-frame-hover group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
+                  className={`timeline-frame-item app-frame-item app-frame-hover group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
                     isEditing ? "ring-1 ring-white/20" : "hover:bg-white/10"
                   }`}
                 >

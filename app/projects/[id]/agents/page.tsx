@@ -202,7 +202,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
       {actionError ? <p className="text-sm text-red-300">{actionError}</p> : null}
       {actionSuccess ? <p className="text-sm text-emerald-300">{actionSuccess}</p> : null}
 
-      <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+      <section className="outer-frame outer-frame-hover rounded-2xl p-6 transition-all duration-300 ease-in-out">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-tight text-white">Attached Agents</h2>
           <Link
@@ -218,7 +218,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
         ) : (
           <div className="space-y-4">
             {agents.map((agent) => (
-              <article key={agent.agentId} className="rounded-xl border border-white/10 bg-black/25 p-4">
+              <article key={agent.agentId} className="inner-frame inner-frame-hover rounded-xl p-4 transition-all duration-300 ease-in-out">
                 <div className="mb-2 flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-base font-semibold text-white">{agent.name}</h3>

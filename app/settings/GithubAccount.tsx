@@ -44,6 +44,8 @@ export default function GithubAccountSettings() {
     if (!linkStatus || linkStatus === "success") return null;
     return statusMessages[linkStatus] || "Github linking status updated.";
   }, [linkStatus]);
+  const framedItemClass =
+    "timeline-frame-item app-frame-item app-frame-hover rounded-xl bg-white/5 transition-all duration-300 ease-in-out hover:bg-white/10";
 
   useEffect(() => {
     let active = true;
@@ -113,7 +115,7 @@ export default function GithubAccountSettings() {
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold text-white">Github Account</h2>
 
-      <div className="app-frame-item rounded-xl p-5">
+      <div className={`${framedItemClass} p-5`}>
         <p className="text-sm leading-relaxed text-neutral-300">
           Link your Versor account to your Github account to manage repositories for group projects.
         </p>
@@ -124,7 +126,7 @@ export default function GithubAccountSettings() {
         {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
 
         {linkedAccount ? (
-          <div className="mt-4 rounded-xl bg-white/5 px-4 py-3 text-sm text-neutral-300">
+          <div className={`${framedItemClass} mt-4 px-4 py-3 text-sm text-neutral-300`}>
             <div className="flex items-center gap-3">
               {linkedAccount.githubAvatarUrl ? (
                 <img

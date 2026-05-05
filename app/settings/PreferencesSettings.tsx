@@ -81,12 +81,14 @@ export default function PreferencesSettings() {
 
   const preset = useMemo(() => QUESTION_STYLE_PRESETS[styleLevel], [styleLevel]);
   const sliderPercent = ((styleLevel - MIN_STYLE_LEVEL) / (MAX_STYLE_LEVEL - MIN_STYLE_LEVEL)) * 100;
+  const framedItemClass =
+    "timeline-frame-item app-frame-item app-frame-hover rounded-xl bg-white/5 transition-all duration-300 ease-in-out hover:bg-white/10";
 
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-semibold text-white">Perferences</h2>
 
-      <div className="app-frame-item rounded-xl p-5">
+      <div className={`${framedItemClass} p-5`}>
         <p className="text-sm font-semibold uppercase tracking-wide text-neutral-400">Style</p>
         <p className="mt-2 text-sm text-neutral-300">
           Control how simple or detailed the PM agent&apos;s clarifying questions should feel.
@@ -158,9 +160,7 @@ export default function PreferencesSettings() {
         </div>
 
         <div
-          className={`mt-3 rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out ${
-            isAnimating ? "opacity-85" : "opacity-100"
-          }`}
+          className={`${framedItemClass} mt-3 p-4 ${isAnimating ? "opacity-85" : "opacity-100"}`}
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Example question</p>
           <p className="mt-2 text-sm italic text-neutral-200">&quot;{preset.example}&quot;</p>

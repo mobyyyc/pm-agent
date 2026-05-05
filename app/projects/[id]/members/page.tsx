@@ -169,10 +169,10 @@ export default function ProjectMembersPage({ params }: PageProps) {
         <p className="text-sm text-neutral-500">Project: {project.name || project.idea}</p>
       </header>
 
-      <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+      <section className="outer-frame outer-frame-hover rounded-2xl p-6 transition-all duration-300 ease-in-out">
         <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Team</h2>
         <div className="space-y-3">
-          <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+          <div className="inner-frame inner-frame-hover rounded-xl p-4 transition-all duration-300 ease-in-out">
             <p className="text-sm text-neutral-300">Member list</p>
             {members.length === 0 ? (
               <p className="mt-1 text-xs text-neutral-500">No members added yet.</p>
@@ -181,7 +181,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
                 {members.map((member) => (
                   <li
                     key={member.userId}
-                    className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm"
+                    className="inner-frame inner-frame-hover flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-all duration-300 ease-in-out"
                   >
                     <div>
                       <div className="flex items-center gap-2">

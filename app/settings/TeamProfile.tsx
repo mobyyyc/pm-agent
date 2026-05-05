@@ -254,6 +254,8 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
   };
 
   const profileToShow = importAnalysis?.normalized ?? savedProfile;
+  const framedItemClass =
+    "timeline-frame-item app-frame-item app-frame-hover rounded-xl bg-white/5 transition-all duration-300 ease-in-out hover:bg-white/10";
 
   return (
     <>
@@ -265,11 +267,11 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
           {success === "Profile analyzed" && <p className="text-sm text-green-400">{success}</p>}
 
           {loadingProfile ? (
-            <div className="app-frame-item rounded-xl p-5">
+            <div className={`${framedItemClass} p-5`}>
               <p className="text-sm text-neutral-300">Loading current profile...</p>
             </div>
           ) : !profileToShow ? (
-            <div className="app-frame-item rounded-xl p-5">
+            <div className={`${framedItemClass} p-5`}>
               <p className="text-sm text-neutral-300">No team profile has been imported yet.</p>
               <button
                 type="button"
@@ -282,22 +284,22 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
           ) : (
             <>
               {importAnalysis && (
-                <div className="app-frame-item rounded-xl p-4">
+                <div className={`${framedItemClass} p-4`}>
                   <p className="text-xs uppercase tracking-wide text-neutral-500">Analysis preview</p>
                   <p className="mt-2 text-sm text-neutral-300">Showing analyzed output. Confirm import to save these changes.</p>
                 </div>
               )}
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="app-frame-item rounded-xl p-4">
+                <div className={`${framedItemClass} p-4`}>
                   <p className="text-xs uppercase tracking-wide text-neutral-500">Team name</p>
                   <p className="mt-2 text-sm font-semibold text-white">{profileToShow.name || "Not set"}</p>
                 </div>
-                <div className="app-frame-item rounded-xl p-4">
+                <div className={`${framedItemClass} p-4`}>
                   <p className="text-xs uppercase tracking-wide text-neutral-500">Industry</p>
                   <p className="mt-2 text-sm font-semibold text-white">{profileToShow.industry || "Not set"}</p>
                 </div>
-                <div className="app-frame-item rounded-xl p-4 sm:col-span-2">
+                <div className={`${framedItemClass} p-4 sm:col-span-2`}>
                   <p className="text-xs uppercase tracking-wide text-neutral-500">Last updated</p>
                   <p className="mt-2 text-sm font-semibold text-white">
                     {importAnalysis
@@ -317,7 +319,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
                   ["Target audience", profileToShow.targetAudience],
                   ["Design system", profileToShow.designSystem],
                 ] as Array<[string, string[]]>).map(([title, values]) => (
-                  <div key={title} className="app-frame-item rounded-xl p-4">
+                  <div key={title} className={`${framedItemClass} p-4`}>
                     <p className="text-xs uppercase tracking-wide text-neutral-500">{title}</p>
                     {values.length === 0 ? (
                       <p className="mt-2 text-sm text-neutral-400">Not set</p>
@@ -342,7 +344,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
           )}
 
           {importAnalysis && (
-            <div className="app-frame-item rounded-xl p-4">
+            <div className={`${framedItemClass} p-4`}>
               <p className="text-xs uppercase tracking-wide text-neutral-500">Analyzed summary</p>
               <p className="mt-2 text-sm text-neutral-300">{importAnalysis.summary}</p>
 
@@ -429,7 +431,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
                   setIsDragging(false);
                 }}
                 onDrop={handleDrop}
-                className={`app-frame-item flex min-h-56 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all ${
+                className={`${framedItemClass} flex min-h-56 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all ${
                   isDragging
                     ? "border-white bg-white/10"
                     : "border-white/20 bg-black/30 hover:border-white/40 hover:bg-white/5"

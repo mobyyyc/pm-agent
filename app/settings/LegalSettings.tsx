@@ -33,7 +33,7 @@ export default function LegalSettings() {
           <Link
             key={page.href}
             href={page.href}
-            className="timeline-frame-item app-frame-item app-frame-hover block rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out hover:bg-white/10"
+            className="inner-frame inner-frame-hover block rounded-xl p-4 transition-all duration-300 ease-in-out"
           >
             <p className="text-base font-semibold text-white">{page.title}</p>
             <p className="mt-1 text-sm text-neutral-300">{page.description}</p>

@@ -111,6 +111,34 @@ export const projectRepositorySchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const agentStatusSchema = z.enum(["active", "paused"]);
+
+export const agentDefinitionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  tagline: z.string().min(1),
+  category: z.string().min(1),
+  description: z.string().min(1),
+  recommendedSchedule: z.string().nullable(),
+  tags: z.array(z.string().min(1)).min(1),
+});
+
+export const projectAgentSchema = z.object({
+  projectId: z.string().min(1),
+  agentId: z.string().min(1),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  category: z.string().min(1),
+  status: agentStatusSchema,
+  schedule: z.string().nullable(),
+  config: z.record(z.unknown()),
+  lastRunAt: z.string().datetime().nullable(),
+  nextRunAt: z.string().datetime().nullable(),
+  createdByUserId: z.string().min(1),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
 export type TeamKnowledge = z.infer<typeof teamKnowledgeSchema>;
 export type UserTeam = z.infer<typeof userTeamSchema>;
 export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
@@ -120,6 +148,9 @@ export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
 export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
 export type RepositoryVisibility = z.infer<typeof repositoryVisibilitySchema>;
 export type ProjectRepository = z.infer<typeof projectRepositorySchema>;
+export type AgentStatus = z.infer<typeof agentStatusSchema>;
+export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
+export type ProjectAgent = z.infer<typeof projectAgentSchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),

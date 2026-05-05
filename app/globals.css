@@ -284,6 +284,10 @@ html[data-theme="light"] [class~="bg-black/30"] {
   background-color: rgba(255, 255, 255, 0.64) !important;
 }
 
+html[data-theme="light"] [class~="bg-black/40"] {
+  background-color: rgba(255, 255, 255, 0.72) !important;
+}
+
 html[data-theme="light"] [class~="bg-white"] {
   background-color: #0f172a !important;
 }

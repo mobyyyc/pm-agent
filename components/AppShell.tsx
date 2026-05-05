@@ -10,8 +10,10 @@ import {
   Bars3Icon,
   ChevronLeftIcon,
   FolderIcon,
+  SparklesIcon,
   PlusIcon,
   Squares2X2Icon,
+  CpuChipIcon,
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -137,10 +139,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isMembersTab = !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/members`);
   const isRepositoriesTab =
     !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/repositories`);
+  const isAgentsTab = !!selectedProjectId && pathname.startsWith(`/projects/${selectedProjectId}/agents`);
   const isDashboardTab =
     !!selectedProjectId &&
     (pathname === `/projects/${selectedProjectId}` ||
-      (!isMembersTab && !isRepositoriesTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
+      (!isMembersTab && !isRepositoriesTab && !isAgentsTab && pathname.startsWith(`/projects/${selectedProjectId}/`)));
 
   useEffect(() => {
     const nextView = isProjectRoute ? "project" : "main";
@@ -347,6 +350,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <PlusIcon className="h-4 w-4" />
                 New Project
               </Link>
+              <Link
+                href="/agents/browse"
+                className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium hover:bg-white/10 ${
+                  pathname.startsWith("/agents/browse") ? "bg-white/10 text-white" : "text-neutral-400"
+                }`}
+              >
+                <SparklesIcon className="h-4 w-4" />
+                Browse Agents
+              </Link>
             </div>
 
             <div className="my-4 border-t border-white/10" />
@@ -444,6 +456,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   <FolderIcon className="h-4 w-4" />
                   Repository
+                </Link>
+                <Link
+                  href={`/projects/${selectedProjectId}/agents`}
+                  className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 ${
+                    isAgentsTab ? "bg-white/10 text-white" : "text-neutral-400"
+                  }`}
+                >
+                  <CpuChipIcon className="h-4 w-4" />
+                  Agents
                 </Link>
               </div>
             )}

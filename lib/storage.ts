@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import {
   appUserSchema,
+  projectAgentSchema,
   projectSchema,
   projectRepositorySchema,
   projectInvitationSchema,
@@ -8,6 +9,7 @@ import {
   taskSchema,
   userTeamSchema,
   type AppUser,
+  type ProjectAgent,
   type Project,
   type ProjectRepository,
   type ProjectInvitation,
@@ -76,12 +78,33 @@ async function initializeCollaborationSchema(): Promise<void> {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_agents (
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      agent_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('active', 'paused')),
+      schedule TEXT,
+      config JSONB NOT NULL DEFAULT '{}'::jsonb,
+      last_run_at TEXT,
+      next_run_at TEXT,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (project_id, agent_id)
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_user_id ON project_members(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON project_members(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_inviter_user_id ON project_invitations(inviter_user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_invitee_user_id ON project_invitations(invitee_user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_project_id ON project_agents(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)
@@ -167,6 +190,24 @@ function mapProjectRepositoryRow(row: Record<string, unknown>): ProjectRepositor
     defaultBranch: String(row.default_branch),
     visibility: row.visibility,
     externalId: String(row.external_id),
+    createdByUserId: String(row.created_by_user_id),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  });
+}
+
+function mapProjectAgentRow(row: Record<string, unknown>): ProjectAgent {
+  return projectAgentSchema.parse({
+    projectId: String(row.project_id),
+    agentId: String(row.agent_id),
+    name: String(row.name),
+    description: String(row.description),
+    category: String(row.category),
+    status: row.status,
+    schedule: typeof row.schedule === "string" ? row.schedule : null,
+    config: (row.config as Record<string, unknown>) || {},
+    lastRunAt: typeof row.last_run_at === "string" ? row.last_run_at : null,
+    nextRunAt: typeof row.next_run_at === "string" ? row.next_run_at : null,
     createdByUserId: String(row.created_by_user_id),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -472,6 +513,148 @@ export async function deleteProjectRepositoryByProjectId(projectId: string): Pro
   await ensureCollaborationSchema();
 
   await sql`DELETE FROM project_repositories WHERE project_id = ${projectId}`;
+}
+
+// ---------------------------------------------------------------------------
+// Project agents
+// ---------------------------------------------------------------------------
+
+export async function getProjectAgentsByProjectId(projectId: string): Promise<ProjectAgent[]> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_agents
+    WHERE project_id = ${projectId}
+    ORDER BY created_at ASC
+  `;
+
+  return rows.map((row) => mapProjectAgentRow(row as Record<string, unknown>));
+}
+
+export async function getProjectAgentByProjectIdAndAgentId(
+  projectId: string,
+  agentId: string,
+): Promise<ProjectAgent | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_agents
+    WHERE project_id = ${projectId} AND agent_id = ${agentId}
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentRow(rows[0] as Record<string, unknown>);
+}
+
+export async function upsertProjectAgent(input: {
+  projectId: string;
+  agentId: string;
+  name: string;
+  description: string;
+  category: string;
+  status: "active" | "paused";
+  schedule: string | null;
+  config: Record<string, unknown>;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  createdByUserId: string;
+  timestamp: string;
+}): Promise<ProjectAgent> {
+  await ensureCollaborationSchema();
+
+  const createdByUserId = normalizeUserId(input.createdByUserId);
+  const rows = await sql`
+    INSERT INTO project_agents (
+      project_id,
+      agent_id,
+      name,
+      description,
+      category,
+      status,
+      schedule,
+      config,
+      last_run_at,
+      next_run_at,
+      created_by_user_id,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${input.projectId},
+      ${input.agentId},
+      ${input.name},
+      ${input.description},
+      ${input.category},
+      ${input.status},
+      ${input.schedule},
+      ${JSON.stringify(input.config)}::jsonb,
+      ${input.lastRunAt},
+      ${input.nextRunAt},
+      ${createdByUserId},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT (project_id, agent_id)
+    DO UPDATE SET
+      name = EXCLUDED.name,
+      description = EXCLUDED.description,
+      category = EXCLUDED.category,
+      status = EXCLUDED.status,
+      schedule = EXCLUDED.schedule,
+      config = EXCLUDED.config,
+      last_run_at = EXCLUDED.last_run_at,
+      next_run_at = EXCLUDED.next_run_at,
+      created_by_user_id = EXCLUDED.created_by_user_id,
+      updated_at = EXCLUDED.updated_at
+    RETURNING *
+  `;
+
+  return mapProjectAgentRow(rows[0] as Record<string, unknown>);
+}
+
+export async function updateProjectAgent(
+  projectId: string,
+  agentId: string,
+  updates: {
+    status?: "active" | "paused";
+    schedule?: string | null;
+    config?: Record<string, unknown>;
+  },
+  timestamp: string,
+): Promise<ProjectAgent | null> {
+  await ensureCollaborationSchema();
+
+  const shouldUpdateSchedule = Object.prototype.hasOwnProperty.call(updates, "schedule");
+  const shouldUpdateConfig = Object.prototype.hasOwnProperty.call(updates, "config");
+  const nextSchedule = shouldUpdateSchedule ? updates.schedule ?? null : null;
+  const nextConfigJson = shouldUpdateConfig ? JSON.stringify(updates.config ?? {}) : "{}";
+  const nextStatus = updates.status ?? null;
+
+  const rows = await sql`
+    UPDATE project_agents
+    SET
+      status = COALESCE(${nextStatus}, status),
+      schedule = CASE WHEN ${shouldUpdateSchedule} THEN ${nextSchedule} ELSE schedule END,
+      config = CASE WHEN ${shouldUpdateConfig} THEN ${nextConfigJson}::jsonb ELSE config END,
+      updated_at = ${timestamp}
+    WHERE project_id = ${projectId} AND agent_id = ${agentId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentRow(rows[0] as Record<string, unknown>);
+}
+
+export async function deleteProjectAgent(projectId: string, agentId: string): Promise<void> {
+  await ensureCollaborationSchema();
+
+  await sql`
+    DELETE FROM project_agents
+    WHERE project_id = ${projectId} AND agent_id = ${agentId}
+  `;
 }
 
 // ---------------------------------------------------------------------------

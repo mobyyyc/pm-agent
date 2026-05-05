@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  agentStatusSchema,
   aiPlanSchema,
   repositoryVisibilitySchema,
   teamImportAnalysisSchema,
@@ -94,6 +95,22 @@ export const createGithubRepositoryRequestSchema = z.object({
   visibility: repositoryVisibilitySchema.default("private"),
   autoInit: z.boolean().optional().default(true),
 });
+
+export const attachProjectAgentRequestSchema = z.object({
+  agentId: z.string().trim().min(1, "Agent ID is required."),
+  schedule: z.string().trim().min(1).nullable().optional(),
+  config: z.record(z.unknown()).optional(),
+});
+
+export const updateProjectAgentRequestSchema = z
+  .object({
+    status: agentStatusSchema.optional(),
+    schedule: z.string().trim().min(1).nullable().optional(),
+    config: z.record(z.unknown()).optional(),
+  })
+  .refine((value) => value.status !== undefined || value.schedule !== undefined || value.config !== undefined, {
+    message: "At least one agent field must be provided.",
+  });
 
 const arrayFromStringSchema = z
   .union([z.array(z.string()), z.string()])

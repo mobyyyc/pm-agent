@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
+import LegalSettings from "./LegalSettings";
 import { TeamProfile, TEAM_PROFILE_TABS, type TeamProfileTab } from "./TeamProfile";
 import GithubAccountSettings from "./GithubAccount";
 import PreferencesSettings from "./PreferencesSettings";
 
-type SettingsTab = TeamProfileTab | "github-account" | "preference-style";
+type SettingsTab = TeamProfileTab | "github-account" | "preference-style" | "legal";
 
 export default function Settings() {
   const { data: session, status } = useSession();
@@ -115,6 +116,22 @@ export default function Settings() {
               <p className="text-xs opacity-80">Question style depth</p>
             </button>
           </nav>
+
+          <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-500">Legal</p>
+          <nav className="space-y-1" aria-label="Legal sections">
+            <button
+              type="button"
+              onClick={() => setActiveTab("legal")}
+              className={`w-full rounded-xl px-3 py-2 text-left transition-colors cursor-pointer ${
+                activeTab === "legal"
+                  ? "bg-white/10 text-white"
+                  : "text-neutral-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <p className="text-sm font-semibold">Legal</p>
+              <p className="text-xs opacity-80">Privacy, cookies, and terms</p>
+            </button>
+          </nav>
         </aside>
 
         <section className="app-frame self-start rounded-2xl p-5 sm:p-6">
@@ -122,6 +139,8 @@ export default function Settings() {
             <GithubAccountSettings />
           ) : activeTab === "preference-style" ? (
             <PreferencesSettings />
+          ) : activeTab === "legal" ? (
+            <LegalSettings />
           ) : (
             <TeamProfile activeTab={activeTab} onChangeTab={handleTeamProfileTabChange} />
           )}

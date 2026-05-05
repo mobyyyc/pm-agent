@@ -526,37 +526,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 Settings
               </Link>
             </div>
-
-            <div className="my-4 border-t border-white/10" />
-            <div className="pb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">
-              Legal
-            </div>
-            <div className="space-y-1">
-                <Link
-                  href="/privacy"
-                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
-                    pathname === "/privacy" ? "bg-white/10 text-white" : "text-neutral-400"
-                  }`}
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  href="/cookies"
-                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
-                    pathname === "/cookies" ? "bg-white/10 text-white" : "text-neutral-400"
-                  }`}
-                >
-                  Cookie Policy
-                </Link>
-                <Link
-                  href="/terms"
-                  className={`block rounded-full px-3 py-2 text-sm hover:bg-white/10 ${
-                    pathname === "/terms" ? "bg-white/10 text-white" : "text-neutral-400"
-                  }`}
-                >
-                  Terms
-                </Link>
-            </div>
           </div>
         </div>
       </aside>

@@ -384,15 +384,12 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
               <button
                 key={inputMode}
                 onClick={() => setMode(inputMode)}
-                className={`rounded-full px-4 py-2 text-sm cursor-pointer ${
-                  mode === inputMode ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20"
-                }`}
+                className={mode === inputMode ? "key-button rounded-full px-4 py-2 text-sm cursor-pointer" : "normal-button rounded-full px-4 py-2 text-sm cursor-pointer"}
               >
                 {inputMode === "text" ? "Paste Text" : "Upload File"}
               </button>
             ))}
           </div>
-                  mode === inputMode ? "key-button" : "normal-button"
           {mode === "text" && (
             <div className="space-y-3">
               <textarea

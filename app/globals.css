@@ -512,7 +512,7 @@ html[data-theme="light"] [class~="placeholder:text-white/20"]::placeholder {
 
 html[data-theme="light"] .home-hero-heading,
 html[data-theme="light"] .new-project-heading {
-  background-image: linear-gradient(180deg, #0f172a 0%, #334155 58%, rgba(51, 65, 85, 0.22) 100%) !important;
+  background-image: linear-gradient(180deg, #0f172a 0%, #334155 58%, #64748b 100%) !important;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;

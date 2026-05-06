@@ -39,6 +39,10 @@ type GithubDeleteRepositoryResponse = {
   documentation_url?: string;
 };
 
+function githubScopeIncludes(scope: string | null, requiredScope: string): boolean {
+  return Boolean(scope?.split(/[\s,]+/).includes(requiredScope));
+}
+
 function buildRepositoryPayload(input: {
   projectId: string;
   ownerLogin: string;
@@ -331,6 +335,22 @@ export async function DELETE(request: Request, context: RouteContext) {
         return NextResponse.json({ error: "Link your Github account before deleting the repository." }, { status: 400 });
       }
 
+      if (!githubScopeIncludes(githubLink.scope, "delete_repo")) {
+        const reauthorizeUrl = new URL("/api/github/link/start", request.url);
+        reauthorizeUrl.searchParams.set("scope", "delete_repo");
+        reauthorizeUrl.searchParams.set("return_to", `/projects/${id}/repositories`);
+
+        return NextResponse.json(
+          {
+            error: "Deleting a GitHub repository requires temporary additional GitHub permission.",
+            detail: "Reconnect GitHub for this delete action, then retry deleting the repository.",
+            code: "github_delete_permission_required",
+            reauthorizeUrl: reauthorizeUrl.toString(),
+          },
+          { status: 403 },
+        );
+      }
+
       const deleteResponse = await fetch(`https://api.github.com/repos/${repository.fullName}`, {
         method: "DELETE",
         headers: {
@@ -345,15 +365,26 @@ export async function DELETE(request: Request, context: RouteContext) {
         const githubDetail = deleteBody.message || null;
         const permissionsDetail =
           deleteResponse.status === 403
-            ? "GitHub refused the delete request. This usually means the token lacks repo admin permission, the repository is in an organization with additional restrictions, or the app authorization needs to be refreshed."
+            ? "Deleting a GitHub repository requires temporary additional GitHub permission, or this repository has organization restrictions. Reconnect GitHub for this delete action, then retry."
             : deleteResponse.status === 401
-              ? "Check Github permissions."
+              ? "Reconnect GitHub for this delete action, then retry."
               : null;
+        const reauthorizeUrl = new URL("/api/github/link/start", request.url);
+        reauthorizeUrl.searchParams.set("scope", "delete_repo");
+        reauthorizeUrl.searchParams.set("return_to", `/projects/${id}/repositories`);
 
         return NextResponse.json(
           {
             error: githubDetail || "Failed to delete Github repository.",
             detail: permissionsDetail,
+            code:
+              deleteResponse.status === 401 || deleteResponse.status === 403
+                ? "github_delete_permission_required"
+                : undefined,
+            reauthorizeUrl:
+              deleteResponse.status === 401 || deleteResponse.status === 403
+                ? reauthorizeUrl.toString()
+                : undefined,
           },
           { status: deleteResponse.status || 500 },
         );

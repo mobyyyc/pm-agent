@@ -10,6 +10,7 @@ type GithubLinkStatePayload = {
   state: string;
   userId: string;
   expiresAt: number;
+  returnTo?: string;
 };
 
 function encodeStatePayload(payload: GithubLinkStatePayload): string {
@@ -42,18 +43,25 @@ export async function GET(request: Request) {
     return redirectToSettings(request, "missing_config");
   }
 
+  const url = new URL(request.url);
+  const requestedScope = url.searchParams.get("scope");
+  const returnToParam = url.searchParams.get("return_to");
+  const returnTo =
+    returnToParam && returnToParam.startsWith("/") && !returnToParam.startsWith("//") ? returnToParam : undefined;
+  const scope = requestedScope === "delete_repo" ? "read:user user:email repo delete_repo" : "read:user user:email repo";
   const state = crypto.randomUUID();
   const payload: GithubLinkStatePayload = {
     state,
     userId: session.user.email,
     expiresAt: Date.now() + LINK_STATE_TTL_SECONDS * 1000,
+    returnTo,
   };
 
   const callbackUrl = new URL("/api/github/link/callback", request.url);
   const authorizeUrl = new URL("https://github.com/login/oauth/authorize");
   authorizeUrl.searchParams.set("client_id", githubClientId);
   authorizeUrl.searchParams.set("redirect_uri", callbackUrl.toString());
-  authorizeUrl.searchParams.set("scope", "read:user user:email repo delete_repo");
+  authorizeUrl.searchParams.set("scope", scope);
   authorizeUrl.searchParams.set("state", state);
 
   const response = NextResponse.redirect(authorizeUrl);

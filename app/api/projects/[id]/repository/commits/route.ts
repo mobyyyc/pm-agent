@@ -15,6 +15,24 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+type GithubCommitResponse = {
+  sha?: string;
+  html_url?: string;
+  author?: {
+    login?: string | null;
+  } | null;
+  commit?: {
+    message?: string;
+    author?: {
+      name?: string | null;
+      date?: string | null;
+    } | null;
+    verification?: {
+      verified?: boolean;
+    } | null;
+  } | null;
+};
+
 async function getAuthorizedProject(projectId: string, sessionUserId: string | null) {
   if (!sessionUserId) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
 
@@ -65,7 +83,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Failed to fetch commits from Github.", detail: body }, { status: res.status });
     }
 
-    const commitsBody = (await res.json().catch(() => [])) as any[];
+    const commitsBody = (await res.json().catch(() => [])) as GithubCommitResponse[];
 
     const commits = commitsBody.map((c) => ({
       sha: c.sha,

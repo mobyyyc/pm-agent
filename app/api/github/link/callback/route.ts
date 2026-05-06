@@ -11,6 +11,7 @@ type GithubLinkStatePayload = {
   state: string;
   userId: string;
   expiresAt: number;
+  returnTo?: string;
 };
 
 type GithubTokenResponse = {
@@ -43,7 +44,8 @@ function isGithubLinkStatePayload(value: unknown): value is GithubLinkStatePaylo
     typeof candidate.state === "string" &&
     typeof candidate.userId === "string" &&
     typeof candidate.expiresAt === "number" &&
-    Number.isFinite(candidate.expiresAt)
+    Number.isFinite(candidate.expiresAt) &&
+    (candidate.returnTo === undefined || typeof candidate.returnTo === "string")
   );
 }
 
@@ -81,8 +83,8 @@ function parseStateCookie(rawValue: string): GithubLinkStatePayload | null {
   return null;
 }
 
-function redirectToSettings(request: Request, status: string) {
-  const url = new URL("/settings", request.url);
+function redirectWithStatus(request: Request, pathname: string, status: string) {
+  const url = new URL(pathname, request.url);
   url.searchParams.set("github_link", status);
 
   const response = NextResponse.redirect(url);
@@ -94,6 +96,10 @@ function redirectToSettings(request: Request, status: string) {
   });
 
   return response;
+}
+
+function redirectToSettings(request: Request, status: string) {
+  return redirectWithStatus(request, "/settings", status);
 }
 
 export async function GET(request: NextRequest) {
@@ -210,7 +216,7 @@ export async function GET(request: NextRequest) {
       timestamp: isoNow(),
     });
 
-    return redirectToSettings(request, "success");
+    return redirectWithStatus(request, parsedState.returnTo || "/settings", "success");
   } catch {
     return redirectToSettings(request, "error");
   }

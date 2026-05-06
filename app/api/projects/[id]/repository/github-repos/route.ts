@@ -13,6 +13,19 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
+type GithubRepoResponse = {
+  id?: number;
+  name?: string;
+  full_name?: string;
+  html_url?: string;
+  private?: boolean;
+  default_branch?: string;
+  description?: string | null;
+  owner?: {
+    login?: string;
+  } | null;
+};
+
 async function getAuthorizedProject(projectId: string, sessionUserId: string | null) {
   if (!sessionUserId) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
 
@@ -60,7 +73,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Failed to fetch Github repos.", detail: body }, { status: res.status });
     }
 
-    const repos = (await res.json().catch(() => [])) as any[];
+    const repos = (await res.json().catch(() => [])) as GithubRepoResponse[];
 
     // Filter to repositories owned by the linked login to simplify UX
     const filtered = repos.filter((r) => r && r.owner && typeof r.owner.login === "string" && r.owner.login === githubLink.githubLogin);

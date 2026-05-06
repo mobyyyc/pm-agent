@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const QUESTION_STYLE_STORAGE_KEY = "pm-agent.question-style-level";
 
@@ -48,36 +48,43 @@ const STYLE_LEVEL_MARKERS = Array.from({ length: MAX_STYLE_LEVEL - MIN_STYLE_LEV
 });
 
 export default function PreferencesSettings() {
-  const [styleLevel, setStyleLevel] = useState(3);
-  const [hasLoaded, setHasLoaded] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [isSliding, setIsSliding] = useState(false);
+  const [styleLevel, setStyleLevel] = useState(() => {
+    if (typeof window === "undefined") return 3;
 
-  useEffect(() => {
     const stored = window.localStorage.getItem(QUESTION_STYLE_STORAGE_KEY);
     const parsed = Number(stored);
 
-    if (Number.isInteger(parsed) && parsed >= MIN_STYLE_LEVEL && parsed <= MAX_STYLE_LEVEL) {
-      setStyleLevel(parsed);
-    }
-
-    setHasLoaded(true);
-  }, []);
+    return Number.isInteger(parsed) && parsed >= MIN_STYLE_LEVEL && parsed <= MAX_STYLE_LEVEL ? parsed : 3;
+  });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isSliding, setIsSliding] = useState(false);
+  const animationTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!hasLoaded) return;
-
     window.localStorage.setItem(QUESTION_STYLE_STORAGE_KEY, String(styleLevel));
+  }, [styleLevel]);
 
-    setIsAnimating(true);
-    const timer = window.setTimeout(() => {
-      setIsAnimating(false);
-    }, 220);
-
+  useEffect(() => {
     return () => {
-      window.clearTimeout(timer);
+      if (animationTimerRef.current) {
+        window.clearTimeout(animationTimerRef.current);
+      }
     };
-  }, [styleLevel, hasLoaded]);
+  }, []);
+
+  const handleStyleLevelChange = (nextStyleLevel: number) => {
+    setStyleLevel(nextStyleLevel);
+    setIsAnimating(true);
+
+    if (animationTimerRef.current) {
+      window.clearTimeout(animationTimerRef.current);
+    }
+
+    animationTimerRef.current = window.setTimeout(() => {
+      setIsAnimating(false);
+      animationTimerRef.current = null;
+    }, 220);
+  };
 
   const preset = useMemo(() => QUESTION_STYLE_PRESETS[styleLevel], [styleLevel]);
   const sliderPercent = ((styleLevel - MIN_STYLE_LEVEL) / (MAX_STYLE_LEVEL - MIN_STYLE_LEVEL)) * 100;
@@ -136,7 +143,7 @@ export default function PreferencesSettings() {
               max={MAX_STYLE_LEVEL}
               step={1}
               value={styleLevel}
-              onChange={(event) => setStyleLevel(Number(event.target.value))}
+              onChange={(event) => handleStyleLevelChange(Number(event.target.value))}
               onPointerDown={() => setIsSliding(true)}
               onPointerUp={() => setIsSliding(false)}
               onPointerCancel={() => setIsSliding(false)}

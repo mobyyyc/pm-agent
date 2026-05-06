@@ -33,6 +33,8 @@ type ApiErrorBody = {
   error?: string;
   detail?: string | null;
   issues?: string[];
+  code?: string;
+  reauthorizeUrl?: string;
 };
 
 type UnlinkAction = "unlink_only" | "unlink_and_delete";
@@ -68,6 +70,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [githubDeleteReauthorizeUrl, setGithubDeleteReauthorizeUrl] = useState<string | null>(null);
   const [unlinkingAction, setUnlinkingAction] = useState<UnlinkAction | null>(null);
   const [isSavingManual, setIsSavingManual] = useState(false);
   const [isCreatingGithubRepo, setIsCreatingGithubRepo] = useState(false);
@@ -293,6 +296,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     setActionSuccess(null);
     setShowDeleteConfirm(false);
     setDeleteConfirmText("");
+    setGithubDeleteReauthorizeUrl(null);
     setIsUnlinkModalOpen(true);
   };
 
@@ -300,12 +304,14 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
     if (unlinkingAction) return;
     setShowDeleteConfirm(false);
     setDeleteConfirmText("");
+    setGithubDeleteReauthorizeUrl(null);
     setIsUnlinkModalOpen(false);
   };
 
   const handleOpenDeleteConfirm = () => {
     setActionError(null);
     setActionSuccess(null);
+    setGithubDeleteReauthorizeUrl(null);
     setShowDeleteConfirm(true);
     setDeleteConfirmText("");
   };
@@ -335,9 +341,17 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         error?: string;
         detail?: string | null;
         issues?: string[];
+        code?: string;
+        reauthorizeUrl?: string;
       };
 
       if (!response.ok || !body.success) {
+        if (body.code === "github_delete_permission_required" && body.reauthorizeUrl) {
+          setGithubDeleteReauthorizeUrl(body.reauthorizeUrl);
+          setActionError(formatApiError(body, "Deleting a GitHub repository requires temporary additional GitHub permission."));
+          return;
+        }
+
         throw new Error(formatApiError(body, "Failed to unlink repository."));
       }
 
@@ -352,6 +366,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
       setManualVisibility("private");
       setShowDeleteConfirm(false);
       setDeleteConfirmText("");
+      setGithubDeleteReauthorizeUrl(null);
       setActionSuccess(
         body.deletedGithubRepository
           ? "Repository unlinked and Github repo deleted."
@@ -545,13 +560,16 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
                   <div
                     className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-in-out ${
-                      showDeleteConfirm ? "mt-4 max-h-72 opacity-100" : "max-h-0 opacity-0"
+                      showDeleteConfirm ? "mt-4 max-h-96 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     <div className="rounded-xl border border-white/10 bg-black/20 p-4">
                       <p className="text-sm font-semibold text-white">Type DELETE to continue</p>
                       <p className="mt-1 text-xs text-neutral-400">
                         This permanently deletes the Github repository and cannot be undone.
+                      </p>
+                      <p className="mt-2 text-xs text-neutral-400">
+                        Deleting a GitHub repository requires temporary additional GitHub permission.
                       </p>
                       <input
                         ref={deleteConfirmInputRef}
@@ -563,10 +581,19 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
                         className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
                       />
                       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        {githubDeleteReauthorizeUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => window.location.assign(githubDeleteReauthorizeUrl)}
+                            className="key-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold"
+                          >
+                            Allow GitHub delete permission
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => void handleUnlinkRepository("unlink_and_delete")}
-                          disabled={!canConfirmGithubDelete || unlinkingAction !== null}
+                          disabled={!canConfirmGithubDelete || unlinkingAction !== null || githubDeleteReauthorizeUrl !== null}
                           className="app-destructive-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {unlinkingAction === "unlink_and_delete" ? "Deleting..." : "Delete repository"}
@@ -578,6 +605,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
                             setShowDeleteConfirm(false);
                             setDeleteConfirmText("");
                             setActionError(null);
+                            setGithubDeleteReauthorizeUrl(null);
                           }}
                           disabled={unlinkingAction !== null}
                           className="sub-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"

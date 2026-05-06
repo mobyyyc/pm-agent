@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ProjectRepository } from "@/types/models";
 
 type RepoItem = {
   id: number;
@@ -12,7 +13,19 @@ type RepoItem = {
   description: string | null;
 };
 
-export default function GithubRepoPicker({ projectId, onLinked }: { projectId: string; onLinked: (repo: any) => void }) {
+type LinkRepositoryResponse = {
+  repository?: ProjectRepository;
+  error?: string;
+  message?: string;
+};
+
+export default function GithubRepoPicker({
+  projectId,
+  onLinked,
+}: {
+  projectId: string;
+  onLinked: (repo: ProjectRepository) => void;
+}) {
   const [repos, setRepos] = useState<RepoItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +77,7 @@ export default function GithubRepoPicker({ projectId, onLinked }: { projectId: s
         body: JSON.stringify(payload),
       });
 
-      const body = await res.json().catch(() => ({}));
+      const body = (await res.json().catch(() => ({}))) as LinkRepositoryResponse;
       if (!res.ok || !body.repository) {
         throw new Error((body && (body.error || body.message)) || `Status ${res.status}`);
       }

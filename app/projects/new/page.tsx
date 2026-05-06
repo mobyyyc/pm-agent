@@ -387,7 +387,7 @@ export default function CreateProjectPage() {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSend()}
                     placeholder="e.g. A mobile app for dog walkers..."
-                    className="w-full bg-white/5 text-xl py-4 pl-8 pr-16 rounded-full text-white placeholder:text-white/20 focus:outline-none focus:bg-white/10 transition-all shadow-2xl"
+                    className="w-full bg-(--frame-surface) text-xl py-4 pl-8 pr-16 rounded-full text-white placeholder:text-white/20 focus:outline-none focus:bg-(--frame-surface-hover) transition-all shadow-2xl"
                     autoFocus
                 />
                 <button
@@ -404,7 +404,7 @@ export default function CreateProjectPage() {
 
         {/* --- Interview Question View --- */}
         {isAsking && currentAnalysis && (
-           <div className="w-full max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500">
+           <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 xl:max-w-6xl">
               <h2 className="text-2xl font-medium leading-tight text-white md:text-3xl">
                 {currentAnalysis.question}
               </h2>

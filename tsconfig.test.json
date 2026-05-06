@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": false,
+    "incremental": false,
+    "isolatedModules": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmit": false,
+    "outDir": ".test-dist",
+    "rootDir": ".",
+    "types": ["node"]
+  },
+  "include": [
+    "tests/**/*.test.ts",
+    "lib/api-errors.ts",
+    "lib/github-token-crypto.ts",
+    "lib/rate-limit.ts"
+  ],
+  "exclude": ["node_modules", ".next", ".test-dist"]
+}

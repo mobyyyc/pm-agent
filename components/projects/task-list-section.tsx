@@ -36,8 +36,8 @@ type TaskListSectionProps = {
   onClaimTask: (task: Task) => Promise<void>;
   onTaskStatusFilterChange: (filter: TaskStatusFilter) => void;
   onTaskListModeChange: (mode: TaskListMode) => void;
-  getAssigneeLabel: (value?: string | null) => string;
   getMemberLabel: (member: ProjectMember) => string;
+  getAssigneeLabel: (value?: string | null) => string;
   isTaskAssignedToCurrentUser: (task: Task) => boolean;
   onStatusChange: (taskId: string, status: Task["status"]) => void;
 };
@@ -142,14 +142,12 @@ export function TaskListSection({
                       Deadline: {taskView.deadline}
                     </span>
                     <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
-                      Assignee: <span className="inline-flex items-center gap-2">
-                        <span>{getAssigneeLabel(taskView.suggestedAssignee)}</span>
-                        {currentUserMember && isTaskAssignedToCurrentUser(taskView) ? (
-                          <span className="task-assignee-you-badge inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
-                            You
-                          </span>
-                        ) : null}
-                      </span>
+                      {getAssigneeLabel(taskView.suggestedAssignee)}
+                      {currentUserMember && isTaskAssignedToCurrentUser(taskView) ? (
+                        <span className="ml-2 task-assignee-you-badge inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
+                          You
+                        </span>
+                      ) : null}
                     </span>
                   </div>
                   <div className="flex h-7 shrink-0 items-end justify-end gap-2">

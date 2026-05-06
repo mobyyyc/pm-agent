@@ -194,15 +194,12 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       }) || null
     );
   };
+  const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || ownerMember.userId;
   const getAssigneeLabel = (value?: string | null) => {
     const member = findMemberByAssigneeValue(value);
-    if (member) {
-      return getMemberLabel(member);
-    }
-
+    if (member) return getMemberLabel(member);
     return value?.trim() || "Unassigned";
   };
-  const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || ownerMember.userId;
   const isTaskAssignedToCurrentUser = (task: Task) => {
     if (!currentUserMember) {
       return false;

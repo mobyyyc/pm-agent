@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   getGithubLinkByUserId,
   getProjectById,
@@ -121,7 +123,7 @@ export async function GET(_request: Request, context: RouteContext) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch repository details.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch repository details.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -180,7 +182,7 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to update repository settings.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to update repository settings.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -193,6 +195,14 @@ export async function POST(request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "github:repo-create", sessionUserId),
+      RATE_LIMITS.githubCreate,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -289,7 +299,7 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create Github repository.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to create Github repository.", detail: getSafeErrorDetail(error, "Failed to create Github repository. Please try again.") },
       { status: 500 },
     );
   }
@@ -399,7 +409,7 @@ export async function DELETE(request: Request, context: RouteContext) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to unlink repository.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to unlink repository.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

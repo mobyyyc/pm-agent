@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { addTaskIdToProject, getProjectById, isProjectMember, normalizeUserId, insertTask, upsertAppUser } from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createTaskRequestSchema, validateTask } from "@/lib/validators";
@@ -14,6 +16,14 @@ export async function POST(request: Request) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "tasks:mutation", sessionUserId),
+      RATE_LIMITS.mutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -62,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to create task.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to create task.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

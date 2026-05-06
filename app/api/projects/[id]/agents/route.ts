@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { findAgentDefinition } from "@/lib/agents";
 import { authOptions } from "@/lib/auth";
 import {
@@ -62,7 +63,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Failed to fetch project agents.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        detail: getSafeErrorDetail(error),
       },
       { status: 500 },
     );
@@ -131,7 +132,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Failed to add project agent.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        detail: getSafeErrorDetail(error),
       },
       { status: 500 },
     );

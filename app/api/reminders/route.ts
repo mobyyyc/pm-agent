@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { getTaskReminders } from "@/lib/reminders";
 import { getProjectsByUserId, getTasksByProjectId, normalizeUserId } from "@/lib/storage";
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ reminders });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch reminders.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch reminders.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

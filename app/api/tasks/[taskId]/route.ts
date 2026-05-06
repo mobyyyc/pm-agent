@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   deleteTaskById,
   getProjectById,
@@ -27,6 +29,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "tasks:mutation", sessionUserId),
+      RATE_LIMITS.mutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -67,7 +77,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to update task.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to update task.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -80,6 +90,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(_request, "tasks:mutation", sessionUserId),
+      RATE_LIMITS.mutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -112,7 +130,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to delete task.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to delete task.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

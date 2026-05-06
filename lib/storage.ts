@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypto";
 import {
   appUserSchema,
   projectAgentSchema,
@@ -358,7 +359,7 @@ function mapGithubLinkRow(row: Record<string, unknown>): GithubLink {
     githubName: typeof row.github_name === "string" ? row.github_name : null,
     githubAvatarUrl: typeof row.github_avatar_url === "string" ? row.github_avatar_url : null,
     githubEmail: typeof row.github_email === "string" ? row.github_email : null,
-    accessToken: String(row.access_token),
+    accessToken: decryptGithubToken(String(row.access_token)),
     scope: typeof row.scope === "string" ? row.scope : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -382,6 +383,10 @@ export async function upsertGithubLinkByUserId(input: {
   scope: string | null;
   timestamp: string;
 }): Promise<GithubLink> {
+  // Stored access_token values are encrypted at rest. Set GITHUB_TOKEN_ENCRYPTION_KEY
+  // in every server environment before linking GitHub accounts.
+  const encryptedAccessToken = encryptGithubToken(input.accessToken);
+
   const rows = await sql`
     INSERT INTO github_links (
       user_id,
@@ -402,7 +407,7 @@ export async function upsertGithubLinkByUserId(input: {
       ${input.githubName},
       ${input.githubAvatarUrl},
       ${input.githubEmail},
-      ${input.accessToken},
+      ${encryptedAccessToken},
       ${input.scope},
       ${input.timestamp},
       ${input.timestamp}

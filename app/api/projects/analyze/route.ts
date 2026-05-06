@@ -4,6 +4,7 @@ import { analyzeProjectRequest } from "@/lib/gemini";
 import { readTeamKnowledge } from "@/lib/storage";
 import { analyzeProjectRequestSchema } from "@/lib/validators";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   const start = performance.now();
@@ -21,6 +22,14 @@ export async function POST(req: NextRequest) {
 
     const session = hasSessionCookie ? await getServerSession(authOptions) : null;
     authMs = performance.now() - authStart;
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(req, "projects:analyze", session?.user?.email),
+      RATE_LIMITS.aiAnalyze,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
+    }
 
     const parseStart = performance.now();
     const json = await req.json();

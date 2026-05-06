@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { analyzeTeamImportWithGemini } from "@/lib/gemini";
 import { analyzeTeamImportRequestSchema } from "@/lib/validators";
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to analyze team profile.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to analyze team profile.", detail: getSafeErrorDetail(error, "The AI service is temporarily unavailable. Please retry.") },
       { status: 500 },
     );
   }

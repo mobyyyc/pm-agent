@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import { getTaskById, getProjectById, isProjectMember, normalizeUserId, updateTaskStatus, upsertAppUser } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { updateTaskStatusRequestSchema } from "@/lib/validators";
@@ -18,6 +20,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "tasks:mutation", sessionUserId),
+      RATE_LIMITS.mutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -60,7 +70,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to update task status.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to update task status.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

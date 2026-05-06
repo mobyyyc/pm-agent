@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { getProjectInvitationById, normalizeUserId, respondToProjectInvitation, upsertAppUser } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
@@ -72,7 +73,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to update invitation.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to update invitation.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

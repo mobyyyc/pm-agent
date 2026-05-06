@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { parseTeamFromJson, parseTeamFromText } from "@/lib/team-parser";
 import { deleteTeamByUserId, getTeamByUserId, readDefaultTeamKnowledge, upsertTeamByUserId } from "@/lib/storage";
@@ -33,7 +34,7 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch team profile.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch team profile.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to save team profile.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to save team profile.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -100,7 +101,7 @@ export async function DELETE() {
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to reset team profile.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to reset team profile.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

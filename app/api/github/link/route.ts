@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { getSafeErrorDetail, getSafeProviderDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { deleteGithubLinkByUserId, getGithubLinkByUserId } from "@/lib/storage";
 
@@ -42,9 +43,10 @@ async function revokeGithubAuthorization(accessToken: string): Promise<RevokeRes
     const details = await response.text().catch(() => "");
     return {
       revoked: false,
-      warning: details
-        ? `GitHub authorization revoke failed (${response.status}): ${details}`
-        : `GitHub authorization revoke failed with status ${response.status}.`,
+      warning: getSafeProviderDetail(
+        details,
+        `GitHub authorization revoke failed with status ${response.status}.`,
+      ) || `GitHub authorization revoke failed with status ${response.status}.`,
     };
   } catch {
     return {
@@ -79,7 +81,7 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to load linked Github account.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to load linked Github account.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -104,7 +106,7 @@ export async function DELETE() {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to unlink Github account.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to unlink Github account.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

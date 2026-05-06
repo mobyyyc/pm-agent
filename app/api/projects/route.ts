@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { generateProjectPlanWithGemini } from "@/lib/gemini";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   getProjectsByUserId,
   insertProject,
@@ -37,7 +39,7 @@ export async function GET() {
     return NextResponse.json({ projects: userProjects });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch projects.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch projects.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -60,6 +62,14 @@ export async function POST(request: Request) {
 
     // Allow both authenticated users and guests
     const userId = sessionEmail || `guest:${crypto.randomUUID()}`;
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "projects:create", sessionEmail),
+      RATE_LIMITS.aiGenerate,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
+    }
 
     const parseStart = performance.now();
     const body = await request.json();
@@ -165,7 +175,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: "Failed to create project.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        detail: getSafeErrorDetail(error, "Failed to create project. Please try again."),
       },
       { status: 500 },
     );

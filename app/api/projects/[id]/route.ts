@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   deleteProject,
   getProjectById,
@@ -54,7 +56,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ project, tasks: projectTasks, members });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch project.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch project.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -67,6 +69,14 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(_request, "projects:mutation", sessionUserId),
+      RATE_LIMITS.projectMutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     const { id } = await context.params;
@@ -85,7 +95,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to delete project.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to delete project.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -98,6 +108,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (!sessionUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimit = checkRateLimit(
+      getRateLimitKey(request, "projects:mutation", sessionUserId),
+      RATE_LIMITS.projectMutation,
+    );
+    if (rateLimit.limited) {
+      return rateLimitResponse(rateLimit);
     }
 
     await upsertAppUser({
@@ -144,7 +162,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { error: "Failed to update project.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to update project.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

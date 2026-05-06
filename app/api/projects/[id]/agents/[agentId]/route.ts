@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import {
   deleteProjectAgent,
@@ -85,7 +86,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Failed to update project agent.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        detail: getSafeErrorDetail(error),
       },
       { status: 500 },
     );
@@ -129,7 +130,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json(
       {
         error: "Failed to remove project agent.",
-        detail: error instanceof Error ? error.message : "Unknown error",
+        detail: getSafeErrorDetail(error),
       },
       { status: 500 },
     );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import {
   createProjectInvitation,
@@ -47,7 +48,7 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Failed to fetch invitations.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to fetch invitations.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }
@@ -139,7 +140,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: "Failed to send invitation.", detail: error instanceof Error ? error.message : "Unknown error" },
+      { error: "Failed to send invitation.", detail: getSafeErrorDetail(error) },
       { status: 500 },
     );
   }

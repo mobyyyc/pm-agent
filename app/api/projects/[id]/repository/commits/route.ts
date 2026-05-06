@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
+import { getSafeErrorDetail, getSafeProviderDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import {
   getGithubLinkByUserId,
@@ -80,7 +81,10 @@ export async function GET(_request: Request, context: RouteContext) {
     const res = await fetch(apiUrl, { headers });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
-      return NextResponse.json({ error: "Failed to fetch commits from Github.", detail: body }, { status: res.status });
+      return NextResponse.json(
+        { error: "Failed to fetch commits from Github.", detail: getSafeProviderDetail(body, "GitHub commit data is temporarily unavailable.") },
+        { status: res.status },
+      );
     }
 
     const commitsBody = (await res.json().catch(() => [])) as GithubCommitResponse[];
@@ -96,6 +100,6 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ commits, fetchedAt: isoNow() });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to fetch commits.", detail: error instanceof Error ? error.message : "Unknown" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch commits.", detail: getSafeErrorDetail(error) }, { status: 500 });
   }
 }

@@ -186,11 +186,16 @@ export default function ProjectMembersPage({ params }: PageProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-white">{member.displayName || member.userId}</p>
-                        {currentUserId && member.userId === currentUserId ? (
-                          <span className="app-you-badge px-2 py-0.5">
-                            You
-                          </span>
-                        ) : null}
+                          {currentUserId && member.userId === currentUserId ? (
+                            <span className="app-you-badge px-2 py-0.5">
+                              You
+                            </span>
+                          ) : null}
+                          {member.role && member.role.toLowerCase() === "owner" ? (
+                            <span className="app-owner-badge px-2 py-0.5">
+                              Owner
+                            </span>
+                          ) : null}
                       </div>
                       <p className="mt-1 text-xs text-neutral-400">{member.userId}</p>
                     </div>

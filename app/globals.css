@@ -524,6 +524,148 @@ html[data-theme="light"] .app-frame-item.app-frame-hover:not([class~="bg-white/1
   background-color: var(--frame-surface-item-hover) !important;
 }
 
+html[data-theme="light"] .project-progress-panel {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(15, 23, 42, 0.13) !important;
+  box-shadow: 0 22px 44px -30px rgba(42, 74, 114, 0.42), 0 10px 22px -16px rgba(42, 74, 114, 0.24);
+}
+
+html[data-theme="light"] .project-progress-eyebrow,
+html[data-theme="light"] .project-progress-meta {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .project-progress-percent {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .project-progress-summary {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .project-progress-health-badge--healthy {
+  background-color: #dff8ec !important;
+  border-color: rgba(4, 120, 87, 0.34) !important;
+  color: #065f46 !important;
+}
+
+html[data-theme="light"] .project-progress-health-badge--watch {
+  background-color: #fff3cf !important;
+  border-color: rgba(180, 83, 9, 0.38) !important;
+  color: #92400e !important;
+}
+
+html[data-theme="light"] .project-progress-health-badge--risk {
+  background-color: #ffe1e1 !important;
+  border-color: rgba(185, 28, 28, 0.44) !important;
+  color: #991b1b !important;
+}
+
+html[data-theme="light"] .project-progress-health-text--healthy {
+  color: #047857 !important;
+}
+
+html[data-theme="light"] .project-progress-health-text--watch {
+  color: #a16207 !important;
+}
+
+html[data-theme="light"] .project-progress-health-text--risk {
+  color: #b91c1c !important;
+}
+
+html[data-theme="light"] .project-progress-timeline {
+  background-color: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #64748b !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+
+html[data-theme="light"] .project-progress-timeline-primary {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .project-progress-timeline-current {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .project-progress-track {
+  background-color: #e2e8f0 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] .project-progress-bar--healthy {
+  background-color: #059669 !important;
+}
+
+html[data-theme="light"] .project-progress-bar--watch {
+  background-color: #d97706 !important;
+}
+
+html[data-theme="light"] .project-progress-bar--risk {
+  background-color: #dc2626 !important;
+}
+
+html[data-theme="light"] .project-progress-card {
+  box-shadow: 0 14px 28px -24px rgba(42, 74, 114, 0.32), 0 1px 0 rgba(255, 255, 255, 0.76) inset;
+}
+
+html[data-theme="light"] .project-progress-card--overdue-active {
+  background-color: #fff0f0 !important;
+  border-color: rgba(185, 28, 28, 0.42) !important;
+  color: #991b1b !important;
+  box-shadow: 0 16px 30px -22px rgba(185, 28, 28, 0.34), 0 1px 0 rgba(255, 255, 255, 0.72) inset;
+}
+
+html[data-theme="light"] .project-progress-card--warning-active {
+  background-color: #fff7df !important;
+  border-color: rgba(180, 83, 9, 0.34) !important;
+  color: #92400e !important;
+}
+
+html[data-theme="light"] .project-progress-card--active {
+  background-color: #eaf4ff !important;
+  border-color: rgba(37, 99, 235, 0.25) !important;
+  color: #1d4ed8 !important;
+}
+
+html[data-theme="light"] .project-progress-card--done {
+  background-color: #eaf8f1 !important;
+  border-color: rgba(5, 150, 105, 0.26) !important;
+  color: #047857 !important;
+}
+
+html[data-theme="light"] .project-progress-card--neutral {
+  background-color: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .project-progress-value--overdue {
+  color: #991b1b !important;
+}
+
+html[data-theme="light"] .project-progress-value--warning {
+  color: #92400e !important;
+}
+
+html[data-theme="light"] .project-progress-value--active {
+  color: #1d4ed8 !important;
+}
+
+html[data-theme="light"] .project-progress-value--done {
+  color: #047857 !important;
+}
+
+html[data-theme="light"] .project-progress-card-label {
+  color: currentColor !important;
+  opacity: 0.78;
+}
+
+html[data-theme="light"] .project-progress-card-detail {
+  color: currentColor !important;
+  opacity: 0.68;
+}
+
 html[data-theme="light"] [class~="placeholder:text-white/20"]::placeholder {
   color: rgba(90, 104, 126, 0.8) !important;
 }

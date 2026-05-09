@@ -7,8 +7,10 @@ import { useGuest } from "@/components/GuestContext";
 import { ActivitySection } from "@/components/projects/activity-section";
 import { GuidelineSection } from "@/components/projects/guideline-section";
 import { ProjectHeader } from "@/components/projects/project-header";
+import { ProjectProgressSection } from "@/components/projects/project-progress-section";
 import { TaskListSection } from "@/components/projects/task-list-section";
-import type { Project, ProjectActivityEvent, ProjectMember, Task } from "@/types/models";
+import { calculateProjectProgress } from "@/lib/project-progress";
+import type { Project, ProjectActivityEvent, ProjectMember, ProjectProgressSummary, Task } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -21,6 +23,7 @@ type ProjectResponse = {
   project?: Project;
   tasks?: Task[];
   members?: ProjectMember[];
+  progress?: ProjectProgressSummary;
 };
 type ActivityResponse = {
   events?: ProjectActivityEvent[];
@@ -181,6 +184,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   if (notFoundState || !project || isGuestNotFound || isUnauthedUser) {
     notFound();
   }
+
+  const projectForProgress: Project = {
+    ...project,
+    timeline: renderedTimeline,
+  };
+  const projectProgress = calculateProjectProgress(
+    projectForProgress,
+    renderedTasks,
+    new Date().toISOString().slice(0, 10),
+  );
 
   const ownerMemberFallback: ProjectMember = {
     projectId: project.id,
@@ -803,6 +816,8 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       />
 
       {frameActionError ? <div className="error-msg px-4 py-2 text-sm font-semibold">{frameActionError}</div> : null}
+
+      <ProjectProgressSection progress={projectProgress} />
 
       <GuidelineSection guideline={project.guideline} />
 

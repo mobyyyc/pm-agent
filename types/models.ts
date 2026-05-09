@@ -202,5 +202,24 @@ export const taskSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const projectProgressSummarySchema = z.object({
+  totalTasks: z.number().int().nonnegative(),
+  completedTasks: z.number().int().nonnegative(),
+  inProgressTasks: z.number().int().nonnegative(),
+  todoTasks: z.number().int().nonnegative(),
+  completionPercent: z.number().int().min(0).max(100),
+  overdueTasks: z.number().int().nonnegative(),
+  dueSoonTasks: z.number().int().nonnegative(),
+  unassignedTasks: z.number().int().nonnegative(),
+  timelinePhaseCount: z.number().int().nonnegative(),
+  completedTimelinePhases: z.number().int().nonnegative(),
+  currentTimelinePhase: z.string().nullable(),
+  projectWindow: z.object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+  }),
+});
+
 export type Project = z.infer<typeof projectSchema>;
 export type Task = z.infer<typeof taskSchema>;
+export type ProjectProgressSummary = z.infer<typeof projectProgressSummarySchema>;

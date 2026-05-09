@@ -40,6 +40,7 @@ type TaskListSectionProps = {
   getAssigneeLabel: (value?: string | null) => string;
   isTaskAssignedToCurrentUser: (task: Task) => boolean;
   onStatusChange: (taskId: string, status: Task["status"]) => void;
+  onStatusSaved: () => void | Promise<void>;
 };
 
 export function TaskListSection({
@@ -73,6 +74,7 @@ export function TaskListSection({
   getMemberLabel,
   isTaskAssignedToCurrentUser,
   onStatusChange,
+  onStatusSaved,
 }: TaskListSectionProps) {
   return (
     <section className="app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
@@ -123,6 +125,7 @@ export function TaskListSection({
                         initialStatus={task.status}
                         isGuest={isGuest}
                         onStatusChange={onStatusChange}
+                        onStatusSaved={onStatusSaved}
                       />
                     ) : (
                       <div aria-hidden="true" className="w-full rounded-xl p-1 opacity-0 sm:min-w-70 sm:w-auto">

@@ -10,6 +10,7 @@ import {
   getProjectById,
   getTaskById,
   isProjectMember,
+  logProjectActivityEvent,
   normalizeUserId,
   removeTaskIdFromProject,
   updateTaskDetails,
@@ -65,7 +66,46 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const updatedTask = await updateTaskDetails(taskId, parsed, isoNow());
+    const updatedAt = isoNow();
+    const updatedTask = await updateTaskDetails(taskId, parsed, updatedAt);
+
+    if (updatedTask) {
+      const changedFields = [
+        task.title !== updatedTask.title ? "title" : null,
+        task.description !== updatedTask.description ? "description" : null,
+        task.deadline !== updatedTask.deadline ? "deadline" : null,
+        task.suggestedAssignee !== updatedTask.suggestedAssignee ? "suggestedAssignee" : null,
+        task.status !== updatedTask.status ? "status" : null,
+      ].filter((field): field is string => Boolean(field));
+      const assigneeChanged = task.suggestedAssignee !== updatedTask.suggestedAssignee;
+      const claimedByActor = assigneeChanged && normalizeUserId(updatedTask.suggestedAssignee) === sessionUserId;
+
+      await logProjectActivityEvent({
+        projectId: project.id,
+        actorUserId: sessionUserId,
+        source: "user",
+        eventType: claimedByActor ? "task.claimed" : "task.updated",
+        entityType: "task",
+        entityId: taskId,
+        summary: claimedByActor ? `Task claimed: ${updatedTask.title}` : `Task updated: ${updatedTask.title}`,
+        metadata: {
+          changedFields,
+          previous: {
+            title: task.title,
+            deadline: task.deadline,
+            suggestedAssignee: task.suggestedAssignee,
+            status: task.status,
+          },
+          next: {
+            title: updatedTask.title,
+            deadline: updatedTask.deadline,
+            suggestedAssignee: updatedTask.suggestedAssignee,
+            status: updatedTask.status,
+          },
+        },
+        createdAt: updatedAt,
+      });
+    }
 
     return NextResponse.json({ task: updatedTask });
   } catch (error) {
@@ -124,8 +164,25 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const deletedAt = isoNow();
     await deleteTaskById(taskId);
-    await removeTaskIdFromProject(project.id, taskId, isoNow());
+    await removeTaskIdFromProject(project.id, taskId, deletedAt);
+    await logProjectActivityEvent({
+      projectId: project.id,
+      actorUserId: sessionUserId,
+      source: "user",
+      eventType: "task.deleted",
+      entityType: "task",
+      entityId: taskId,
+      summary: `Task deleted: ${task.title}`,
+      metadata: {
+        title: task.title,
+        status: task.status,
+        deadline: task.deadline,
+        suggestedAssignee: task.suggestedAssignee,
+      },
+      createdAt: deletedAt,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

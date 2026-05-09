@@ -10,6 +10,7 @@ import {
   getProjectsByUserId,
   insertProject,
   insertTasks,
+  logProjectActivityEvent,
   normalizeUserId,
   readTeamKnowledge,
   upsertAppUser,
@@ -146,6 +147,21 @@ export async function POST(request: Request) {
     const dbStart = performance.now();
     await insertProject(project);
     await insertTasks(tasks);
+    await logProjectActivityEvent({
+      projectId,
+      actorUserId: userId,
+      source: "user",
+      eventType: "project.created",
+      entityType: "project",
+      entityId: projectId,
+      summary: `Project created: ${project.name}`,
+      metadata: {
+        projectName: project.name,
+        taskCount: tasks.length,
+        timelineCount: project.timeline.length,
+      },
+      createdAt: timestamp,
+    });
     dbMs = performance.now() - dbStart;
 
     const totalMs = performance.now() - start;

@@ -5,7 +5,15 @@ import { z } from "zod";
 import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
-import { addTaskIdToProject, getProjectById, isProjectMember, normalizeUserId, insertTask, upsertAppUser } from "@/lib/storage";
+import {
+  addTaskIdToProject,
+  getProjectById,
+  isProjectMember,
+  logProjectActivityEvent,
+  normalizeUserId,
+  insertTask,
+  upsertAppUser,
+} from "@/lib/storage";
 import { createId, isoNow } from "@/lib/utils";
 import { createTaskRequestSchema, validateTask } from "@/lib/validators";
 
@@ -61,6 +69,22 @@ export async function POST(request: Request) {
 
     await insertTask(task);
     const updatedProject = await addTaskIdToProject(parsed.projectId, task.id, timestamp);
+    await logProjectActivityEvent({
+      projectId: parsed.projectId,
+      actorUserId: sessionUserId,
+      source: "user",
+      eventType: "task.created",
+      entityType: "task",
+      entityId: task.id,
+      summary: `Task created: ${task.title}`,
+      metadata: {
+        title: task.title,
+        status: task.status,
+        deadline: task.deadline,
+        suggestedAssignee: task.suggestedAssignee,
+      },
+      createdAt: timestamp,
+    });
 
     return NextResponse.json({ task, project: updatedProject }, { status: 201 });
   } catch (error) {

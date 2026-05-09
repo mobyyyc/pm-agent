@@ -5,7 +5,15 @@ import { z } from "zod";
 import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
-import { getTaskById, getProjectById, isProjectMember, normalizeUserId, updateTaskStatus, upsertAppUser } from "@/lib/storage";
+import {
+  getTaskById,
+  getProjectById,
+  isProjectMember,
+  logProjectActivityEvent,
+  normalizeUserId,
+  updateTaskStatus,
+  upsertAppUser,
+} from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { updateTaskStatusRequestSchema } from "@/lib/validators";
 
@@ -58,7 +66,26 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const updatedTask = await updateTaskStatus(taskId, parsed.status, isoNow());
+    const updatedAt = isoNow();
+    const updatedTask = await updateTaskStatus(taskId, parsed.status, updatedAt);
+
+    if (updatedTask && task.status !== updatedTask.status) {
+      await logProjectActivityEvent({
+        projectId: project.id,
+        actorUserId: sessionUserId,
+        source: "user",
+        eventType: "task.status_changed",
+        entityType: "task",
+        entityId: taskId,
+        summary: `Task status changed: ${updatedTask.title} (${task.status} -> ${updatedTask.status})`,
+        metadata: {
+          previousStatus: task.status,
+          nextStatus: updatedTask.status,
+          title: updatedTask.title,
+        },
+        createdAt: updatedAt,
+      });
+    }
 
     return NextResponse.json({ task: updatedTask });
   } catch (error) {

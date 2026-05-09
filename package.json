@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none .test-dist/tests/api-errors.test.js .test-dist/tests/github-token-crypto.test.js .test-dist/tests/rate-limit.test.js"
+    "test": "tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none .test-dist/tests/api-errors.test.js .test-dist/tests/github-token-crypto.test.js .test-dist/tests/rate-limit.test.js",
+    "check": "npm run lint && npx tsc --noEmit && npm test"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

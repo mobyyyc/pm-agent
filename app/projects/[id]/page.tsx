@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, use } from "react";
+import { useCallback, useEffect, useRef, useState, use } from "react";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useGuest } from "@/components/GuestContext";
+import { ActivitySection } from "@/components/projects/activity-section";
 import { GuidelineSection } from "@/components/projects/guideline-section";
 import { ProjectHeader } from "@/components/projects/project-header";
 import { TaskListSection } from "@/components/projects/task-list-section";
-import type { Project, ProjectMember, Task } from "@/types/models";
+import type { Project, ProjectActivityEvent, ProjectMember, Task } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -20,6 +21,9 @@ type ProjectResponse = {
   project?: Project;
   tasks?: Task[];
   members?: ProjectMember[];
+};
+type ActivityResponse = {
+  events?: ProjectActivityEvent[];
 };
 
 const COLLAPSE_ANIMATION_MS = 320;
@@ -47,6 +51,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [dbProject, setDbProject] = useState<Project | null>(null);
   const [dbTasks, setDbTasks] = useState<Task[]>([]);
   const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
+  const [dbActivityEvents, setDbActivityEvents] = useState<ProjectActivityEvent[]>([]);
   const [renderedTimeline, setRenderedTimeline] = useState<Project["timeline"]>([]);
   const [renderedTasks, setRenderedTasks] = useState<Task[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
@@ -82,6 +87,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     sessionStatus === "loading" ||
     (!isGuest && !!session?.user?.email && !notFoundState && dbProject === null);
 
+  const refreshActivity = useCallback(async () => {
+    if (isGuest || !session?.user?.email) return;
+
+    const response = await fetch(`/api/projects/${id}/activity?limit=50`, { cache: "no-store" });
+    if (!response.ok) return;
+
+    const data = (await response.json().catch(() => null)) as ActivityResponse | null;
+    setDbActivityEvents(Array.isArray(data?.events) ? data.events : []);
+  }, [id, isGuest, session?.user?.email]);
+
   useEffect(() => {
     // Wait for session to settle
     if (sessionStatus === "loading") return;
@@ -110,6 +125,11 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         .catch(() => setNotFoundState(true));
     }
   }, [id, isGuest, session?.user?.email, sessionStatus, guestProjectBundle]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    void refreshActivity();
+  }, [refreshActivity, sessionStatus]);
 
   useEffect(() => {
     setRenderedTimeline(project?.timeline || []);
@@ -341,6 +361,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       }
 
       setIsEditingProjectTitle(false);
+      await refreshActivity();
       window.dispatchEvent(
         new CustomEvent<ProjectTitleUpdatedDetail>("project-title-updated", {
           detail: { projectId: id, name: savedTitle },
@@ -408,6 +429,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       setEditingTimelineIndex(null);
       setTimelineDraft(null);
+      await refreshActivity();
       startTimelineEditCooldown(timelineIndex);
     } catch (error) {
       setRenderedTimeline(previousTimeline);
@@ -448,6 +470,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         }
       }
 
+      await refreshActivity();
       setEditingTimelineIndex(createdTimelineIndex);
       setTimelineDraft({ ...timelineTemplate });
     } catch (error) {
@@ -487,6 +510,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         }
       }
 
+      await refreshActivity();
       if (editingTimelineIndex !== null) {
         if (editingTimelineIndex === timelineIndex) {
           setEditingTimelineIndex(null);
@@ -567,6 +591,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         }
       }
 
+      await refreshActivity();
       setEditingTaskId(null);
       setTaskDraft(null);
       startTaskEditCooldown(taskId);
@@ -632,6 +657,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
           suggestedAssignee: claimedAssignee,
         });
       }
+      await refreshActivity();
     } catch (error) {
       setRenderedTasks(previousTasks);
       setFrameActionError(error instanceof Error ? error.message : "Failed to claim task.");
@@ -663,6 +689,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         setDbTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
       }
 
+      await refreshActivity();
       if (editingTaskId === taskId) {
         setEditingTaskId(null);
         setTaskDraft(null);
@@ -731,6 +758,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       }
       setEditingTaskId(data.task.id);
       setTaskDraft({ ...taskTemplate });
+      await refreshActivity();
     } catch (error) {
       setFrameActionError(error instanceof Error ? error.message : "Failed to add task.");
     } finally {
@@ -934,6 +962,13 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         getMemberLabel={getMemberLabel}
         isTaskAssignedToCurrentUser={isTaskAssignedToCurrentUser}
         onStatusChange={handleStatusChange}
+        onStatusSaved={refreshActivity}
+      />
+
+      <ActivitySection
+        events={isGuest ? [] : dbActivityEvents}
+        projectMembers={projectMembers}
+        isGuest={isGuest}
       />
     </main>
   );

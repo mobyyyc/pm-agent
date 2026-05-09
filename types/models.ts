@@ -111,6 +111,29 @@ export const projectRepositorySchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const projectActivitySourceSchema = z.enum(["user", "github", "system"]);
+export const projectActivityEntityTypeSchema = z.enum([
+  "project",
+  "task",
+  "timeline",
+  "repository",
+  "member",
+  "github_commit",
+]);
+
+export const projectActivityEventSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  actorUserId: z.string().min(1).nullable(),
+  source: projectActivitySourceSchema,
+  eventType: z.string().min(1),
+  entityType: projectActivityEntityTypeSchema,
+  entityId: z.string().min(1).nullable(),
+  summary: z.string().min(1),
+  metadata: z.record(z.unknown()),
+  createdAt: z.string().datetime(),
+});
+
 export const agentStatusSchema = z.enum(["active", "paused"]);
 
 export const agentDefinitionSchema = z.object({
@@ -148,6 +171,9 @@ export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
 export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
 export type RepositoryVisibility = z.infer<typeof repositoryVisibilitySchema>;
 export type ProjectRepository = z.infer<typeof projectRepositorySchema>;
+export type ProjectActivitySource = z.infer<typeof projectActivitySourceSchema>;
+export type ProjectActivityEntityType = z.infer<typeof projectActivityEntityTypeSchema>;
+export type ProjectActivityEvent = z.infer<typeof projectActivityEventSchema>;
 export type AgentStatus = z.infer<typeof agentStatusSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 export type ProjectAgent = z.infer<typeof projectAgentSchema>;

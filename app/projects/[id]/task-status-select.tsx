@@ -42,11 +42,13 @@ export function TaskStatusSelect({
   initialStatus,
   isGuest,
   onStatusChange,
+  onStatusSaved,
 }: {
   taskId: string;
   initialStatus: TaskStatus;
   isGuest?: boolean;
   onStatusChange?: (taskId: string, status: TaskStatus) => void;
+  onStatusSaved?: () => void | Promise<void>;
 }) {
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
   const [isPending, startTransition] = useTransition();
@@ -84,6 +86,7 @@ export function TaskStatusSelect({
         return;
       }
 
+      await onStatusSaved?.();
       router.refresh();
     });
   };

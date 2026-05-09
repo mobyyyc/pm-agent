@@ -11,6 +11,7 @@ import {
   getProjectRepositoryByProjectId,
   deleteProjectRepositoryByProjectId,
   isProjectMember,
+  logProjectActivityEvent,
   normalizeUserId,
   upsertAppUser,
   upsertProjectRepository,
@@ -157,6 +158,8 @@ export async function PUT(request: Request, context: RouteContext) {
 
     const body = await request.json();
     const parsed = upsertProjectRepositoryRequestSchema.parse(body);
+    const previousRepository = await getProjectRepositoryByProjectId(id);
+    const timestamp = isoNow();
 
     const repository = await upsertProjectRepository(
       buildRepositoryPayload({
@@ -168,9 +171,25 @@ export async function PUT(request: Request, context: RouteContext) {
         visibility: parsed.visibility,
         externalId: parsed.externalId || `manual:${parsed.ownerLogin}/${parsed.repoName}`,
         createdByUserId: sessionUserId,
-        timestamp: isoNow(),
+        timestamp,
       }),
     );
+    await logProjectActivityEvent({
+      projectId: id,
+      actorUserId: sessionUserId,
+      source: "user",
+      eventType: "repository.linked",
+      entityType: "repository",
+      entityId: repository.externalId,
+      summary: `Repository linked: ${repository.fullName}`,
+      metadata: {
+        previousFullName: previousRepository?.fullName || null,
+        fullName: repository.fullName,
+        htmlUrl: repository.htmlUrl,
+        visibility: repository.visibility,
+      },
+      createdAt: timestamp,
+    });
 
     return NextResponse.json({ repository });
   } catch (error) {
@@ -274,6 +293,7 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Github repository response was incomplete." }, { status: 502 });
     }
 
+    const timestamp = isoNow();
     const repository = await upsertProjectRepository({
       projectId: id,
       provider: "github",
@@ -286,7 +306,23 @@ export async function POST(request: Request, context: RouteContext) {
         githubBody.visibility || (githubBody.private ? "private" : "public") || parsed.visibility,
       externalId: String(githubBody.id),
       createdByUserId: sessionUserId,
-      timestamp: isoNow(),
+      timestamp,
+    });
+    await logProjectActivityEvent({
+      projectId: id,
+      actorUserId: sessionUserId,
+      source: "github",
+      eventType: "repository.created",
+      entityType: "repository",
+      entityId: repository.externalId,
+      summary: `GitHub repository created and linked: ${repository.fullName}`,
+      metadata: {
+        fullName: repository.fullName,
+        htmlUrl: repository.htmlUrl,
+        visibility: repository.visibility,
+        defaultBranch: repository.defaultBranch,
+      },
+      createdAt: timestamp,
     });
 
     return NextResponse.json({ repository }, { status: 201 });
@@ -401,7 +437,27 @@ export async function DELETE(request: Request, context: RouteContext) {
       }
     }
 
+    const unlinkedAt = isoNow();
     await deleteProjectRepositoryByProjectId(id);
+    await logProjectActivityEvent({
+      projectId: id,
+      actorUserId: sessionUserId,
+      source: action === "unlink_and_delete" ? "github" : "user",
+      eventType: "repository.unlinked",
+      entityType: "repository",
+      entityId: repository.externalId,
+      summary:
+        action === "unlink_and_delete"
+          ? `Repository unlinked and deleted: ${repository.fullName}`
+          : `Repository unlinked: ${repository.fullName}`,
+      metadata: {
+        action,
+        fullName: repository.fullName,
+        htmlUrl: repository.htmlUrl,
+        deletedGithubRepository: action === "unlink_and_delete",
+      },
+      createdAt: unlinkedAt,
+    });
 
     return NextResponse.json({
       success: true,

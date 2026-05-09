@@ -11,6 +11,7 @@ import {
   getProjectMembers,
   getTasksByProjectId,
   isProjectMember,
+  logProjectActivityEvent,
   normalizeUserId,
   updateProject,
   upsertAppUser,
@@ -139,17 +140,52 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = await request.json();
     const parsed = updateProjectRequestSchema.parse(body);
+    const updatedAt = isoNow();
     const updatedProject = await updateProject(
       id,
       {
         name: parsed.name,
         timeline: parsed.timeline,
       },
-      isoNow(),
+      updatedAt,
     );
 
     if (!updatedProject) {
       return NextResponse.json({ error: "Project not found." }, { status: 404 });
+    }
+
+    if (parsed.name !== undefined && parsed.name !== project.name) {
+      await logProjectActivityEvent({
+        projectId: id,
+        actorUserId: sessionUserId,
+        source: "user",
+        eventType: "project.renamed",
+        entityType: "project",
+        entityId: id,
+        summary: `Project renamed from "${project.name}" to "${updatedProject.name}"`,
+        metadata: {
+          previousName: project.name,
+          nextName: updatedProject.name,
+        },
+        createdAt: updatedAt,
+      });
+    }
+
+    if (parsed.timeline !== undefined && JSON.stringify(parsed.timeline) !== JSON.stringify(project.timeline)) {
+      await logProjectActivityEvent({
+        projectId: id,
+        actorUserId: sessionUserId,
+        source: "user",
+        eventType: "timeline.updated",
+        entityType: "timeline",
+        entityId: id,
+        summary: "Project timeline updated",
+        metadata: {
+          previousCount: project.timeline.length,
+          nextCount: updatedProject.timeline.length,
+        },
+        createdAt: updatedAt,
+      });
     }
 
     return NextResponse.json({ project: updatedProject });

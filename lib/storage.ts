@@ -3,6 +3,7 @@ import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypt
 import {
   appUserSchema,
   projectAgentSchema,
+  projectActivityEventSchema,
   projectSchema,
   projectRepositorySchema,
   projectInvitationSchema,
@@ -11,6 +12,9 @@ import {
   userTeamSchema,
   type AppUser,
   type ProjectAgent,
+  type ProjectActivityEvent,
+  type ProjectActivityEntityType,
+  type ProjectActivitySource,
   type Project,
   type ProjectRepository,
   type ProjectInvitation,
@@ -98,6 +102,21 @@ async function initializeCollaborationSchema(): Promise<void> {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_activity_events (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      actor_user_id TEXT,
+      source TEXT NOT NULL CHECK (source IN ('user', 'github', 'system')),
+      event_type TEXT NOT NULL,
+      entity_type TEXT NOT NULL CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit')),
+      entity_id TEXT,
+      summary TEXT NOT NULL,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TEXT NOT NULL
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_user_id ON project_members(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON project_members(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
@@ -106,6 +125,8 @@ async function initializeCollaborationSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_project_id ON project_agents(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_project_id_created_at ON project_activity_events(project_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)
@@ -212,6 +233,21 @@ function mapProjectAgentRow(row: Record<string, unknown>): ProjectAgent {
     createdByUserId: String(row.created_by_user_id),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
+  });
+}
+
+function mapProjectActivityEventRow(row: Record<string, unknown>): ProjectActivityEvent {
+  return projectActivityEventSchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    actorUserId: typeof row.actor_user_id === "string" ? row.actor_user_id : null,
+    source: row.source,
+    eventType: String(row.event_type),
+    entityType: row.entity_type,
+    entityId: typeof row.entity_id === "string" ? row.entity_id : null,
+    summary: String(row.summary),
+    metadata: (row.metadata as Record<string, unknown>) || {},
+    createdAt: String(row.created_at),
   });
 }
 
@@ -660,6 +696,99 @@ export async function deleteProjectAgent(projectId: string, agentId: string): Pr
     DELETE FROM project_agents
     WHERE project_id = ${projectId} AND agent_id = ${agentId}
   `;
+}
+
+// ---------------------------------------------------------------------------
+// Project activity events
+// ---------------------------------------------------------------------------
+
+export async function insertProjectActivityEvent(input: {
+  id: string;
+  projectId: string;
+  actorUserId: string | null;
+  source: ProjectActivitySource;
+  eventType: string;
+  entityType: ProjectActivityEntityType;
+  entityId: string | null;
+  summary: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}): Promise<ProjectActivityEvent> {
+  await ensureCollaborationSchema();
+
+  const actorUserId = input.actorUserId ? normalizeUserId(input.actorUserId) : null;
+  const rows = await sql`
+    INSERT INTO project_activity_events (
+      id,
+      project_id,
+      actor_user_id,
+      source,
+      event_type,
+      entity_type,
+      entity_id,
+      summary,
+      metadata,
+      created_at
+    )
+    VALUES (
+      ${input.id},
+      ${input.projectId},
+      ${actorUserId},
+      ${input.source},
+      ${input.eventType},
+      ${input.entityType},
+      ${input.entityId},
+      ${input.summary},
+      ${JSON.stringify(input.metadata || {})}::jsonb,
+      ${input.createdAt}
+    )
+    RETURNING *
+  `;
+
+  return mapProjectActivityEventRow(rows[0] as Record<string, unknown>);
+}
+
+export async function insertProjectActivityEvents(
+  events: Array<Parameters<typeof insertProjectActivityEvent>[0]>,
+): Promise<ProjectActivityEvent[]> {
+  const inserted: ProjectActivityEvent[] = [];
+
+  for (const event of events) {
+    inserted.push(await insertProjectActivityEvent(event));
+  }
+
+  return inserted;
+}
+
+export async function logProjectActivityEvent(input: Omit<Parameters<typeof insertProjectActivityEvent>[0], "id"> & {
+  id?: string;
+}): Promise<void> {
+  try {
+    await insertProjectActivityEvent({
+      ...input,
+      id: input.id || `activity_${crypto.randomUUID()}`,
+    });
+  } catch (error) {
+    console.error("[project_activity_events] Failed to log activity event:", error);
+  }
+}
+
+export async function getProjectActivityEventsByProjectId(
+  projectId: string,
+  limit: number,
+): Promise<ProjectActivityEvent[]> {
+  await ensureCollaborationSchema();
+
+  const safeLimit = Math.min(100, Math.max(1, Math.floor(limit)));
+  const rows = await sql`
+    SELECT *
+    FROM project_activity_events
+    WHERE project_id = ${projectId}
+    ORDER BY created_at DESC
+    LIMIT ${safeLimit}
+  `;
+
+  return rows.map((row) => mapProjectActivityEventRow(row as Record<string, unknown>));
 }
 
 // ---------------------------------------------------------------------------

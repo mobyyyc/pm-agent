@@ -13,6 +13,7 @@ import {
   getProjectActivityEventsByProjectId,
   getProjectById,
   getTasksByProjectId,
+  insertProjectReport,
   isProjectMember,
   normalizeUserId,
   upsertAppUser,
@@ -98,9 +99,22 @@ export async function POST(request: Request, context: RouteContext) {
     const geminiStart = performance.now();
     const report = await generateProjectProgressReportWithGemini(reportInput);
     geminiMs = performance.now() - geminiStart;
+    const savedReport = await insertProjectReport({
+      id: `report_${crypto.randomUUID()}`,
+      projectId: id,
+      createdByUserId: sessionUserId,
+      period: parsed.period,
+      periodStart: reportInput.periodStart,
+      periodEnd: reportInput.periodEnd,
+      generatedAt: report.generatedAt,
+      report,
+      inputSnapshot: reportInput,
+      source: "manual",
+      createdAt: generatedAt,
+    });
 
     const totalMs = performance.now() - start;
-    const response = NextResponse.json({ report });
+    const response = NextResponse.json({ report, savedReport });
     response.headers.set(
       "Server-Timing",
       [

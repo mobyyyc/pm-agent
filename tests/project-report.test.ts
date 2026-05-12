@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildProjectReportInput } from "../lib/project-report-input";
-import { projectProgressReportSchema } from "../types/models";
+import { listProjectReportsQuerySchema } from "../lib/validators";
+import { projectProgressReportSchema, projectReportArtifactSchema, projectReportPeriodSchema } from "../types/models";
 import type {
   Project,
   ProjectActivityEvent,
   ProjectHealthSummary,
   ProjectProgressSummary,
+  ProjectProgressReport,
   Task,
 } from "../types/models";
 
@@ -140,4 +142,87 @@ test("projectProgressReportSchema validates concise report output", () => {
 
   assert.equal(parsed.period, "weekly");
   assert.equal(parsed.suggestedNextActions[0].priority, "warning");
+});
+
+test("projectReportArtifactSchema validates saved report artifact with deterministic snapshot", () => {
+  const generatedAt = "2026-05-09T12:00:00.000Z";
+  const reportInput = buildProjectReportInput({
+    project,
+    tasks: [
+      makeTask({ id: "task_done", title: "Ship beta", status: "done" }),
+      makeTask({ id: "task_active", title: "Build onboarding", status: "in_progress", deadline: "2026-05-10" }),
+    ],
+    progress,
+    health,
+    activityEvents: [
+      makeEvent({ id: "activity_recent", summary: "Task status changed", createdAt: generatedAt }),
+    ],
+    period: "weekly",
+    today: "2026-05-09",
+    generatedAt,
+  });
+  const report: ProjectProgressReport = {
+    projectId: project.id,
+    projectName: project.name,
+    period: "weekly",
+    generatedAt,
+    executiveSummary: "The project is moving, with one overdue task needing attention.",
+    progressOverview: "1 of 4 tasks are complete.",
+    completedWork: ["Ship beta"],
+    inProgressWork: ["Build onboarding"],
+    riskyWork: ["Fix billing is overdue."],
+    activityHighlights: ["Task status changed."],
+    healthExplanation: "The project is on watch because one task is overdue.",
+    suggestedNextActions: [
+      {
+        title: "Resolve the overdue billing task",
+        rationale: "It is the clearest delivery risk.",
+        priority: "warning",
+      },
+    ],
+  };
+
+  const parsed = projectReportArtifactSchema.parse({
+    id: "report_1",
+    projectId: project.id,
+    createdByUserId: "owner@example.com",
+    period: "weekly",
+    periodStart: reportInput.periodStart,
+    periodEnd: reportInput.periodEnd,
+    generatedAt,
+    report,
+    inputSnapshot: reportInput,
+    source: "manual",
+    createdAt: generatedAt,
+  });
+
+  assert.equal(parsed.inputSnapshot.health.label, "Watch");
+  assert.equal(parsed.inputSnapshot.periodStart, "2026-05-03");
+  assert.equal(parsed.report.executiveSummary, report.executiveSummary);
+});
+
+test("projectReportPeriodSchema validates supported report history periods", () => {
+  const parsed = projectReportPeriodSchema.parse("monthly");
+
+  assert.equal(parsed, "monthly");
+  assert.throws(
+    () => projectReportPeriodSchema.parse("yearly"),
+    /Invalid enum value/,
+  );
+});
+
+test("listProjectReportsQuerySchema validates period and limit for report history", () => {
+  const parsed = listProjectReportsQuerySchema.parse({ period: "monthly", limit: "10" });
+
+  assert.equal(parsed.period, "monthly");
+  assert.equal(parsed.limit, 10);
+  assert.equal(listProjectReportsQuerySchema.parse({}).limit, 10);
+  assert.throws(
+    () => listProjectReportsQuerySchema.parse({ period: "yearly", limit: "10" }),
+    /Invalid enum value/,
+  );
+  assert.throws(
+    () => listProjectReportsQuerySchema.parse({ period: "weekly", limit: "100" }),
+    /Number must be less than or equal to 50/,
+  );
 });

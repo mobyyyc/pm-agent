@@ -17,6 +17,7 @@ import type {
   ProjectActivityEvent,
   ProjectHealthSummary,
   ProjectMember,
+  ProjectReportArtifact,
   ProjectProgressSummary,
   ProjectProgressReport,
   ProjectReportPeriod,
@@ -39,6 +40,9 @@ type ProjectResponse = {
 };
 type ActivityResponse = {
   events?: ProjectActivityEvent[];
+};
+type ReportsResponse = {
+  reports?: ProjectReportArtifact[];
 };
 
 const COLLAPSE_ANIMATION_MS = 320;
@@ -89,6 +93,8 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [projectTitleDraft, setProjectTitleDraft] = useState("");
   const [reportPeriod, setReportPeriod] = useState<ProjectReportPeriod>("weekly");
   const [generatedReport, setGeneratedReport] = useState<ProjectProgressReport | null>(null);
+  const [reportHistory, setReportHistory] = useState<ProjectReportArtifact[]>([]);
+  const [selectedReportArtifact, setSelectedReportArtifact] = useState<ProjectReportArtifact | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
 
@@ -115,6 +121,25 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     const data = (await response.json().catch(() => null)) as ActivityResponse | null;
     setDbActivityEvents(Array.isArray(data?.events) ? data.events : []);
   }, [id, isGuest, session?.user?.email]);
+
+  const refreshReportHistory = useCallback(async () => {
+    if (isGuest || !session?.user?.email) {
+      setReportHistory([]);
+      setSelectedReportArtifact(null);
+      setGeneratedReport(null);
+      return;
+    }
+
+    const response = await fetch(`/api/projects/${id}/reports?period=${reportPeriod}&limit=10`, { cache: "no-store" });
+    if (!response.ok) return;
+
+    const data = (await response.json().catch(() => null)) as ReportsResponse | null;
+    const reports = Array.isArray(data?.reports) ? data.reports : [];
+    setReportHistory(reports);
+    const nextSelected = reports[0] || null;
+    setSelectedReportArtifact(nextSelected);
+    setGeneratedReport(nextSelected?.report || null);
+  }, [id, isGuest, reportPeriod, session?.user?.email]);
 
   useEffect(() => {
     // Wait for session to settle
@@ -149,6 +174,11 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     if (sessionStatus === "loading") return;
     void refreshActivity();
   }, [refreshActivity, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") return;
+    void refreshReportHistory();
+  }, [refreshReportHistory, sessionStatus]);
 
   useEffect(() => {
     setRenderedTimeline(project?.timeline || []);
@@ -797,6 +827,14 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     }
   };
 
+  const handleReportPeriodChange = (period: ProjectReportPeriod) => {
+    setReportPeriod(period);
+    setReportError(null);
+    setReportHistory([]);
+    setSelectedReportArtifact(null);
+    setGeneratedReport(null);
+  };
+
   const handleGenerateReport = async () => {
     if (isGuest || isGeneratingReport) return;
 
@@ -814,12 +852,19 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         throw new Error(await getResponseErrorMessage(response, "Failed to generate report."));
       }
 
-      const data = (await response.json()) as { report?: ProjectProgressReport };
+      const data = (await response.json()) as { report?: ProjectProgressReport; savedReport?: ProjectReportArtifact };
       if (!data.report) {
         throw new Error("Report response was empty.");
       }
 
       setGeneratedReport(data.report);
+      if (data.savedReport) {
+        setSelectedReportArtifact(data.savedReport);
+        setReportHistory((currentReports) => [
+          data.savedReport as ProjectReportArtifact,
+          ...currentReports.filter((reportArtifact) => reportArtifact.id !== data.savedReport?.id),
+        ].slice(0, 10));
+      }
     } catch (error) {
       setReportError(error instanceof Error ? error.message : "Failed to generate report.");
     } finally {
@@ -875,8 +920,14 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             report={generatedReport}
             isGenerating={isGeneratingReport}
             error={reportError}
-            onPeriodChange={setReportPeriod}
+            reportHistory={reportHistory}
+            selectedReportId={selectedReportArtifact?.id || null}
+            onPeriodChange={handleReportPeriodChange}
             onGenerate={() => void handleGenerateReport()}
+            onReportSelect={(reportArtifact) => {
+              setSelectedReportArtifact(reportArtifact);
+              setGeneratedReport(reportArtifact.report);
+            }}
             variant="controls"
           />
 
@@ -1056,7 +1107,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             report={generatedReport}
             isGenerating={isGeneratingReport}
             error={reportError}
-            onPeriodChange={setReportPeriod}
+            onPeriodChange={handleReportPeriodChange}
             onGenerate={() => void handleGenerateReport()}
             variant="preview"
           />

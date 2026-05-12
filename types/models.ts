@@ -240,6 +240,7 @@ export const projectHealthSummarySchema = z.object({
 });
 
 export const projectReportPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
+export const projectReportSourceSchema = z.enum(["manual"]);
 
 export const projectReportActionItemSchema = z.object({
   title: z.string().min(1),
@@ -262,6 +263,74 @@ export const projectProgressReportSchema = z.object({
   suggestedNextActions: z.array(projectReportActionItemSchema).min(1).max(5),
 });
 
+export const projectReportInputSnapshotSchema = z.object({
+  period: projectReportPeriodSchema,
+  generatedAt: z.string().datetime(),
+  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  project: z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    idea: z.string().min(1),
+    guideline: z.string().min(1),
+  }),
+  progress: projectProgressSummarySchema,
+  health: projectHealthSummarySchema,
+  tasks: z.object({
+    completed: z.array(z.object({
+      title: z.string().min(1),
+      status: taskStatusSchema,
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      suggestedAssignee: z.string(),
+    })),
+    inProgress: z.array(z.object({
+      title: z.string().min(1),
+      status: taskStatusSchema,
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      suggestedAssignee: z.string(),
+    })),
+    overdue: z.array(z.object({
+      title: z.string().min(1),
+      status: taskStatusSchema,
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      suggestedAssignee: z.string(),
+    })),
+    dueSoon: z.array(z.object({
+      title: z.string().min(1),
+      status: taskStatusSchema,
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      suggestedAssignee: z.string(),
+    })),
+    unassigned: z.array(z.object({
+      title: z.string().min(1),
+      status: taskStatusSchema,
+      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      suggestedAssignee: z.string(),
+    })),
+  }),
+  recentActivity: z.array(z.object({
+    summary: z.string().min(1),
+    source: projectActivitySourceSchema,
+    entityType: projectActivityEntityTypeSchema,
+    eventType: z.string().min(1),
+    createdAt: z.string().datetime(),
+  })),
+});
+
+export const projectReportArtifactSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  createdByUserId: z.string().min(1).nullable(),
+  period: projectReportPeriodSchema,
+  periodStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  periodEnd: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  generatedAt: z.string().datetime(),
+  report: projectProgressReportSchema,
+  inputSnapshot: projectReportInputSnapshotSchema,
+  source: projectReportSourceSchema,
+  createdAt: z.string().datetime(),
+});
+
 export type Project = z.infer<typeof projectSchema>;
 export type Task = z.infer<typeof taskSchema>;
 export type ProjectProgressSummary = z.infer<typeof projectProgressSummarySchema>;
@@ -270,5 +339,8 @@ export type ProjectRiskSeverity = z.infer<typeof projectRiskSeveritySchema>;
 export type ProjectRiskSignal = z.infer<typeof projectRiskSignalSchema>;
 export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;
 export type ProjectReportPeriod = z.infer<typeof projectReportPeriodSchema>;
+export type ProjectReportSource = z.infer<typeof projectReportSourceSchema>;
 export type ProjectReportActionItem = z.infer<typeof projectReportActionItemSchema>;
 export type ProjectProgressReport = z.infer<typeof projectProgressReportSchema>;
+export type ProjectReportInputSnapshot = z.infer<typeof projectReportInputSnapshotSchema>;
+export type ProjectReportArtifact = z.infer<typeof projectReportArtifactSchema>;

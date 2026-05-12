@@ -788,6 +788,69 @@ html[data-theme="light"] .project-progress-card-detail {
   min-width: 0;
 }
 
+.project-report-history {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.85rem;
+}
+
+.project-report-history-title {
+  color: #8b94a5;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-report-history-item {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.3rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(0, 0, 0, 0.14);
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+
+.project-report-history-item:hover,
+.project-report-history-item--active {
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.project-report-history-main,
+.project-report-history-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.project-report-history-period {
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.project-report-history-time,
+.project-report-history-meta {
+  color: #8b94a5;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.project-report-history-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .project-report-section-title {
   color: #ffffff;
   font-size: 0.86rem;
@@ -954,6 +1017,31 @@ html[data-theme="light"] .project-report-list-item--risk {
 
 html[data-theme="light"] .project-report-empty-state {
   color: #64748b !important;
+}
+
+html[data-theme="light"] .project-report-history {
+  border-top-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+html[data-theme="light"] .project-report-history-title,
+html[data-theme="light"] .project-report-history-time,
+html[data-theme="light"] .project-report-history-meta {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .project-report-history-item {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .project-report-history-item:hover,
+html[data-theme="light"] .project-report-history-item--active {
+  border-color: rgba(15, 23, 42, 0.26) !important;
+  background-color: #eef3f8 !important;
+}
+
+html[data-theme="light"] .project-report-history-period {
+  color: #0f172a !important;
 }
 
 html[data-theme="light"] .project-report-severity--critical {

@@ -170,6 +170,24 @@ async function main() {
 
   console.log("  ✓ project_activity_events table created");
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_reports (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      created_by_user_id TEXT,
+      period TEXT NOT NULL CHECK (period IN ('daily', 'weekly', 'monthly')),
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      generated_at TEXT NOT NULL,
+      report JSONB NOT NULL,
+      input_snapshot JSONB NOT NULL,
+      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual')),
+      created_at TEXT NOT NULL
+    )
+  `;
+
+  console.log("  ✓ project_reports table created");
+
   // Add useful indexes
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id)`;
@@ -186,6 +204,8 @@ async function main() {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_project_id_created_at ON project_activity_events(project_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_period_generated_at ON project_reports(project_id, period, generated_at DESC)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)

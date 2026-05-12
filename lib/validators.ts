@@ -19,7 +19,7 @@ import {
   type Project,
   type Task,
   aiAnalysisSchema,
-} from "@/types/models";
+} from "../types/models";
 
 export const createProjectRequestSchema = z.object({
   idea: z.string().min(5, "Project idea must be at least 5 characters."),
@@ -117,6 +117,11 @@ export const updateProjectAgentRequestSchema = z
 
 export const generateProjectReportRequestSchema = z.object({
   period: projectReportPeriodSchema,
+});
+
+export const listProjectReportsQuerySchema = z.object({
+  period: projectReportPeriodSchema.optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 const arrayFromStringSchema = z

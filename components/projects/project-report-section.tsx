@@ -1,6 +1,6 @@
 "use client";
 
-import type { ProjectProgressReport, ProjectReportPeriod } from "@/types/models";
+import type { ProjectProgressReport, ProjectReportArtifact, ProjectReportPeriod } from "@/types/models";
 
 type ProjectReportSectionProps = {
   isGuest: boolean;
@@ -8,8 +8,11 @@ type ProjectReportSectionProps = {
   report: ProjectProgressReport | null;
   isGenerating: boolean;
   error: string | null;
+  reportHistory?: ProjectReportArtifact[];
+  selectedReportId?: string | null;
   onPeriodChange: (period: ProjectReportPeriod) => void;
   onGenerate: () => void;
+  onReportSelect?: (report: ProjectReportArtifact) => void;
   variant?: "full" | "controls" | "preview";
 };
 
@@ -28,7 +31,7 @@ const periodTitles: Record<ProjectReportPeriod, string> = {
 function formatGeneratedTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 function formatWindowDate(date: Date): string {
@@ -84,8 +87,11 @@ export function ProjectReportSection({
   report,
   isGenerating,
   error,
+  reportHistory = [],
+  selectedReportId = null,
   onPeriodChange,
   onGenerate,
+  onReportSelect,
   variant = "full",
 }: ProjectReportSectionProps) {
   const isControlsOnly = variant === "controls";
@@ -153,6 +159,36 @@ export function ProjectReportSection({
       ) : null}
 
       {showControls && error ? <div className="error-msg mt-4 px-4 py-2 text-sm font-semibold">{error}</div> : null}
+
+      {showControls && reportHistory.length > 0 ? (
+        <div className="project-report-history mt-4">
+          <p className="project-report-history-title">Saved Reports</p>
+          <ul className="mt-2 space-y-2">
+            {reportHistory.map((artifact) => {
+              const isSelected = selectedReportId === artifact.id;
+              return (
+                <li key={artifact.id}>
+                  <button
+                    type="button"
+                    onClick={() => onReportSelect?.(artifact)}
+                    className={`project-report-history-item ${isSelected ? "project-report-history-item--active" : ""}`}
+                    aria-pressed={isSelected}
+                  >
+                    <span className="project-report-history-main">
+                      <span className="project-report-history-period">{artifact.period}</span>
+                      <span className="project-report-history-time">{formatGeneratedTime(artifact.generatedAt)}</span>
+                    </span>
+                    <span className="project-report-history-meta">
+                      <span>{artifact.inputSnapshot.health.label}</span>
+                      {artifact.createdByUserId ? <span>{artifact.createdByUserId}</span> : null}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       {showPreview && report ? (
         <div className={`${showControls ? "mt-5" : ""} space-y-5`}>

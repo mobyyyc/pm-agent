@@ -2,6 +2,7 @@ import { sql } from "@/lib/db";
 import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypto";
 import {
   appUserSchema,
+  projectReportArtifactSchema,
   projectAgentSchema,
   projectActivityEventSchema,
   projectSchema,
@@ -16,6 +17,10 @@ import {
   type ProjectActivityEntityType,
   type ProjectActivitySource,
   type Project,
+  type ProjectProgressReport,
+  type ProjectReportArtifact,
+  type ProjectReportInputSnapshot,
+  type ProjectReportPeriod,
   type ProjectRepository,
   type ProjectInvitation,
   type ProjectMember,
@@ -117,6 +122,22 @@ async function initializeCollaborationSchema(): Promise<void> {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_reports (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      created_by_user_id TEXT,
+      period TEXT NOT NULL CHECK (period IN ('daily', 'weekly', 'monthly')),
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      generated_at TEXT NOT NULL,
+      report JSONB NOT NULL,
+      input_snapshot JSONB NOT NULL,
+      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual')),
+      created_at TEXT NOT NULL
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_user_id ON project_members(user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_members_project_id ON project_members(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
@@ -127,6 +148,8 @@ async function initializeCollaborationSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_project_id_created_at ON project_activity_events(project_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_period_generated_at ON project_reports(project_id, period, generated_at DESC)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)
@@ -247,6 +270,22 @@ function mapProjectActivityEventRow(row: Record<string, unknown>): ProjectActivi
     entityId: typeof row.entity_id === "string" ? row.entity_id : null,
     summary: String(row.summary),
     metadata: (row.metadata as Record<string, unknown>) || {},
+    createdAt: String(row.created_at),
+  });
+}
+
+function mapProjectReportRow(row: Record<string, unknown>): ProjectReportArtifact {
+  return projectReportArtifactSchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    createdByUserId: typeof row.created_by_user_id === "string" ? row.created_by_user_id : null,
+    period: row.period,
+    periodStart: String(row.period_start),
+    periodEnd: String(row.period_end),
+    generatedAt: String(row.generated_at),
+    report: row.report,
+    inputSnapshot: row.input_snapshot,
+    source: row.source,
     createdAt: String(row.created_at),
   });
 }
@@ -789,6 +828,93 @@ export async function getProjectActivityEventsByProjectId(
   `;
 
   return rows.map((row) => mapProjectActivityEventRow(row as Record<string, unknown>));
+}
+
+// ---------------------------------------------------------------------------
+// Project report artifacts
+// ---------------------------------------------------------------------------
+
+export async function insertProjectReport(input: {
+  id: string;
+  projectId: string;
+  createdByUserId: string | null;
+  period: ProjectReportPeriod;
+  periodStart: string;
+  periodEnd: string;
+  generatedAt: string;
+  report: ProjectProgressReport;
+  inputSnapshot: ProjectReportInputSnapshot;
+  source: "manual";
+  createdAt: string;
+}): Promise<ProjectReportArtifact> {
+  await ensureCollaborationSchema();
+
+  const createdByUserId = input.createdByUserId ? normalizeUserId(input.createdByUserId) : null;
+  const rows = await sql`
+    INSERT INTO project_reports (
+      id,
+      project_id,
+      created_by_user_id,
+      period,
+      period_start,
+      period_end,
+      generated_at,
+      report,
+      input_snapshot,
+      source,
+      created_at
+    )
+    VALUES (
+      ${input.id},
+      ${input.projectId},
+      ${createdByUserId},
+      ${input.period},
+      ${input.periodStart},
+      ${input.periodEnd},
+      ${input.generatedAt},
+      ${JSON.stringify(input.report)}::jsonb,
+      ${JSON.stringify(input.inputSnapshot)}::jsonb,
+      ${input.source},
+      ${input.createdAt}
+    )
+    RETURNING *
+  `;
+
+  return mapProjectReportRow(rows[0] as Record<string, unknown>);
+}
+
+export async function getProjectReportsByProjectId(input: {
+  projectId: string;
+  period?: ProjectReportPeriod;
+  limit: number;
+}): Promise<ProjectReportArtifact[]> {
+  await ensureCollaborationSchema();
+
+  const safeLimit = Math.min(50, Math.max(1, Math.floor(input.limit)));
+  const period = input.period ?? null;
+  const rows = await sql`
+    SELECT *
+    FROM project_reports
+    WHERE project_id = ${input.projectId}
+      AND (${period}::text IS NULL OR period = ${period})
+    ORDER BY generated_at DESC
+    LIMIT ${safeLimit}
+  `;
+
+  return rows.map((row) => mapProjectReportRow(row as Record<string, unknown>));
+}
+
+export async function getLatestProjectReportByProjectId(input: {
+  projectId: string;
+  period?: ProjectReportPeriod;
+}): Promise<ProjectReportArtifact | null> {
+  const reports = await getProjectReportsByProjectId({
+    projectId: input.projectId,
+    period: input.period,
+    limit: 1,
+  });
+
+  return reports[0] || null;
 }
 
 // ---------------------------------------------------------------------------

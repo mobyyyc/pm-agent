@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
@@ -54,9 +55,11 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const members = await getProjectMembers(id);
     const projectTasks = await getTasksByProjectId(id);
-    const progress = calculateProjectProgress(project, projectTasks, isoNow().slice(0, 10));
+    const today = isoNow().slice(0, 10);
+    const progress = calculateProjectProgress(project, projectTasks, today);
+    const health = calculateProjectHealth(progress, today);
 
-    return NextResponse.json({ project, tasks: projectTasks, members, progress });
+    return NextResponse.json({ project, tasks: projectTasks, members, progress, health });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch project.", detail: getSafeErrorDetail(error) },

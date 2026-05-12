@@ -220,6 +220,29 @@ export const projectProgressSummarySchema = z.object({
   }),
 });
 
+export const projectHealthStatusSchema = z.enum(["healthy", "watch", "at_risk"]);
+export const projectRiskSeveritySchema = z.enum(["info", "warning", "critical"]);
+
+export const projectRiskSignalSchema = z.object({
+  id: z.string().min(1),
+  severity: projectRiskSeveritySchema,
+  message: z.string().min(1),
+  value: z.number().nonnegative(),
+  threshold: z.number().nonnegative().nullable(),
+});
+
+export const projectHealthSummarySchema = z.object({
+  status: projectHealthStatusSchema,
+  label: z.string().min(1),
+  message: z.string().min(1),
+  signals: z.array(projectRiskSignalSchema),
+  evaluatedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 export type Project = z.infer<typeof projectSchema>;
 export type Task = z.infer<typeof taskSchema>;
 export type ProjectProgressSummary = z.infer<typeof projectProgressSummarySchema>;
+export type ProjectHealthStatus = z.infer<typeof projectHealthStatusSchema>;
+export type ProjectRiskSeverity = z.infer<typeof projectRiskSeveritySchema>;
+export type ProjectRiskSignal = z.infer<typeof projectRiskSignalSchema>;
+export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;

@@ -9,8 +9,16 @@ import { GuidelineSection } from "@/components/projects/guideline-section";
 import { ProjectHeader } from "@/components/projects/project-header";
 import { ProjectProgressSection } from "@/components/projects/project-progress-section";
 import { TaskListSection } from "@/components/projects/task-list-section";
+import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
-import type { Project, ProjectActivityEvent, ProjectMember, ProjectProgressSummary, Task } from "@/types/models";
+import type {
+  Project,
+  ProjectActivityEvent,
+  ProjectHealthSummary,
+  ProjectMember,
+  ProjectProgressSummary,
+  Task,
+} from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -24,6 +32,7 @@ type ProjectResponse = {
   tasks?: Task[];
   members?: ProjectMember[];
   progress?: ProjectProgressSummary;
+  health?: ProjectHealthSummary;
 };
 type ActivityResponse = {
   events?: ProjectActivityEvent[];
@@ -189,11 +198,13 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     ...project,
     timeline: renderedTimeline,
   };
+  const today = new Date().toISOString().slice(0, 10);
   const projectProgress = calculateProjectProgress(
     projectForProgress,
     renderedTasks,
-    new Date().toISOString().slice(0, 10),
+    today,
   );
+  const projectHealth = calculateProjectHealth(projectProgress, today);
 
   const ownerMemberFallback: ProjectMember = {
     projectId: project.id,
@@ -817,7 +828,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       {frameActionError ? <div className="error-msg px-4 py-2 text-sm font-semibold">{frameActionError}</div> : null}
 
-      <ProjectProgressSection progress={projectProgress} />
+      <ProjectProgressSection progress={projectProgress} health={projectHealth} />
 
       <GuidelineSection guideline={project.guideline} />
 

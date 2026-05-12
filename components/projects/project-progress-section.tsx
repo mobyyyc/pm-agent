@@ -1,12 +1,11 @@
 "use client";
 
-import type { ProjectProgressSummary } from "@/types/models";
+import type { ProjectHealthStatus, ProjectHealthSummary, ProjectProgressSummary } from "@/types/models";
 
 type ProjectProgressSectionProps = {
   progress: ProjectProgressSummary;
+  health: ProjectHealthSummary;
 };
-
-type ProjectHealth = "healthy" | "watch" | "at_risk";
 
 function formatWindow(startDate: string | null, endDate: string | null): string {
   if (!startDate && !endDate) return "No project window set";
@@ -14,63 +13,27 @@ function formatWindow(startDate: string | null, endDate: string | null): string 
   return startDate || endDate || "No timeline dates";
 }
 
-function getProjectHealth(progress: ProjectProgressSummary): ProjectHealth {
-  const overdueRatio = progress.totalTasks === 0 ? 0 : progress.overdueTasks / progress.totalTasks;
-  const projectEnded = progress.projectWindow.endDate !== null && progress.projectWindow.endDate < new Date().toISOString().slice(0, 10);
-  const lowCompletionAfterEnd = projectEnded && progress.completionPercent < 80;
-
-  if (progress.overdueTasks >= 3 || overdueRatio >= 0.25 || lowCompletionAfterEnd) {
-    return "at_risk";
-  }
-
-  if (progress.overdueTasks > 0 || progress.dueSoonTasks >= 3 || progress.unassignedTasks > 0) {
-    return "watch";
-  }
-
-  return "healthy";
-}
-
-function getHealthCopy(health: ProjectHealth, progress: ProjectProgressSummary): string {
-  if (health === "at_risk") {
-    if (progress.overdueTasks > 0) return `${progress.overdueTasks} tasks need deadline attention.`;
-    return "Completion is behind the project window.";
-  }
-
-  if (health === "watch") {
-    if (progress.overdueTasks > 0) return `${progress.overdueTasks} tasks are past deadline.`;
-    if (progress.unassignedTasks > 0) return `${progress.unassignedTasks} tasks need an owner.`;
-    return `${progress.dueSoonTasks} tasks are due soon.`;
-  }
-
-  return "No immediate delivery signals need attention.";
-}
-
 function pluralize(value: number, singular: string, plural = `${singular}s`): string {
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
-export function ProjectProgressSection({ progress }: ProjectProgressSectionProps) {
-  const health = getProjectHealth(progress);
-  const healthStyles: Record<ProjectHealth, {
-    label: string;
+export function ProjectProgressSection({ progress, health }: ProjectProgressSectionProps) {
+  const healthStyles: Record<ProjectHealthStatus, {
     badgeClassName: string;
     barClassName: string;
     textClassName: string;
   }> = {
     healthy: {
-      label: "Healthy",
       badgeClassName: "project-progress-health-badge--healthy border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
       barClassName: "project-progress-bar--healthy bg-emerald-300",
       textClassName: "project-progress-health-text--healthy text-emerald-200",
     },
     watch: {
-      label: "Watch",
       badgeClassName: "project-progress-health-badge--watch border-amber-300/35 bg-amber-300/10 text-amber-200",
       barClassName: "project-progress-bar--watch bg-amber-300",
       textClassName: "project-progress-health-text--watch text-amber-200",
     },
     at_risk: {
-      label: "At Risk",
       badgeClassName: "project-progress-health-badge--risk border-red-300/40 bg-red-400/10 text-red-200",
       barClassName: "project-progress-bar--risk bg-red-300",
       textClassName: "project-progress-health-text--risk text-red-200",
@@ -130,7 +93,7 @@ export function ProjectProgressSection({ progress }: ProjectProgressSectionProps
       valueClassName: "text-white",
     },
   ];
-  const healthStyle = healthStyles[health];
+  const healthStyle = healthStyles[health.status];
   const phasesCompleteText =
     progress.timelinePhaseCount === 0
       ? "No phases planned"
@@ -143,7 +106,7 @@ export function ProjectProgressSection({ progress }: ProjectProgressSectionProps
           <div className="flex flex-wrap items-center gap-2">
             <p className="project-progress-eyebrow text-xs font-semibold uppercase tracking-wide text-neutral-500">Project status</p>
             <span className={`inline-flex h-6 items-center rounded-full border px-2.5 text-xs font-semibold ${healthStyle.badgeClassName}`}>
-              {healthStyle.label}
+              {health.label}
             </span>
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
@@ -152,7 +115,7 @@ export function ProjectProgressSection({ progress }: ProjectProgressSectionProps
               {progress.completedTasks} of {pluralize(progress.totalTasks, "task")} complete
             </p>
           </div>
-          <p className={`mt-2 text-sm font-medium ${healthStyle.textClassName}`}>{getHealthCopy(health, progress)}</p>
+          <p className={`mt-2 text-sm font-medium ${healthStyle.textClassName}`}>{health.message}</p>
         </div>
 
         <div className="project-progress-timeline min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-400 md:text-right">

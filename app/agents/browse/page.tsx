@@ -117,7 +117,7 @@ export default function BrowseAgentsPage() {
   const isAuthed = !!session?.user?.email;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:py-8 md:px-6 md:py-10">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight text-white">Browse Agents</h1>
         <p className="max-w-3xl text-sm text-neutral-400">

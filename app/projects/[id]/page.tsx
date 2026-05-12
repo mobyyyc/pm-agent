@@ -873,7 +873,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl min-w-0 flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-10 xl:px-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl min-w-0 flex-col gap-6 px-4 py-6 sm:py-8 md:gap-8 md:px-6 md:py-10 xl:px-8">
       <ProjectHeader
         projectName={project.name}
         projectIdea={project.idea}

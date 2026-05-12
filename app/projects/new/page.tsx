@@ -353,7 +353,7 @@ export default function CreateProjectPage() {
   return (
     <div className="app-shell-bleed relative isolate flex min-h-full w-full flex-col items-center justify-center overflow-hidden transition-colors duration-500">
       <CodeRainBackground />
-      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center justify-center space-y-8 px-3 py-6 text-center sm:px-4 sm:py-8 md:px-6 md:py-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center justify-center space-y-8 px-4 py-6 text-center sm:py-8 md:px-6 md:py-10">
 
         {/* --- Loading View --- */}
         {isAnalyzing && (
@@ -371,7 +371,7 @@ export default function CreateProjectPage() {
 
         {/* --- Initial View --- */}
         {isInitial && (
-          <div className="w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
+          <div className="mx-auto w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
             <h1 className="new-project-heading mb-4 text-4xl font-bold tracking-tight md:text-5xl">
               New Project
             </h1>
@@ -404,7 +404,7 @@ export default function CreateProjectPage() {
 
         {/* --- Interview Question View --- */}
         {isAsking && currentAnalysis && (
-           <div className="w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 xl:max-w-6xl">
+           <div className="mx-auto w-full max-w-5xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 xl:max-w-6xl">
               <h2 className="text-2xl font-medium leading-tight text-white md:text-3xl">
                 {currentAnalysis.question}
               </h2>
@@ -468,7 +468,7 @@ export default function CreateProjectPage() {
 
         {/* --- Ready / Summary View --- */}
         {isReady && currentAnalysis && (
-            <div className="w-full max-w-xl bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 text-center animate-in zoom-in-95 fade-in duration-500 shadow-2xl relative overflow-hidden flex flex-col items-center">
+            <div className="mx-auto w-full max-w-xl bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 text-center animate-in zoom-in-95 fade-in duration-500 shadow-2xl relative overflow-hidden flex flex-col items-center">
                 <div className="success-accent-gradient absolute top-0 left-0 h-1 w-full"></div>
                 
                 <div className="inline-flex items-center justify-center p-4 bg-green-500/20 rounded-full mb-6 relative">

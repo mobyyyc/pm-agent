@@ -568,7 +568,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="relative min-h-0 flex-1 overflow-auto bg-black px-3 pt-20 pb-8 sm:px-4 sm:pt-22 sm:pb-10 md:px-6 md:pt-24 md:pb-12">
+        <main className="relative min-h-0 flex-1 overflow-auto bg-black pt-20 pb-8 sm:pt-22 sm:pb-10 md:pt-24 md:pb-12">
             {children}
         </main>
       </div>

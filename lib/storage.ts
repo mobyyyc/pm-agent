@@ -830,6 +830,55 @@ export async function getProjectActivityEventsByProjectId(
   return rows.map((row) => mapProjectActivityEventRow(row as Record<string, unknown>));
 }
 
+export async function insertGithubCommitActivityEvents(
+  events: Array<Parameters<typeof insertProjectActivityEvent>[0]>,
+): Promise<{ inserted: ProjectActivityEvent[]; skippedCount: number }> {
+  await ensureCollaborationSchema();
+
+  const inserted: ProjectActivityEvent[] = [];
+
+  for (const event of events) {
+    const actorUserId = event.actorUserId ? normalizeUserId(event.actorUserId) : null;
+    const rows = await sql`
+      INSERT INTO project_activity_events (
+        id,
+        project_id,
+        actor_user_id,
+        source,
+        event_type,
+        entity_type,
+        entity_id,
+        summary,
+        metadata,
+        created_at
+      )
+      VALUES (
+        ${event.id},
+        ${event.projectId},
+        ${actorUserId},
+        ${event.source},
+        ${event.eventType},
+        ${event.entityType},
+        ${event.entityId},
+        ${event.summary},
+        ${JSON.stringify(event.metadata || {})}::jsonb,
+        ${event.createdAt}
+      )
+      ON CONFLICT (id) DO NOTHING
+      RETURNING *
+    `;
+
+    if (rows.length > 0) {
+      inserted.push(mapProjectActivityEventRow(rows[0] as Record<string, unknown>));
+    }
+  }
+
+  return {
+    inserted,
+    skippedCount: Math.max(0, events.length - inserted.length),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Project report artifacts
 // ---------------------------------------------------------------------------

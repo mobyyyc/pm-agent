@@ -27,6 +27,7 @@ export const RATE_LIMITS = {
   mutation: { max: 60, windowMs: 10 * 60 * 1000 },
   projectMutation: { max: 30, windowMs: 10 * 60 * 1000 },
   githubCreate: { max: 10, windowMs: 10 * 60 * 1000 },
+  githubSync: { max: 20, windowMs: 10 * 60 * 1000 },
 } satisfies Record<string, RateLimitConfig>;
 
 export function getRateLimitKey(request: Request, scope: string, userId?: string | null): string {

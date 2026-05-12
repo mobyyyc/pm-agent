@@ -17,6 +17,8 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // reset when repo changes
@@ -24,6 +26,7 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
     setPage(1);
     setHasMore(true);
     setError(null);
+    setSyncMessage(null);
   }, [owner, repo]);
 
   useEffect(() => {
@@ -58,10 +61,51 @@ export default function RepoCommits({ projectId, owner, repo }: { projectId: str
 
   if (!owner || !repo) return null;
 
+  const handleSyncCommits = async () => {
+    setSyncing(true);
+    setError(null);
+    setSyncMessage(null);
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/repository/commits/sync`, {
+        method: "POST",
+      });
+      const body = (await res.json().catch(() => ({}))) as {
+        syncedCount?: number;
+        skippedCount?: number;
+        error?: string;
+        detail?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(body.detail || body.error || `Status ${res.status}`);
+      }
+
+      const syncedCount = Number(body.syncedCount || 0);
+      setSyncMessage(`Synced ${syncedCount} new commits`);
+      setPage(1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sync commits.");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div>
-      <h3 className="mb-3 text-xl font-semibold tracking-tight text-white">Recent Commits</h3>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-xl font-semibold tracking-tight text-white">Recent Commits</h3>
+        <button
+          type="button"
+          onClick={() => void handleSyncCommits()}
+          disabled={syncing}
+          className="normal-button self-start rounded-full px-3 py-1 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+        >
+          {syncing ? "Syncing..." : "Sync commits"}
+        </button>
+      </div>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
+      {syncMessage ? <p className="mb-3 text-sm font-semibold text-green-400">{syncMessage}</p> : null}
 
       <div className="relative">
         {/* Vertical line behind the commit items */}

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { getSafeErrorDetail, getSafeProviderDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
+import { normalizeGithubCommits, type GithubCommitResponse } from "@/lib/github-commits";
 import {
   getGithubLinkByUserId,
   getProjectById,
@@ -14,24 +15,6 @@ import { isoNow } from "@/lib/utils";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
-};
-
-type GithubCommitResponse = {
-  sha?: string;
-  html_url?: string;
-  author?: {
-    login?: string | null;
-  } | null;
-  commit?: {
-    message?: string;
-    author?: {
-      name?: string | null;
-      date?: string | null;
-    } | null;
-    verification?: {
-      verified?: boolean;
-    } | null;
-  } | null;
 };
 
 async function getAuthorizedProject(projectId: string, sessionUserId: string | null) {
@@ -89,14 +72,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const commitsBody = (await res.json().catch(() => [])) as GithubCommitResponse[];
 
-    const commits = commitsBody.map((c) => ({
-      sha: c.sha,
-      message: c.commit?.message || "",
-      authorName: (c.commit && c.commit.author && c.commit.author.name) || (c.author && c.author.login) || null,
-      date: c.commit?.author?.date || null,
-      htmlUrl: c.html_url || `https://github.com/${owner}/${repo}/commit/${c.sha}`,
-      verified: Boolean(c.commit?.verification?.verified),
-    }));
+    const commits = normalizeGithubCommits(commitsBody, {
+      ownerLogin: owner,
+      repoName: repo,
+    });
 
     return NextResponse.json({ commits, fetchedAt: isoNow() });
   } catch (error) {

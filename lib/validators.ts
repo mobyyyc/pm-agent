@@ -7,10 +7,13 @@ import {
   teamImportAnalysisSchema,
   teamKnowledgeSchema,
   projectSchema,
+  projectProgressReportSchema,
+  projectReportPeriodSchema,
   taskSchema,
   taskStatusSchema,
   timelineItemSchema,
   type AIPlan,
+  type ProjectProgressReport,
   type TeamImportAnalysis,
   type TeamKnowledge,
   type Project,
@@ -112,6 +115,10 @@ export const updateProjectAgentRequestSchema = z
     message: "At least one agent field must be provided.",
   });
 
+export const generateProjectReportRequestSchema = z.object({
+  period: projectReportPeriodSchema,
+});
+
 const arrayFromStringSchema = z
   .union([z.array(z.string()), z.string()])
   .transform((value) => {
@@ -182,4 +189,8 @@ export function validateTeamKnowledge(team: unknown): TeamKnowledge {
 
 export function validateAndNormalizeTeamImportAnalysis(analysis: unknown): TeamImportAnalysis {
   return teamImportAnalysisSchema.parse(analysis);
+}
+
+export function validateAndNormalizeProjectProgressReport(report: unknown): ProjectProgressReport {
+  return projectProgressReportSchema.parse(report);
 }

@@ -1,9 +1,11 @@
 import {
   validateAndNormalizeAIPlan,
   validateAndNormalizeAIAnalysis,
+  validateAndNormalizeProjectProgressReport,
   validateAndNormalizeTeamImportAnalysis,
 } from "@/lib/validators";
-import type { AIPlan, AIAnalysis, TeamImportAnalysis } from "@/types/models";
+import type { AIPlan, AIAnalysis, ProjectProgressReport, TeamImportAnalysis } from "@/types/models";
+import type { ProjectReportInput } from "@/lib/project-report-input";
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
 const GEMINI_URL =
@@ -13,6 +15,7 @@ const ANALYZE_TIMEOUT_MS = 30000;
 const ANALYZE_MAX_ATTEMPTS = 1;
 const PLAN_TIMEOUT_MS = 25000;
 const IMPORT_TIMEOUT_MS = 20000;
+const REPORT_TIMEOUT_MS = 25000;
 
 function isRetryableAnalyzeError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -133,6 +136,49 @@ const teamImportAnalysisJsonSchema = {
     },
   },
   required: ["summary", "categories", "normalized"],
+};
+
+const projectProgressReportJsonSchema = {
+  type: "OBJECT",
+  properties: {
+    projectId: { type: "STRING" },
+    projectName: { type: "STRING" },
+    period: { type: "STRING", enum: ["daily", "weekly", "monthly"] },
+    generatedAt: { type: "STRING" },
+    executiveSummary: { type: "STRING" },
+    progressOverview: { type: "STRING" },
+    completedWork: { type: "ARRAY", items: { type: "STRING" } },
+    inProgressWork: { type: "ARRAY", items: { type: "STRING" } },
+    riskyWork: { type: "ARRAY", items: { type: "STRING" } },
+    activityHighlights: { type: "ARRAY", items: { type: "STRING" } },
+    healthExplanation: { type: "STRING" },
+    suggestedNextActions: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          title: { type: "STRING" },
+          rationale: { type: "STRING" },
+          priority: { type: "STRING", enum: ["info", "warning", "critical"] },
+        },
+        required: ["title", "rationale", "priority"],
+      },
+    },
+  },
+  required: [
+    "projectId",
+    "projectName",
+    "period",
+    "generatedAt",
+    "executiveSummary",
+    "progressOverview",
+    "completedWork",
+    "inProgressWork",
+    "riskyWork",
+    "activityHighlights",
+    "healthExplanation",
+    "suggestedNextActions",
+  ],
 };
 
 type GeminiResponse = {
@@ -385,5 +431,78 @@ export async function analyzeTeamImportWithGemini(input: {
   }
 
   return validateAndNormalizeTeamImportAnalysis(parsed);
+}
+
+export async function generateProjectProgressReportWithGemini(
+  input: ProjectReportInput,
+): Promise<ProjectProgressReport> {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not set.");
+  }
+
+  const prompt = [
+    "You are a senior product manager generating a concise stakeholder-ready progress report.",
+    "Return only valid JSON matching the schema. Do not include markdown, comments, or extra keys.",
+    "Use only the deterministic project signals provided below. Do not invent project state, tasks, blockers, dates, or activity.",
+    "Keep each string concise. Prefer plain PM language over generic AI prose.",
+    "Arrays should contain 0-5 items, except suggestedNextActions must contain 1-5 items.",
+    "If a category has no supporting input, return an empty array for that category.",
+    "",
+    "REPORT REQUIREMENTS",
+    "- executiveSummary: 1-2 sentences.",
+    "- progressOverview: mention completion, task counts, timeline phase/window if useful.",
+    "- completedWork: completed task titles or activity-backed completions only.",
+    "- inProgressWork: active in-progress task titles only.",
+    "- riskyWork: overdue, due-soon, unassigned, or health-signal-backed risks only.",
+    "- activityHighlights: recent activity summaries only.",
+    "- healthExplanation: explain the supplied health status and signals.",
+    "- suggestedNextActions: practical next steps grounded in supplied risks/tasks/activity.",
+    "",
+    "DETERMINISTIC INPUT",
+    JSON.stringify(input, null, 2),
+  ].join("\n");
+
+  const response = await fetchWithTimeout(`${GEMINI_URL}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: projectProgressReportJsonSchema,
+      },
+    }),
+  }, REPORT_TIMEOUT_MS);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gemini report generation failed: ${response.status} ${errorText}`);
+  }
+
+  const json = (await response.json()) as GeminiResponse;
+  const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!rawText) {
+    throw new Error("Gemini returned an empty report.");
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error("Gemini returned invalid report JSON.");
+  }
+
+  const report = validateAndNormalizeProjectProgressReport(parsed);
+
+  return {
+    ...report,
+    projectId: input.project.id,
+    projectName: input.project.name,
+    period: input.period,
+    generatedAt: input.generatedAt,
+  };
 }
 

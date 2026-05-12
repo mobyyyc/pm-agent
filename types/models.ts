@@ -239,6 +239,29 @@ export const projectHealthSummarySchema = z.object({
   evaluatedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+export const projectReportPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
+
+export const projectReportActionItemSchema = z.object({
+  title: z.string().min(1),
+  rationale: z.string().min(1),
+  priority: projectRiskSeveritySchema,
+});
+
+export const projectProgressReportSchema = z.object({
+  projectId: z.string().min(1),
+  projectName: z.string().min(1),
+  period: projectReportPeriodSchema,
+  generatedAt: z.string().datetime(),
+  executiveSummary: z.string().min(1),
+  progressOverview: z.string().min(1),
+  completedWork: z.array(z.string().min(1)),
+  inProgressWork: z.array(z.string().min(1)),
+  riskyWork: z.array(z.string().min(1)),
+  activityHighlights: z.array(z.string().min(1)),
+  healthExplanation: z.string().min(1),
+  suggestedNextActions: z.array(projectReportActionItemSchema).min(1).max(5),
+});
+
 export type Project = z.infer<typeof projectSchema>;
 export type Task = z.infer<typeof taskSchema>;
 export type ProjectProgressSummary = z.infer<typeof projectProgressSummarySchema>;
@@ -246,3 +269,6 @@ export type ProjectHealthStatus = z.infer<typeof projectHealthStatusSchema>;
 export type ProjectRiskSeverity = z.infer<typeof projectRiskSeveritySchema>;
 export type ProjectRiskSignal = z.infer<typeof projectRiskSignalSchema>;
 export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;
+export type ProjectReportPeriod = z.infer<typeof projectReportPeriodSchema>;
+export type ProjectReportActionItem = z.infer<typeof projectReportActionItemSchema>;
+export type ProjectProgressReport = z.infer<typeof projectProgressReportSchema>;

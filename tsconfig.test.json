@@ -15,7 +15,9 @@
     "tests/**/*.test.ts",
     "lib/api-errors.ts",
     "lib/github-token-crypto.ts",
+    "lib/project-health.ts",
     "lib/project-progress.ts",
+    "lib/project-report-input.ts",
     "lib/rate-limit.ts"
   ],
   "exclude": ["node_modules", ".next", ".test-dist"]

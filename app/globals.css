@@ -666,6 +666,304 @@ html[data-theme="light"] .project-progress-card-detail {
   opacity: 0.68;
 }
 
+.project-report-panel {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.project-report-eyebrow,
+.project-report-artifact-label,
+.project-report-generated,
+.project-report-muted {
+  color: #8b94a5;
+}
+
+.project-report-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-report-heading {
+  margin-top: 0.25rem;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.project-report-period-control {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.24);
+}
+
+.project-report-period-button {
+  color: #a5adba;
+}
+
+.project-report-period-button:hover {
+  color: #ffffff;
+}
+
+.project-report-period-button--active {
+  background-color: #ffffff;
+  color: #030712;
+  box-shadow: 0 10px 20px -14px rgba(0, 0, 0, 0.72);
+}
+
+.project-report-summary-card,
+.project-report-list-item,
+.project-report-action-item {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.18);
+}
+
+.project-report-summary-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.project-report-artifact-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-report-project-name {
+  margin-top: 0.25rem;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.project-report-meta {
+  text-align: left;
+}
+
+.project-report-window {
+  color: #dbe4f0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.project-report-generated {
+  margin-top: 0.15rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.project-report-executive-summary {
+  margin-top: 1rem;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.project-report-progress-copy {
+  margin-top: 0.75rem;
+  color: #b8c0cc;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.project-report-risk-callout {
+  margin-top: 1rem;
+  border-left: 3px solid rgba(248, 113, 113, 0.8);
+  border-radius: 0.5rem;
+  background-color: rgba(248, 113, 113, 0.08);
+  padding: 0.75rem 0.9rem;
+  color: #fee2e2;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.project-report-section-block {
+  min-width: 0;
+}
+
+.project-report-section-title {
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.project-report-list-item {
+  border-radius: 0.55rem;
+  padding: 0.68rem 0.8rem;
+  color: #dbe4f0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.project-report-list-item--risk {
+  border-color: rgba(248, 113, 113, 0.28);
+  background-color: rgba(248, 113, 113, 0.06);
+  color: #fee2e2;
+}
+
+.project-report-empty-state {
+  margin-top: 0.55rem;
+  color: #7d8796;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.project-report-action-item {
+  border-radius: 0.65rem;
+  padding: 0.85rem 0.9rem;
+}
+
+.project-report-action-title {
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.project-report-action-rationale {
+  margin-top: 0.35rem;
+  color: #aeb7c5;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.project-report-severity-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.14rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.project-report-severity--critical {
+  border-color: rgba(248, 113, 113, 0.34);
+  background-color: rgba(248, 113, 113, 0.08);
+  color: #fecaca;
+}
+
+.project-report-severity--warning {
+  border-color: rgba(251, 191, 36, 0.34);
+  background-color: rgba(251, 191, 36, 0.08);
+  color: #fde68a;
+}
+
+.project-report-severity--info {
+  border-color: rgba(125, 211, 252, 0.3);
+  background-color: rgba(125, 211, 252, 0.08);
+  color: #bae6fd;
+}
+
+html[data-theme="light"] .project-report-panel {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 24px 46px -28px rgba(42, 74, 114, 0.38), 0 10px 24px -16px rgba(42, 74, 114, 0.2);
+}
+
+html[data-theme="light"] .project-report-eyebrow,
+html[data-theme="light"] .project-report-artifact-label,
+html[data-theme="light"] .project-report-generated,
+html[data-theme="light"] .project-report-muted {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .project-report-heading,
+html[data-theme="light"] .project-report-project-name,
+html[data-theme="light"] .project-report-section-title,
+html[data-theme="light"] .project-report-action-title {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .project-report-period-control {
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  background-color: #eef3f8 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="light"] .project-report-period-button {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .project-report-period-button:hover {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .project-report-period-button--active {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 20px -14px rgba(15, 23, 42, 0.42);
+}
+
+html[data-theme="light"] .project-report-summary-card {
+  background-color: #ffffff !important;
+  border-color: rgba(15, 23, 42, 0.16) !important;
+  box-shadow: 0 18px 34px -26px rgba(42, 74, 114, 0.28), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+html[data-theme="light"] .project-report-window {
+  color: #1e293b !important;
+}
+
+html[data-theme="light"] .project-report-executive-summary {
+  color: #1f2937 !important;
+}
+
+html[data-theme="light"] .project-report-progress-copy,
+html[data-theme="light"] .project-report-action-rationale {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .project-report-risk-callout {
+  border-left-color: #dc2626 !important;
+  background-color: #fff1f1 !important;
+  color: #991b1b !important;
+  box-shadow: inset 0 0 0 1px rgba(185, 28, 28, 0.12);
+}
+
+html[data-theme="light"] .project-report-list-item,
+html[data-theme="light"] .project-report-action-item {
+  background-color: #f8fafc !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #334155 !important;
+  box-shadow: 0 12px 24px -22px rgba(42, 74, 114, 0.24);
+}
+
+html[data-theme="light"] .project-report-list-item--risk {
+  background-color: #fff7ed !important;
+  border-color: rgba(194, 65, 12, 0.24) !important;
+  color: #9a3412 !important;
+}
+
+html[data-theme="light"] .project-report-empty-state {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .project-report-severity--critical {
+  border-color: rgba(185, 28, 28, 0.28) !important;
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+html[data-theme="light"] .project-report-severity--warning {
+  border-color: rgba(180, 83, 9, 0.28) !important;
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+html[data-theme="light"] .project-report-severity--info {
+  border-color: rgba(37, 99, 235, 0.24) !important;
+  background-color: #dbeafe !important;
+  color: #1d4ed8 !important;
+}
+
 html[data-theme="light"] [class~="placeholder:text-white/20"]::placeholder {
   color: rgba(90, 104, 126, 0.8) !important;
 }

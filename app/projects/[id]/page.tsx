@@ -8,6 +8,7 @@ import { ActivitySection } from "@/components/projects/activity-section";
 import { GuidelineSection } from "@/components/projects/guideline-section";
 import { ProjectHeader } from "@/components/projects/project-header";
 import { ProjectProgressSection } from "@/components/projects/project-progress-section";
+import { ProjectReportSection } from "@/components/projects/project-report-section";
 import { TaskListSection } from "@/components/projects/task-list-section";
 import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
@@ -829,6 +830,8 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       {frameActionError ? <div className="error-msg px-4 py-2 text-sm font-semibold">{frameActionError}</div> : null}
 
       <ProjectProgressSection progress={projectProgress} health={projectHealth} />
+
+      <ProjectReportSection projectId={project.id} isGuest={isGuest} />
 
       <GuidelineSection guideline={project.guideline} />
 

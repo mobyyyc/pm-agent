@@ -366,8 +366,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               Projects
             </div>
 
-            <div className="relative min-h-0 flex-1">
-              <div ref={projectScrollRef} onScroll={updateProjectScrollFades} className="project-scroll-area h-full overflow-y-auto">
+            <div className="scroll-fade scroll-fade--sidebar relative min-h-0 flex-1">
+              <div ref={projectScrollRef} onScroll={updateProjectScrollFades} className="scroll-fade__viewport h-full overflow-y-auto">
                 <div className="space-y-1 pr-1">
                   {displayProjects.map((project) => (
                     <div key={project.id} className="group flex items-center justify-between rounded-full pr-2 hover:bg-white/10">
@@ -395,11 +395,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <div
                 aria-hidden="true"
-                className={`project-scroll-fade-top ${showProjectFadeTop ? "opacity-100" : "opacity-0"}`}
+                className={`scroll-fade__edge scroll-fade__edge--top ${showProjectFadeTop ? "opacity-100" : "opacity-0"}`}
               />
               <div
                 aria-hidden="true"
-                className={`project-scroll-fade-bottom ${showProjectFadeBottom ? "opacity-100" : "opacity-0"}`}
+                className={`scroll-fade__edge scroll-fade__edge--bottom ${showProjectFadeBottom ? "opacity-100" : "opacity-0"}`}
               />
             </div>
 
@@ -568,7 +568,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="page-edge-fade relative min-h-0 flex-1 overflow-auto bg-black px-3 pt-20 pb-8 sm:px-4 sm:pt-22 sm:pb-10 md:px-6 md:pt-24 md:pb-12">
+        <main className="relative min-h-0 flex-1 overflow-auto bg-black px-3 pt-20 pb-8 sm:px-4 sm:pt-22 sm:pb-10 md:px-6 md:pt-24 md:pb-12">
             {children}
         </main>
       </div>

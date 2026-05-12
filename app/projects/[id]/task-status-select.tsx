@@ -93,7 +93,7 @@ export function TaskStatusSelect({
 
   return (
     <div className="flex w-full flex-col gap-1 sm:min-w-70 sm:w-auto">
-      <div className="rounded-xl bg-linear-to-l from-(--status-frame-gradient-from) to-transparent p-1">
+      <div className="status-control-gradient rounded-xl p-1">
         <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="Task status">
           {statusOptions.map((option) => {
             const isActive = status === option.value;

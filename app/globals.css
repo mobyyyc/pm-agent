@@ -19,10 +19,18 @@
   --frame-surface-item: rgba(255, 255, 255, 0.07);
   --frame-surface-hover: rgba(255, 255, 255, 0.12);
   --frame-surface-item-hover: rgba(255, 255, 255, 0.11);
+  --activity-fade-surface: #171717;
   --frame-shadow-lg: 0 24px 44px -30px rgba(0, 0, 0, 0.78), 0 10px 20px -14px rgba(0, 0, 0, 0.56);
   --frame-shadow-md: 0 18px 32px -28px rgba(0, 0, 0, 0.7), 0 8px 16px -12px rgba(0, 0, 0, 0.5);
   --frame-shadow-hover: 0 30px 56px -32px rgba(0, 0, 0, 0.84), 0 14px 26px -14px rgba(0, 0, 0, 0.62);
-  --status-frame-gradient-from: rgba(255, 255, 255, 0.09);
+  --fade-surface: var(--sidebar-background);
+  --fade-size: 24px;
+  --status-gradient-todo: linear-gradient(to left, rgba(14, 165, 233, 0.18), transparent);
+  --status-gradient-in-progress: linear-gradient(to left, rgba(245, 158, 11, 0.18), transparent);
+  --status-gradient-done: linear-gradient(to left, rgba(16, 185, 129, 0.18), transparent);
+  --status-control-gradient: linear-gradient(to left, rgba(255, 255, 255, 0.09), transparent);
+  --heading-gradient: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
+  --success-accent-gradient: linear-gradient(to right, rgba(34, 197, 94, 0), rgba(34, 197, 94, 0.5), rgba(34, 197, 94, 0));
   color-scheme: dark;
 }
 
@@ -45,10 +53,17 @@ html[data-theme="light"] {
   --frame-surface-item: rgba(255, 255, 255, 0.68);
   --frame-surface-hover: rgba(255, 255, 255, 0.88);
   --frame-surface-item-hover: rgba(255, 255, 255, 0.8);
+  --activity-fade-surface: #fbfdff;
   --frame-shadow-lg: 0 24px 46px -28px rgba(42, 74, 114, 0.34), 0 10px 24px -16px rgba(42, 74, 114, 0.22);
   --frame-shadow-md: 0 18px 34px -26px rgba(42, 74, 114, 0.3), 0 8px 20px -16px rgba(42, 74, 114, 0.2);
   --frame-shadow-hover: 0 30px 56px -30px rgba(42, 74, 114, 0.4), 0 14px 28px -16px rgba(42, 74, 114, 0.26);
-  --status-frame-gradient-from: rgba(15, 23, 42, 0.12);
+  --fade-surface: var(--sidebar-background);
+  --status-gradient-todo: linear-gradient(to left, rgba(2, 132, 199, 0.14), transparent);
+  --status-gradient-in-progress: linear-gradient(to left, rgba(217, 119, 6, 0.14), transparent);
+  --status-gradient-done: linear-gradient(to left, rgba(5, 150, 105, 0.14), transparent);
+  --status-control-gradient: linear-gradient(to left, rgba(15, 23, 42, 0.12), transparent);
+  --heading-gradient: linear-gradient(180deg, #0f172a 0%, #334155 58%, #64748b 100%);
+  --success-accent-gradient: linear-gradient(to right, rgba(22, 163, 74, 0), rgba(22, 163, 74, 0.52), rgba(22, 163, 74, 0));
   color-scheme: light;
 }
 
@@ -456,16 +471,6 @@ html[data-theme="light"] [class~="border-white/40"] {
 
 html[data-theme="light"] [class~="ring-white/20"] {
   --tw-ring-color: rgba(15, 23, 42, 0.2) !important;
-}
-
-html[data-theme="light"] [class~="from-white"] {
-  --tw-gradient-from: rgba(15, 23, 42, 0.95) var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position) !important;
-}
-
-html[data-theme="light"] [class~="from-white/12"] {
-  --tw-gradient-from: rgba(15, 23, 42, 0.14) var(--tw-gradient-from-position) !important;
-  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position) !important;
 }
 
 html[data-theme="light"] [class~="hover:bg-white/5"]:hover {
@@ -1066,13 +1071,14 @@ html[data-theme="light"] [class~="placeholder:text-white/20"]::placeholder {
   color: rgba(90, 104, 126, 0.8) !important;
 }
 
-html[data-theme="light"] .home-hero-heading,
-html[data-theme="light"] .new-project-heading {
-  background-image: linear-gradient(180deg, #0f172a 0%, #334155 58%, #64748b 100%) !important;
+.home-hero-heading,
+.new-project-heading,
+.heading-gradient {
+  background-image: var(--heading-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  color: transparent !important;
+  color: transparent;
 }
 
 html[data-theme="light"] .normal-button {
@@ -1300,29 +1306,60 @@ html[data-theme="light"] .settings-style-slider-thumb-active {
   box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.24), 0 14px 28px -12px rgba(42, 74, 114, 0.72);
 }
 
-.project-scroll-area {
+.scroll-fade {
+  position: relative;
+}
+
+.scroll-fade--sidebar {
+  --fade-surface: var(--sidebar-background);
+}
+
+.scroll-fade--activity {
+  --fade-surface: var(--activity-fade-surface);
+}
+
+.scroll-fade__viewport {
   scrollbar-gutter: stable;
 }
 
-.project-scroll-fade-top,
-.project-scroll-fade-bottom {
+.scroll-fade__edge {
   pointer-events: none;
   position: absolute;
   left: 0;
   right: 0;
-  height: 20px;
+  height: var(--fade-size);
   z-index: 1;
   transition: opacity 0.2s ease;
 }
 
-.project-scroll-fade-top {
+.scroll-fade__edge--top {
   top: 0;
-  background: linear-gradient(to bottom, var(--sidebar-background), transparent);
+  background: linear-gradient(to bottom, var(--fade-surface), transparent);
 }
 
-.project-scroll-fade-bottom {
+.scroll-fade__edge--bottom {
   bottom: 0;
-  background: linear-gradient(to top, var(--sidebar-background), transparent);
+  background: linear-gradient(to top, var(--fade-surface), transparent);
+}
+
+.status-card-gradient--todo {
+  background-image: var(--status-gradient-todo);
+}
+
+.status-card-gradient--in-progress {
+  background-image: var(--status-gradient-in-progress);
+}
+
+.status-card-gradient--done {
+  background-image: var(--status-gradient-done);
+}
+
+.status-control-gradient {
+  background-image: var(--status-control-gradient);
+}
+
+.success-accent-gradient {
+  background-image: var(--success-accent-gradient);
 }
 
 .project-title-underline {
@@ -1331,29 +1368,6 @@ html[data-theme="light"] .settings-style-slider-thumb-active {
 
 html[data-theme="light"] .project-title-underline {
   border-bottom-color: rgba(0, 0, 0, 0.5);
-}
-
-.page-edge-fade {
-  --page-edge-fade-top-offset: 20px;
-  --page-edge-fade-top-size: 88px;
-  --page-edge-fade-bottom-size: 88px;
-  scrollbar-gutter: stable;
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent var(--page-edge-fade-top-offset),
-    black calc(var(--page-edge-fade-top-offset) + var(--page-edge-fade-top-size)),
-    black calc(100% - var(--page-edge-fade-bottom-size)),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent var(--page-edge-fade-top-offset),
-    black calc(var(--page-edge-fade-top-offset) + var(--page-edge-fade-top-size)),
-    black calc(100% - var(--page-edge-fade-bottom-size)),
-    transparent 100%
-  );
 }
 
 .app-shell-bleed {

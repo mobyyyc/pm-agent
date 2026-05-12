@@ -301,9 +301,9 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const doneCount = filteredByAssignee.filter((task) => task.status === "done").length;
 
   const statusCardStyles: Record<Task["status"], string> = {
-    todo: "bg-linear-to-l from-sky-500/18 to-transparent",
-    in_progress: "bg-linear-to-l from-amber-500/18 to-transparent",
-    done: "bg-linear-to-l from-emerald-500/18 to-transparent",
+    todo: "status-card-gradient--todo",
+    in_progress: "status-card-gradient--in-progress",
+    done: "status-card-gradient--done",
   };
 
   const frameEditButtonClass =

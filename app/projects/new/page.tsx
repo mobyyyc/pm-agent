@@ -372,7 +372,7 @@ export default function CreateProjectPage() {
         {/* --- Initial View --- */}
         {isInitial && (
           <div className="w-full max-w-2xl animate-in slide-in-from-bottom-4 fade-in duration-700">
-            <h1 className="new-project-heading mb-4 bg-linear-to-b from-white to-transparent bg-clip-text text-4xl font-bold tracking-tight text-transparent md:text-5xl">
+            <h1 className="new-project-heading mb-4 text-4xl font-bold tracking-tight md:text-5xl">
               New Project
             </h1>
             <p className="mb-8 bg-transparent text-xl font-light text-white/60">
@@ -469,7 +469,7 @@ export default function CreateProjectPage() {
         {/* --- Ready / Summary View --- */}
         {isReady && currentAnalysis && (
             <div className="w-full max-w-xl bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 text-center animate-in zoom-in-95 fade-in duration-500 shadow-2xl relative overflow-hidden flex flex-col items-center">
-                <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-green-500/0 via-green-500/50 to-green-500/0"></div>
+                <div className="success-accent-gradient absolute top-0 left-0 h-1 w-full"></div>
                 
                 <div className="inline-flex items-center justify-center p-4 bg-green-500/20 rounded-full mb-6 relative">
                     <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full"></div>

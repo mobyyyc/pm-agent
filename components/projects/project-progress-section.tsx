@@ -5,6 +5,7 @@ import type { ProjectHealthStatus, ProjectHealthSummary, ProjectProgressSummary 
 type ProjectProgressSectionProps = {
   progress: ProjectProgressSummary;
   health: ProjectHealthSummary;
+  variant?: "default" | "compact";
 };
 
 function formatWindow(startDate: string | null, endDate: string | null): string {
@@ -17,7 +18,8 @@ function pluralize(value: number, singular: string, plural = `${singular}s`): st
   return `${value} ${value === 1 ? singular : plural}`;
 }
 
-export function ProjectProgressSection({ progress, health }: ProjectProgressSectionProps) {
+export function ProjectProgressSection({ progress, health, variant = "default" }: ProjectProgressSectionProps) {
+  const isCompact = variant === "compact";
   const healthStyles: Record<ProjectHealthStatus, {
     badgeClassName: string;
     barClassName: string;
@@ -100,8 +102,8 @@ export function ProjectProgressSection({ progress, health }: ProjectProgressSect
       : `${progress.completedTimelinePhases} of ${progress.timelinePhaseCount} phases complete`;
 
   return (
-    <section className="project-progress-panel app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <section className={`project-progress-panel app-frame rounded-2xl bg-white/5 ${isCompact ? "p-4" : "p-4 sm:p-5 md:p-6"}`}>
+      <div className={isCompact ? "flex flex-col gap-3" : "flex flex-col gap-4 md:flex-row md:items-start md:justify-between"}>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="project-progress-eyebrow text-xs font-semibold uppercase tracking-wide text-neutral-500">Project status</p>
@@ -110,7 +112,7 @@ export function ProjectProgressSection({ progress, health }: ProjectProgressSect
             </span>
           </div>
           <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
-            <h2 className="project-progress-percent text-3xl font-semibold tracking-tight text-white">{progress.completionPercent}%</h2>
+            <h2 className={`project-progress-percent font-semibold tracking-tight text-white ${isCompact ? "text-2xl" : "text-3xl"}`}>{progress.completionPercent}%</h2>
             <p className="project-progress-summary pb-1 text-sm text-neutral-400">
               {progress.completedTasks} of {pluralize(progress.totalTasks, "task")} complete
             </p>
@@ -118,7 +120,7 @@ export function ProjectProgressSection({ progress, health }: ProjectProgressSect
           <p className={`mt-2 text-sm font-medium ${healthStyle.textClassName}`}>{health.message}</p>
         </div>
 
-        <div className="project-progress-timeline min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-400 md:text-right">
+        <div className={`project-progress-timeline min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-neutral-400 ${isCompact ? "" : "md:text-right"}`}>
           <p className="project-progress-timeline-primary truncate text-neutral-200">
             Current phase: <span className="project-progress-timeline-current font-semibold text-white">{progress.currentTimelinePhase || "No active phase"}</span>
           </p>
@@ -138,7 +140,7 @@ export function ProjectProgressSection({ progress, health }: ProjectProgressSect
         <span>{progress.totalTasks === 0 ? "No tasks yet" : `${progress.totalTasks} tracked tasks`}</span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <div className={`mt-4 grid gap-2 ${isCompact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"}`}>
         {metricItems.map((item) => (
           <div key={item.label} className={`rounded-lg border px-3 py-2 ${item.className}`}>
             <p className="project-progress-card-label text-xs font-medium text-current/70">{item.label}</p>

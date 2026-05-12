@@ -693,6 +693,10 @@ html[data-theme="light"] .project-progress-card-detail {
   letter-spacing: 0;
 }
 
+.project-report-heading--compact {
+  font-size: 1rem;
+}
+
 .project-report-period-control {
   border: 1px solid rgba(255, 255, 255, 0.1);
   background-color: rgba(0, 0, 0, 0.24);
@@ -860,6 +864,12 @@ html[data-theme="light"] .project-progress-card-detail {
   border-color: rgba(125, 211, 252, 0.3);
   background-color: rgba(125, 211, 252, 0.08);
   color: #bae6fd;
+}
+
+@media (min-width: 640px) {
+  .project-report-meta {
+    text-align: right;
+  }
 }
 
 html[data-theme="light"] .project-report-panel {

@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
-
 import type { ProjectProgressReport, ProjectReportPeriod } from "@/types/models";
 
 type ProjectReportSectionProps = {
-  projectId: string;
   isGuest: boolean;
+  selectedPeriod: ProjectReportPeriod;
+  report: ProjectProgressReport | null;
+  isGenerating: boolean;
+  error: string | null;
+  onPeriodChange: (period: ProjectReportPeriod) => void;
+  onGenerate: () => void;
+  variant?: "full" | "controls" | "preview";
 };
 
 const reportPeriods: Array<{ value: ProjectReportPeriod; label: string }> = [
@@ -20,11 +24,6 @@ const periodTitles: Record<ProjectReportPeriod, string> = {
   weekly: "Weekly Operational Summary",
   monthly: "Monthly Operational Summary",
 };
-
-async function getResponseErrorMessage(response: Response): Promise<string> {
-  const body = (await response.json().catch(() => null)) as { detail?: string; error?: string } | null;
-  return body?.detail || body?.error || "Failed to generate report.";
-}
 
 function formatGeneratedTime(value: string): string {
   const date = new Date(value);
@@ -79,83 +78,84 @@ function ReportList({ title, items, tone = "default" }: { title: string; items: 
   );
 }
 
-export function ProjectReportSection({ projectId, isGuest }: ProjectReportSectionProps) {
-  const [selectedPeriod, setSelectedPeriod] = useState<ProjectReportPeriod>("weekly");
-  const [report, setReport] = useState<ProjectProgressReport | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerateReport = async () => {
-    if (isGuest || isGenerating) return;
-
-    setIsGenerating(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/reports/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ period: selectedPeriod }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await getResponseErrorMessage(response));
-      }
-
-      const data = (await response.json()) as { report?: ProjectProgressReport };
-      if (!data.report) {
-        throw new Error("Report response was empty.");
-      }
-
-      setReport(data.report);
-    } catch (generationError) {
-      setError(generationError instanceof Error ? generationError.message : "Failed to generate report.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+export function ProjectReportSection({
+  isGuest,
+  selectedPeriod,
+  report,
+  isGenerating,
+  error,
+  onPeriodChange,
+  onGenerate,
+  variant = "full",
+}: ProjectReportSectionProps) {
+  const isControlsOnly = variant === "controls";
+  const isPreviewOnly = variant === "preview";
+  const showControls = variant === "full" || isControlsOnly;
+  const showPreview = variant === "full" || isPreviewOnly;
 
   return (
-    <section className="project-report-panel app-frame rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="project-report-eyebrow">Reports</p>
-          <h2 className="project-report-heading">Project Progress Report</h2>
-          {isGuest ? (
-            <p className="project-report-muted mt-2">Sign in to generate reports from project activity.</p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="project-report-period-control inline-flex rounded-full p-1">
-            {reportPeriods.map((period) => (
-              <button
-                key={period.value}
-                type="button"
-                onClick={() => setSelectedPeriod(period.value)}
-                className={`project-report-period-button rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
-                  selectedPeriod === period.value ? "project-report-period-button--active" : ""
-                }`}
-              >
-                {period.label}
-              </button>
-            ))}
+    <section className={`project-report-panel app-frame rounded-2xl bg-white/5 ${isControlsOnly ? "p-4" : "p-4 sm:p-5 md:p-6"}`}>
+      {showControls ? (
+        <div className={`flex flex-col gap-4 ${isControlsOnly ? "" : "md:flex-row md:items-start md:justify-between"}`}>
+          <div>
+            <p className="project-report-eyebrow">Reports</p>
+            <h2 className={`project-report-heading ${isControlsOnly ? "project-report-heading--compact" : ""}`}>
+              {isControlsOnly ? "Report Actions" : "Project Progress Report"}
+            </h2>
+            {isGuest ? (
+              <p className="project-report-muted mt-2">Sign in to generate reports from project activity.</p>
+            ) : report && isControlsOnly ? (
+              <p className="project-report-muted mt-2">Last generated {formatGeneratedTime(report.generatedAt)}</p>
+            ) : null}
           </div>
-          <button
-            type="button"
-            onClick={() => void handleGenerateReport()}
-            disabled={isGuest || isGenerating}
-            className="key-button inline-flex h-9 items-center justify-center rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isGenerating ? "Generating..." : "Generate"}
-          </button>
+
+          <div className={`flex flex-col gap-3 ${isControlsOnly ? "" : "sm:flex-row sm:items-center"}`}>
+            <div
+              className="relative flex h-8 w-full min-w-0 max-w-full flex-nowrap overflow-hidden rounded-full bg-white/15 p-1"
+              role="tablist"
+              aria-label="Report period"
+            >
+              <span
+                aria-hidden="true"
+                className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
+                  selectedPeriod === "daily"
+                    ? "left-1 right-[calc(66.666667%+0.125rem)]"
+                    : selectedPeriod === "weekly"
+                      ? "left-[calc(33.333333%+0.125rem)] right-[calc(33.333333%+0.125rem)]"
+                      : "left-[calc(66.666667%+0.125rem)] right-1"
+                }`}
+              />
+              {reportPeriods.map((period) => (
+                <button
+                  key={period.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedPeriod === period.value}
+                  onClick={() => onPeriodChange(period.value)}
+                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
+                    selectedPeriod === period.value ? "text-black" : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {period.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={isGuest || isGenerating}
+              className="key-button inline-flex h-9 items-center justify-center rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isGenerating ? "Generating..." : "Generate"}
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      {error ? <div className="error-msg mt-4 px-4 py-2 text-sm font-semibold">{error}</div> : null}
+      {showControls && error ? <div className="error-msg mt-4 px-4 py-2 text-sm font-semibold">{error}</div> : null}
 
-      {report ? (
-        <div className="mt-5 space-y-5">
+      {showPreview && report ? (
+        <div className={`${showControls ? "mt-5" : ""} space-y-5`}>
           <div className="project-report-summary-card rounded-xl p-4 sm:p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -196,9 +196,9 @@ export function ProjectReportSection({ projectId, isGuest }: ProjectReportSectio
             </ul>
           </div>
         </div>
-      ) : (
+      ) : showPreview ? (
         <p className="project-report-empty-state mt-4">No report generated for this project yet.</p>
-      )}
+      ) : null}
     </section>
   );
 }

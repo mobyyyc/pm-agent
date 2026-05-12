@@ -18,6 +18,8 @@ import type {
   ProjectHealthSummary,
   ProjectMember,
   ProjectProgressSummary,
+  ProjectProgressReport,
+  ProjectReportPeriod,
   Task,
 } from "@/types/models";
 
@@ -85,6 +87,10 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [isEditingProjectTitle, setIsEditingProjectTitle] = useState(false);
   const [isSavingProjectTitle, setIsSavingProjectTitle] = useState(false);
   const [projectTitleDraft, setProjectTitleDraft] = useState("");
+  const [reportPeriod, setReportPeriod] = useState<ProjectReportPeriod>("weekly");
+  const [generatedReport, setGeneratedReport] = useState<ProjectProgressReport | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const [frameActionError, setFrameActionError] = useState<string | null>(null);
 
@@ -791,8 +797,38 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     }
   };
 
+  const handleGenerateReport = async () => {
+    if (isGuest || isGeneratingReport) return;
+
+    setIsGeneratingReport(true);
+    setReportError(null);
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}/reports/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: reportPeriod }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await getResponseErrorMessage(response, "Failed to generate report."));
+      }
+
+      const data = (await response.json()) as { report?: ProjectProgressReport };
+      if (!data.report) {
+        throw new Error("Report response was empty.");
+      }
+
+      setGeneratedReport(data.report);
+    } catch (error) {
+      setReportError(error instanceof Error ? error.message : "Failed to generate report.");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl min-w-0 flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-12">
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl min-w-0 flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8 md:gap-8 md:px-6 md:py-10 xl:px-8">
       <ProjectHeader
         projectName={project.name}
         projectIdea={project.idea}
@@ -829,11 +865,31 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
       {frameActionError ? <div className="error-msg px-4 py-2 text-sm font-semibold">{frameActionError}</div> : null}
 
-      <ProjectProgressSection progress={projectProgress} health={projectHealth} />
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(19rem,22.5rem)_minmax(0,1fr)] lg:items-start lg:gap-7 xl:gap-8">
+        <aside className="min-w-0 space-y-5">
+          <ProjectProgressSection progress={projectProgress} health={projectHealth} variant="compact" />
 
-      <ProjectReportSection projectId={project.id} isGuest={isGuest} />
+          <ProjectReportSection
+            isGuest={isGuest}
+            selectedPeriod={reportPeriod}
+            report={generatedReport}
+            isGenerating={isGeneratingReport}
+            error={reportError}
+            onPeriodChange={setReportPeriod}
+            onGenerate={() => void handleGenerateReport()}
+            variant="controls"
+          />
 
-      <GuidelineSection guideline={project.guideline} />
+          <ActivitySection
+            events={isGuest ? [] : dbActivityEvents}
+            projectMembers={projectMembers}
+            isGuest={isGuest}
+            variant="compact"
+          />
+        </aside>
+
+        <div className="min-w-0 space-y-6 border-white/10 md:space-y-8 lg:border-l lg:pl-7 xl:pl-8">
+          <GuidelineSection guideline={project.guideline} />
 
       <section className="app-frame min-w-0 rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
@@ -994,11 +1050,18 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         onStatusSaved={refreshActivity}
       />
 
-      <ActivitySection
-        events={isGuest ? [] : dbActivityEvents}
-        projectMembers={projectMembers}
-        isGuest={isGuest}
-      />
+          <ProjectReportSection
+            isGuest={isGuest}
+            selectedPeriod={reportPeriod}
+            report={generatedReport}
+            isGenerating={isGeneratingReport}
+            error={reportError}
+            onPeriodChange={setReportPeriod}
+            onGenerate={() => void handleGenerateReport()}
+            variant="preview"
+          />
+        </div>
+      </div>
     </main>
   );
 }

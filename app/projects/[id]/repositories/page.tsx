@@ -10,7 +10,6 @@ import { useGuest } from "@/components/GuestContext";
 import type { Project, ProjectMember, ProjectRepository, RepositoryVisibility } from "@/types/models";
 import RepoCommits from "@/components/RepoCommits";
 import GithubRepoPicker from "@/components/GithubRepoPicker";
-import GithubContributorMapping from "@/components/GithubContributorMapping";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -157,8 +156,9 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
     return member.displayName?.trim() || member.userId;
   };
-  const currentUserMemberId = session?.user?.email
-    ? dbMembers.find((member) => member.userId === session.user?.email?.trim().toLowerCase())?.userId || null
+  const currentSessionUserId = session?.user?.email?.trim().toLowerCase() || null;
+  const currentUserMemberId = currentSessionUserId
+    ? dbMembers.find((member) => member.userId === currentSessionUserId)?.userId || currentSessionUserId
     : null;
 
   useEffect(() => {
@@ -476,8 +476,6 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
             currentMemberId={currentUserMemberId}
           />
         </section>
-
-        <GithubContributorMapping projectId={id} members={dbMembers} />
         </>
       ) : null}
 

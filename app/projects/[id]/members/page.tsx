@@ -6,23 +6,16 @@ import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import { useGuest } from "@/components/GuestContext";
-import type { Project } from "@/types/models";
+import GithubContributorMapping from "@/components/GithubContributorMapping";
+import type { Project, ProjectMember } from "@/types/models";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
 
-type MemberItem = {
-  userId: string;
-  role: string;
-  joinedAt: string;
-  displayName: string | null;
-  imageUrl: string | null;
-};
-
 type ProjectResponse = {
   project?: Project;
-  members?: MemberItem[];
+  members?: ProjectMember[];
   error?: string;
 };
 
@@ -47,7 +40,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
   const { isGuest, getGuestProject } = useGuest();
 
   const [dbProject, setDbProject] = useState<Project | null>(null);
-  const [dbMembers, setDbMembers] = useState<MemberItem[]>([]);
+  const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [inviteeEmail, setInviteeEmail] = useState("");
@@ -220,6 +213,8 @@ export default function ProjectMembersPage({ params }: PageProps) {
           {inviteSuccess ? <p className="text-sm text-green-400">{inviteSuccess}</p> : null}
         </div>
       </section>
+
+      {!isGuest ? <GithubContributorMapping projectId={id} members={members} /> : null}
 
       {isMounted && isAddMemberModalOpen
         ? createPortal(

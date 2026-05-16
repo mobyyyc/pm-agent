@@ -176,8 +176,8 @@ export default function GithubContributorMapping({
 
   const handleSave = async (contributor: GithubContributorIdentity) => {
     const key = contributorIdentityKey(contributor);
-    const memberId = draftMembers[key] || "";
     const existingMapping = findMappingForContributor(mappings, contributor);
+    const memberId = draftMembers[key] ?? existingMapping?.memberId ?? "";
 
     if (!memberId) {
       setError("Choose a project member before saving.");

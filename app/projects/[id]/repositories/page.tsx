@@ -157,6 +157,9 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
     return member.displayName?.trim() || member.userId;
   };
+  const currentUserMemberId = session?.user?.email
+    ? dbMembers.find((member) => member.userId === session.user?.email?.trim().toLowerCase())?.userId || null
+    : null;
 
   useEffect(() => {
     setIsMounted(true);
@@ -466,7 +469,12 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         </section>
 
         <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
-          <RepoCommits projectId={id} owner={repository.ownerLogin} repo={repository.repoName} />
+          <RepoCommits
+            projectId={id}
+            owner={repository.ownerLogin}
+            repo={repository.repoName}
+            currentMemberId={currentUserMemberId}
+          />
         </section>
 
         <GithubContributorMapping projectId={id} members={dbMembers} />

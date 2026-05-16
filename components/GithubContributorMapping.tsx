@@ -18,6 +18,34 @@ type MappingsResponse = {
   mappings?: ProjectMemberGithubIdentity[];
 };
 
+type ApiErrorBody = {
+  error?: string;
+  detail?: string | null;
+  issues?: string[];
+};
+
+async function readApiError(response: Response): Promise<string> {
+  const body = (await response.json().catch(() => null)) as ApiErrorBody | null;
+  const details = [
+    body?.error,
+    body?.detail,
+    Array.isArray(body?.issues) ? body.issues.join(" ") : null,
+  ].filter(Boolean);
+
+  return details.join(" ") || `Request failed with status ${response.status}.`;
+}
+
+function logMappingLoadError(details: {
+  url: string;
+  status?: number;
+  body?: string;
+  error?: unknown;
+}) {
+  if (process.env.NODE_ENV === "production") return;
+
+  console.error("[GitHubContributorMapping] Failed to load contributor mapping.", details);
+}
+
 function normalizeValue(value: string | null | undefined): string | null {
   const normalized = value?.trim().toLowerCase();
   return normalized ? normalized : null;
@@ -82,13 +110,23 @@ export default function GithubContributorMapping({
     setError(null);
 
     try {
+      const activityUrl = `/api/projects/${projectId}/activity?limit=100`;
+      const mappingsUrl = `/api/projects/${projectId}/github-identities`;
       const [activityResponse, mappingsResponse] = await Promise.all([
-        fetch(`/api/projects/${projectId}/activity?limit=100`, { cache: "no-store" }),
-        fetch(`/api/projects/${projectId}/github-identities`, { cache: "no-store" }),
+        fetch(activityUrl, { cache: "no-store" }),
+        fetch(mappingsUrl, { cache: "no-store" }),
       ]);
 
-      if (!activityResponse.ok || !mappingsResponse.ok) {
-        throw new Error("Failed to load GitHub contributor mapping.");
+      if (!activityResponse.ok) {
+        const body = await readApiError(activityResponse);
+        logMappingLoadError({ url: activityUrl, status: activityResponse.status, body });
+        throw new Error(body);
+      }
+
+      if (!mappingsResponse.ok) {
+        const body = await readApiError(mappingsResponse);
+        logMappingLoadError({ url: mappingsUrl, status: mappingsResponse.status, body });
+        throw new Error(body);
       }
 
       const activityBody = (await activityResponse.json().catch(() => null)) as ActivityResponse | null;
@@ -97,7 +135,11 @@ export default function GithubContributorMapping({
       setEvents(Array.isArray(activityBody?.events) ? activityBody.events : []);
       setMappings(Array.isArray(mappingsBody?.mappings) ? mappingsBody.mappings : []);
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load GitHub contributor mapping.");
+      logMappingLoadError({
+        url: `/api/projects/${projectId}/github-identities`,
+        error: loadError,
+      });
+      setError("Failed to load GitHub contributor mapping.");
     } finally {
       setLoading(false);
     }
@@ -108,7 +150,7 @@ export default function GithubContributorMapping({
   }, [loadMappingData]);
 
   const contributors = useMemo(() => {
-    const seen = new Set<string>();
+    const byKey = new Map<string, GithubContributorIdentity>();
     const nextContributors: GithubContributorIdentity[] = [];
 
     for (const event of events) {
@@ -116,10 +158,17 @@ export default function GithubContributorMapping({
       if (!contributor) continue;
 
       const key = contributorIdentityKey(contributor);
-      if (seen.has(key)) continue;
+      const existing = byKey.get(key);
 
-      seen.add(key);
-      nextContributors.push(contributor);
+      if (existing) {
+        existing.githubLogin ||= contributor.githubLogin;
+        existing.githubEmail ||= contributor.githubEmail;
+        existing.githubName ||= contributor.githubName;
+        continue;
+      }
+
+      byKey.set(key, { ...contributor });
+      nextContributors.push(byKey.get(key) as GithubContributorIdentity);
     }
 
     return nextContributors;

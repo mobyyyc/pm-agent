@@ -10,11 +10,12 @@ function normalizeIdentityValue(value: string | null | undefined): string | null
 }
 
 export function contributorIdentityKey(contributor: GithubContributorIdentity): string {
-  return [
-    normalizeIdentityValue(contributor.githubLogin) || "",
-    normalizeIdentityValue(contributor.githubEmail) || "",
-    normalizeIdentityValue(contributor.githubName) || "",
-  ].join("|");
+  return (
+    normalizeIdentityValue(contributor.githubLogin) ||
+    normalizeIdentityValue(contributor.githubEmail) ||
+    normalizeIdentityValue(contributor.githubName) ||
+    "unknown"
+  );
 }
 
 export function resolveGithubContributorFromMappings(

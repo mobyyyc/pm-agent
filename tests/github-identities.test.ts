@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { resolveGithubContributorFromMappings } from "../lib/github-identities";
+import { contributorIdentityKey, resolveGithubContributorFromMappings } from "../lib/github-identities";
 import type { ProjectMember, ProjectMemberGithubIdentity } from "../types/models";
 
 const members: ProjectMember[] = [
@@ -96,4 +96,31 @@ test("uses login before email and name when multiple mappings could match", () =
   );
 
   assert.equal(resolved?.userId, "ada@example.com");
+});
+
+test("contributorIdentityKey dedupes by deterministic identity priority", () => {
+  assert.equal(
+    contributorIdentityKey({
+      githubLogin: "MobyYyc",
+      githubEmail: "aly.moby@gmail.com",
+      githubName: "Qiyuan Cai",
+    }),
+    "mobyyyc",
+  );
+  assert.equal(
+    contributorIdentityKey({
+      githubLogin: "mobyyyc",
+      githubEmail: null,
+      githubName: "Qiyuan Cai",
+    }),
+    "mobyyyc",
+  );
+  assert.equal(
+    contributorIdentityKey({
+      githubLogin: null,
+      githubEmail: "Aly.Moby@gmail.com",
+      githubName: "Qiyuan Cai",
+    }),
+    "aly.moby@gmail.com",
+  );
 });

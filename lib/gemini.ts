@@ -456,7 +456,7 @@ export async function generateProjectProgressReportWithGemini(
     "- completedWork: completed task titles or activity-backed completions only.",
     "- inProgressWork: active in-progress task titles only.",
     "- riskyWork: overdue, due-soon, unassigned, or health-signal-backed risks only.",
-    "- activityHighlights: recent activity summaries only.",
+    "- activityHighlights: recent activity summaries only. Mention a project member only when actorMemberName is present.",
     "- healthExplanation: explain the supplied health status and signals.",
     "- suggestedNextActions: practical next steps grounded in supplied risks/tasks/activity.",
     "",

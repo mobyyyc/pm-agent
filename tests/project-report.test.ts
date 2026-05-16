@@ -83,7 +83,7 @@ function makeEvent(overrides: Partial<ProjectActivityEvent>): ProjectActivityEve
     entityType: overrides.entityType || "task",
     entityId: overrides.entityId || "task_1",
     summary: overrides.summary || "Task updated",
-    metadata: {},
+    metadata: overrides.metadata || {},
     createdAt: overrides.createdAt || "2026-05-09T12:00:00.000Z",
   };
 }
@@ -116,6 +116,35 @@ test("buildProjectReportInput groups deterministic task and activity signals", (
   assert.deepEqual(reportInput.tasks.dueSoon.map((task) => task.title), ["Build onboarding", "Write docs"]);
   assert.deepEqual(reportInput.tasks.unassigned.map((task) => task.title), ["Write docs"]);
   assert.deepEqual(reportInput.recentActivity.map((event) => event.summary), ["Task status changed"]);
+});
+
+test("buildProjectReportInput carries deterministic actor member attribution", () => {
+  const reportInput = buildProjectReportInput({
+    project,
+    tasks: [],
+    progress,
+    health,
+    activityEvents: [
+      makeEvent({
+        id: "github_commit_1",
+        source: "github",
+        entityType: "github_commit",
+        eventType: "github.commit.synced",
+        summary: "Commit: Ship mapping",
+        metadata: {
+          actorMemberId: "owner@example.com",
+          actorMemberName: "Project Owner",
+        },
+        createdAt: "2026-05-09T12:00:00.000Z",
+      }),
+    ],
+    period: "weekly",
+    today: "2026-05-09",
+    generatedAt: "2026-05-09T12:00:00.000Z",
+  });
+
+  assert.equal(reportInput.recentActivity[0].actorMemberId, "owner@example.com");
+  assert.equal(reportInput.recentActivity[0].actorMemberName, "Project Owner");
 });
 
 test("projectProgressReportSchema validates concise report output", () => {

@@ -16,6 +16,7 @@ import {
   insertGithubCommitActivityEvents,
   isProjectMember,
   normalizeUserId,
+  resolveGithubContributorToMember,
   upsertAppUser,
 } from "@/lib/storage";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
@@ -101,14 +102,26 @@ export async function POST(request: Request, context: RouteContext) {
       ownerLogin: repository.ownerLogin,
       repoName: repository.repoName,
     });
-    const events = commits.map((commit) =>
-      githubCommitToActivityEvent({
+    const events = await Promise.all(commits.map(async (commit) => {
+      const actorMember = await resolveGithubContributorToMember(id, {
+        githubLogin: commit.authorLogin,
+        githubEmail: commit.authorEmail,
+        githubName: commit.authorName,
+      });
+
+      return githubCommitToActivityEvent({
         projectId: id,
         commit,
         repositoryFullName: repository.fullName,
         syncedAt,
-      }),
-    );
+        actorMember: actorMember
+          ? {
+              id: actorMember.userId,
+              name: actorMember.displayName?.trim() || actorMember.userId,
+            }
+          : null,
+      });
+    }));
     const result = await insertGithubCommitActivityEvents(events);
 
     return NextResponse.json({

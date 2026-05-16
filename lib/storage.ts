@@ -1,7 +1,9 @@
 import { sql } from "@/lib/db";
+import { resolveGithubContributorFromMappings } from "@/lib/github-identities";
 import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypto";
 import {
   appUserSchema,
+  projectMemberGithubIdentitySchema,
   projectReportArtifactSchema,
   projectAgentSchema,
   projectActivityEventSchema,
@@ -12,6 +14,8 @@ import {
   taskSchema,
   userTeamSchema,
   type AppUser,
+  type GithubContributorIdentity,
+  type GithubIdentityMappingInput,
   type ProjectAgent,
   type ProjectActivityEvent,
   type ProjectActivityEntityType,
@@ -24,6 +28,7 @@ import {
   type ProjectRepository,
   type ProjectInvitation,
   type ProjectMember,
+  type ProjectMemberGithubIdentity,
   type Task,
   type TeamKnowledge,
   type UserTeam,
@@ -108,6 +113,20 @@ async function initializeCollaborationSchema(): Promise<void> {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS project_member_github_identities (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      member_id TEXT NOT NULL,
+      github_login TEXT,
+      github_name TEXT,
+      github_email TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (project_id, member_id) REFERENCES project_members(project_id, user_id) ON DELETE CASCADE
+    )
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS project_activity_events (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -143,6 +162,8 @@ async function initializeCollaborationSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_inviter_user_id ON project_invitations(inviter_user_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_invitations_invitee_user_id ON project_invitations(invitee_user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_member_github_identities_project_id ON project_member_github_identities(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_member_github_identities_member_id ON project_member_github_identities(member_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_project_id ON project_agents(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
@@ -208,6 +229,19 @@ function mapProjectMemberRow(row: Record<string, unknown>): ProjectMember {
     joinedAt: String(row.joined_at),
     displayName: typeof row.display_name === "string" ? row.display_name : null,
     imageUrl: typeof row.image_url === "string" ? row.image_url : null,
+  });
+}
+
+function mapProjectMemberGithubIdentityRow(row: Record<string, unknown>): ProjectMemberGithubIdentity {
+  return projectMemberGithubIdentitySchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    memberId: String(row.member_id),
+    githubLogin: typeof row.github_login === "string" ? row.github_login : null,
+    githubName: typeof row.github_name === "string" ? row.github_name : null,
+    githubEmail: typeof row.github_email === "string" ? row.github_email : null,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
   });
 }
 
@@ -1229,6 +1263,105 @@ export async function getProjectMembers(projectId: string): Promise<ProjectMembe
   `;
 
   return rows.map((row) => mapProjectMemberRow(row as Record<string, unknown>));
+}
+
+// ---------------------------------------------------------------------------
+// Project member GitHub identities
+// ---------------------------------------------------------------------------
+
+function normalizeNullableIdentity(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+export async function getGithubIdentityMappingsByProjectId(
+  projectId: string,
+): Promise<ProjectMemberGithubIdentity[]> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_member_github_identities
+    WHERE project_id = ${projectId}
+    ORDER BY created_at ASC
+  `;
+
+  return rows.map((row) => mapProjectMemberGithubIdentityRow(row as Record<string, unknown>));
+}
+
+export async function upsertGithubIdentityMapping(input: GithubIdentityMappingInput & {
+  projectId: string;
+  timestamp: string;
+}): Promise<ProjectMemberGithubIdentity> {
+  await ensureCollaborationSchema();
+
+  const id = input.id || `github_identity_${crypto.randomUUID()}`;
+  const memberId = normalizeUserId(input.memberId);
+  const githubLogin = normalizeNullableIdentity(input.githubLogin);
+  const githubName = normalizeNullableIdentity(input.githubName);
+  const githubEmail = normalizeNullableIdentity(input.githubEmail)?.toLowerCase() || null;
+
+  const rows = await sql`
+    INSERT INTO project_member_github_identities (
+      id,
+      project_id,
+      member_id,
+      github_login,
+      github_name,
+      github_email,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${id},
+      ${input.projectId},
+      ${memberId},
+      ${githubLogin},
+      ${githubName},
+      ${githubEmail},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT (id)
+    DO UPDATE SET
+      member_id = EXCLUDED.member_id,
+      github_login = EXCLUDED.github_login,
+      github_name = EXCLUDED.github_name,
+      github_email = EXCLUDED.github_email,
+      updated_at = EXCLUDED.updated_at
+    WHERE project_member_github_identities.project_id = EXCLUDED.project_id
+    RETURNING *
+  `;
+
+  if (rows.length === 0) {
+    throw new Error("GitHub identity mapping not found.");
+  }
+
+  return mapProjectMemberGithubIdentityRow(rows[0] as Record<string, unknown>);
+}
+
+export async function deleteGithubIdentityMapping(mappingId: string, projectId: string): Promise<boolean> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    DELETE FROM project_member_github_identities
+    WHERE id = ${mappingId} AND project_id = ${projectId}
+    RETURNING id
+  `;
+
+  return rows.length > 0;
+}
+
+export async function resolveGithubContributorToMember(
+  projectId: string,
+  contributor: GithubContributorIdentity,
+): Promise<ProjectMember | null> {
+  const [mappings, members] = await Promise.all([
+    getGithubIdentityMappingsByProjectId(projectId),
+    getProjectMembers(projectId),
+  ]);
+
+  return resolveGithubContributorFromMappings(mappings, members, contributor);
 }
 
 export type PendingProjectInvitation = {

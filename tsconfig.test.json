@@ -15,6 +15,7 @@
     "tests/**/*.test.ts",
     "lib/api-errors.ts",
     "lib/github-commits.ts",
+    "lib/github-identities.ts",
     "lib/github-token-crypto.ts",
     "lib/project-health.ts",
     "lib/project-progress.ts",

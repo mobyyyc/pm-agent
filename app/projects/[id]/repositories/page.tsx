@@ -10,6 +10,7 @@ import { useGuest } from "@/components/GuestContext";
 import type { Project, ProjectMember, ProjectRepository, RepositoryVisibility } from "@/types/models";
 import RepoCommits from "@/components/RepoCommits";
 import GithubRepoPicker from "@/components/GithubRepoPicker";
+import GithubContributorMapping from "@/components/GithubContributorMapping";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -467,6 +468,8 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
           <RepoCommits projectId={id} owner={repository.ownerLogin} repo={repository.repoName} />
         </section>
+
+        <GithubContributorMapping projectId={id} members={dbMembers} />
         </>
       ) : null}
 

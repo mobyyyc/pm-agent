@@ -81,6 +81,39 @@ export const projectMemberSchema = z.object({
   imageUrl: z.string().nullable(),
 });
 
+export const projectMemberGithubIdentitySchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  memberId: z.string().min(1),
+  githubLogin: z.string().nullable(),
+  githubName: z.string().nullable(),
+  githubEmail: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
+export const githubContributorIdentitySchema = z.object({
+  githubLogin: z.string().nullable(),
+  githubName: z.string().nullable(),
+  githubEmail: z.string().nullable(),
+});
+
+export const githubIdentityMappingInputSchema = z.object({
+  id: z.string().min(1).optional(),
+  memberId: z.string().min(1),
+  githubLogin: z.string().trim().min(1).nullable().optional(),
+  githubName: z.string().trim().min(1).nullable().optional(),
+  githubEmail: z.string().trim().email().nullable().optional(),
+}).refine(
+  (value) => Boolean(value.githubLogin || value.githubName || value.githubEmail),
+  { message: "At least one GitHub identity field is required." },
+);
+
+export const resolvedGithubActorSchema = z.object({
+  actorMemberId: z.string().min(1),
+  actorMemberName: z.string().min(1),
+});
+
 export const projectInvitationStatusSchema = z.enum(["pending", "accepted", "declined"]);
 
 export const projectInvitationSchema = z.object({
@@ -167,6 +200,10 @@ export type UserTeam = z.infer<typeof userTeamSchema>;
 export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
 export type AppUser = z.infer<typeof appUserSchema>;
 export type ProjectMember = z.infer<typeof projectMemberSchema>;
+export type ProjectMemberGithubIdentity = z.infer<typeof projectMemberGithubIdentitySchema>;
+export type GithubContributorIdentity = z.infer<typeof githubContributorIdentitySchema>;
+export type GithubIdentityMappingInput = z.infer<typeof githubIdentityMappingInputSchema>;
+export type ResolvedGithubActor = z.infer<typeof resolvedGithubActorSchema>;
 export type ProjectInvitation = z.infer<typeof projectInvitationSchema>;
 export type ProjectInvitationStatus = z.infer<typeof projectInvitationStatusSchema>;
 export type RepositoryVisibility = z.infer<typeof repositoryVisibilitySchema>;
@@ -314,6 +351,8 @@ export const projectReportInputSnapshotSchema = z.object({
     entityType: projectActivityEntityTypeSchema,
     eventType: z.string().min(1),
     createdAt: z.string().datetime(),
+    actorMemberId: z.string().min(1).nullable().optional(),
+    actorMemberName: z.string().min(1).nullable().optional(),
   })),
 });
 

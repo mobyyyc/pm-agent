@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   agentStatusSchema,
   aiPlanSchema,
+  githubIdentityMappingInputSchema,
   repositoryVisibilitySchema,
   teamImportAnalysisSchema,
   teamKnowledgeSchema,
@@ -127,6 +128,8 @@ export const listProjectReportsQuerySchema = z.object({
 export const syncGithubCommitsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
+
+export const upsertGithubIdentityMappingRequestSchema = githubIdentityMappingInputSchema;
 
 const arrayFromStringSchema = z
   .union([z.array(z.string()), z.string()])

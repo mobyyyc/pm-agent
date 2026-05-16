@@ -10,6 +10,7 @@ export type GithubCommitResponse = {
     message?: string;
     author?: {
       name?: string | null;
+      email?: string | null;
       date?: string | null;
     } | null;
     verification?: {
@@ -23,6 +24,7 @@ export type NormalizedGithubCommit = {
   message: string;
   authorName: string | null;
   authorLogin: string | null;
+  authorEmail: string | null;
   date: string | null;
   htmlUrl: string;
   verified: boolean;
@@ -34,9 +36,12 @@ export type GithubCommitActivityInput = Omit<ProjectActivityEvent, "metadata"> &
     message: string;
     authorName: string | null;
     authorLogin: string | null;
+    authorEmail: string | null;
     htmlUrl: string;
     repositoryFullName: string;
     syncedAt: string;
+    actorMemberId?: string;
+    actorMemberName?: string;
   };
 };
 
@@ -55,6 +60,7 @@ export function normalizeGithubCommit(
     message: commit.commit?.message || "",
     authorName: commit.commit?.author?.name || commit.author?.login || null,
     authorLogin: commit.author?.login || null,
+    authorEmail: commit.commit?.author?.email || null,
     date: commit.commit?.author?.date || null,
     htmlUrl: commit.html_url || `https://github.com/${repository.ownerLogin}/${repository.repoName}/commit/${commit.sha}`,
     verified: Boolean(commit.commit?.verification?.verified),
@@ -79,6 +85,10 @@ export function githubCommitToActivityEvent(input: {
   commit: NormalizedGithubCommit;
   repositoryFullName: string;
   syncedAt: string;
+  actorMember?: {
+    id: string;
+    name: string;
+  } | null;
 }): GithubCommitActivityInput {
   const summary = `Commit: ${getFirstLine(input.commit.message)}`;
 
@@ -96,9 +106,16 @@ export function githubCommitToActivityEvent(input: {
       message: input.commit.message,
       authorName: input.commit.authorName,
       authorLogin: input.commit.authorLogin,
+      authorEmail: input.commit.authorEmail,
       htmlUrl: input.commit.htmlUrl,
       repositoryFullName: input.repositoryFullName,
       syncedAt: input.syncedAt,
+      ...(input.actorMember
+        ? {
+            actorMemberId: input.actorMember.id,
+            actorMemberName: input.actorMember.name,
+          }
+        : {}),
     },
     createdAt: input.commit.date || input.syncedAt,
   };

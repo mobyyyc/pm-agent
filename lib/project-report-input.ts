@@ -40,6 +40,8 @@ export type ProjectReportInput = {
     entityType: ProjectActivityEvent["entityType"];
     eventType: string;
     createdAt: string;
+    actorMemberId?: string | null;
+    actorMemberName?: string | null;
   }>;
 };
 
@@ -100,13 +102,20 @@ export function buildProjectReportInput(input: {
   const relevantActivity = input.activityEvents
     .filter((event) => event.createdAt.slice(0, 10) >= periodStart && event.createdAt.slice(0, 10) <= periodEnd)
     .slice(0, 12)
-    .map((event) => ({
-      summary: event.summary,
-      source: event.source,
-      entityType: event.entityType,
-      eventType: event.eventType,
-      createdAt: event.createdAt,
-    }));
+    .map((event) => {
+      const actorMemberId = typeof event.metadata.actorMemberId === "string" ? event.metadata.actorMemberId : null;
+      const actorMemberName = typeof event.metadata.actorMemberName === "string" ? event.metadata.actorMemberName : null;
+
+      return {
+        summary: event.summary,
+        source: event.source,
+        entityType: event.entityType,
+        eventType: event.eventType,
+        createdAt: event.createdAt,
+        actorMemberId,
+        actorMemberName,
+      };
+    });
 
   return {
     period: input.period,

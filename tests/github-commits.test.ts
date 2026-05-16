@@ -26,6 +26,7 @@ test("normalizeGithubCommit maps GitHub payload into the shared commit shape", (
         message: "Ship report history\n\nAdds saved artifacts.",
         author: {
           name: "Mona Lisa",
+          email: "mona@example.com",
           date: "2026-05-12T14:00:00.000Z",
         },
         verification: {
@@ -40,6 +41,7 @@ test("normalizeGithubCommit maps GitHub payload into the shared commit shape", (
   assert.equal(commit?.message, "Ship report history\n\nAdds saved artifacts.");
   assert.equal(commit?.authorName, "Mona Lisa");
   assert.equal(commit?.authorLogin, "octocat");
+  assert.equal(commit?.authorEmail, "mona@example.com");
   assert.equal(commit?.date, "2026-05-12T14:00:00.000Z");
   assert.equal(commit?.verified, true);
 });

@@ -3,11 +3,13 @@ import type {
   ProjectActivityEvent,
   ProjectHealthSummary,
   ProjectProgressSummary,
+  ProjectReportComparisonSummary,
   ProjectReportPeriod,
   Task,
 } from "@/types/models";
 
 type ReportTaskSummary = {
+  id: string;
   title: string;
   status: Task["status"];
   deadline: string;
@@ -33,16 +35,20 @@ export type ProjectReportInput = {
     overdue: ReportTaskSummary[];
     dueSoon: ReportTaskSummary[];
     unassigned: ReportTaskSummary[];
+    all: ReportTaskSummary[];
   };
   recentActivity: Array<{
+    id: string;
     summary: string;
     source: ProjectActivityEvent["source"];
     entityType: ProjectActivityEvent["entityType"];
+    entityId: string | null;
     eventType: string;
     createdAt: string;
     actorMemberId?: string | null;
     actorMemberName?: string | null;
   }>;
+  comparisonSummary?: ProjectReportComparisonSummary | null;
 };
 
 function formatDate(date: Date): string {
@@ -68,6 +74,7 @@ function getPeriodStart(period: ProjectReportPeriod, today: string): string {
 
 function toReportTaskSummary(task: Task): ReportTaskSummary {
   return {
+    id: task.id,
     title: task.title,
     status: task.status,
     deadline: task.deadline,
@@ -107,9 +114,11 @@ export function buildProjectReportInput(input: {
       const actorMemberName = typeof event.metadata.actorMemberName === "string" ? event.metadata.actorMemberName : null;
 
       return {
+        id: event.id,
         summary: event.summary,
         source: event.source,
         entityType: event.entityType,
+        entityId: event.entityId,
         eventType: event.eventType,
         createdAt: event.createdAt,
         actorMemberId,
@@ -131,6 +140,7 @@ export function buildProjectReportInput(input: {
     progress: input.progress,
     health: input.health,
     tasks: {
+      all: input.tasks.slice(0, 100).map(toReportTaskSummary),
       completed: input.tasks.filter((task) => task.status === "done").slice(0, 10).map(toReportTaskSummary),
       inProgress: input.tasks.filter((task) => task.status === "in_progress").slice(0, 10).map(toReportTaskSummary),
       overdue: activeTasks

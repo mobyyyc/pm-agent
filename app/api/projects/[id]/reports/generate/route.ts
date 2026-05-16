@@ -7,11 +7,13 @@ import { authOptions } from "@/lib/auth";
 import { generateProjectProgressReportWithGemini } from "@/lib/gemini";
 import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
+import { compareProjectReportSnapshots } from "@/lib/project-report-comparison";
 import { buildProjectReportInput } from "@/lib/project-report-input";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   getProjectActivityEventsByProjectId,
   getProjectById,
+  getLatestProjectReportByProjectId,
   getTasksByProjectId,
   insertProjectReport,
   isProjectMember,
@@ -78,9 +80,10 @@ export async function POST(request: Request, context: RouteContext) {
 
     const generatedAt = isoNow();
     const today = generatedAt.slice(0, 10);
-    const [tasks, activityEvents] = await Promise.all([
+    const [tasks, activityEvents, previousReport] = await Promise.all([
       getTasksByProjectId(id),
       getProjectActivityEventsByProjectId(id, 100),
+      getLatestProjectReportByProjectId({ projectId: id }),
     ]);
     const progress = calculateProjectProgress(project, tasks, today);
     const health = calculateProjectHealth(progress, today);
@@ -94,6 +97,16 @@ export async function POST(request: Request, context: RouteContext) {
       today,
       generatedAt,
     });
+    reportInput.comparisonSummary = compareProjectReportSnapshots(
+      previousReport?.inputSnapshot || null,
+      reportInput,
+      previousReport
+        ? {
+            id: previousReport.id,
+            createdAt: previousReport.createdAt,
+          }
+        : null,
+    );
     dataMs = performance.now() - dataStart;
 
     const geminiStart = performance.now();

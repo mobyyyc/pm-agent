@@ -285,6 +285,58 @@ export const projectReportActionItemSchema = z.object({
   priority: projectRiskSeveritySchema,
 });
 
+export const projectReportTaskSummarySchema = z.object({
+  id: z.string().min(1).optional(),
+  title: z.string().min(1),
+  status: taskStatusSchema,
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  suggestedAssignee: z.string(),
+});
+
+export const projectReportActivitySummarySchema = z.object({
+  id: z.string().min(1).optional(),
+  summary: z.string().min(1),
+  source: projectActivitySourceSchema,
+  entityType: projectActivityEntityTypeSchema,
+  entityId: z.string().min(1).nullable().optional(),
+  eventType: z.string().min(1),
+  createdAt: z.string().datetime(),
+  actorMemberId: z.string().min(1).nullable().optional(),
+  actorMemberName: z.string().min(1).nullable().optional(),
+});
+
+export const projectReportComparisonSummarySchema = z.object({
+  previousReportId: z.string().min(1),
+  previousReportCreatedAt: z.string().datetime(),
+  taskChanges: z.object({
+    completedSinceLastReport: z.array(projectReportTaskSummarySchema),
+    newlyOverdue: z.array(projectReportTaskSummarySchema),
+    newlyCreated: z.array(projectReportTaskSummarySchema),
+    statusChanged: z.array(z.object({
+      id: z.string().min(1),
+      title: z.string().min(1),
+      previousStatus: taskStatusSchema,
+      currentStatus: taskStatusSchema,
+    })),
+  }),
+  activityChanges: z.object({
+    newActivityCount: z.number().int().nonnegative(),
+    newCommitCount: z.number().int().nonnegative(),
+    newMemberAttributedActivity: z.number().int().nonnegative(),
+  }),
+  progressDelta: z.object({
+    completionPercentDelta: z.number().int(),
+    overdueTasksDelta: z.number().int(),
+    dueSoonTasksDelta: z.number().int(),
+  }),
+  healthChange: z.object({
+    previousStatus: projectHealthStatusSchema,
+    currentStatus: projectHealthStatusSchema,
+    changed: z.boolean(),
+  }),
+  notableChanges: z.array(z.string().min(1)),
+});
+
 export const projectProgressReportSchema = z.object({
   projectId: z.string().min(1),
   projectName: z.string().min(1),
@@ -314,46 +366,15 @@ export const projectReportInputSnapshotSchema = z.object({
   progress: projectProgressSummarySchema,
   health: projectHealthSummarySchema,
   tasks: z.object({
-    completed: z.array(z.object({
-      title: z.string().min(1),
-      status: taskStatusSchema,
-      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      suggestedAssignee: z.string(),
-    })),
-    inProgress: z.array(z.object({
-      title: z.string().min(1),
-      status: taskStatusSchema,
-      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      suggestedAssignee: z.string(),
-    })),
-    overdue: z.array(z.object({
-      title: z.string().min(1),
-      status: taskStatusSchema,
-      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      suggestedAssignee: z.string(),
-    })),
-    dueSoon: z.array(z.object({
-      title: z.string().min(1),
-      status: taskStatusSchema,
-      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      suggestedAssignee: z.string(),
-    })),
-    unassigned: z.array(z.object({
-      title: z.string().min(1),
-      status: taskStatusSchema,
-      deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      suggestedAssignee: z.string(),
-    })),
+    all: z.array(projectReportTaskSummarySchema).optional(),
+    completed: z.array(projectReportTaskSummarySchema),
+    inProgress: z.array(projectReportTaskSummarySchema),
+    overdue: z.array(projectReportTaskSummarySchema),
+    dueSoon: z.array(projectReportTaskSummarySchema),
+    unassigned: z.array(projectReportTaskSummarySchema),
   }),
-  recentActivity: z.array(z.object({
-    summary: z.string().min(1),
-    source: projectActivitySourceSchema,
-    entityType: projectActivityEntityTypeSchema,
-    eventType: z.string().min(1),
-    createdAt: z.string().datetime(),
-    actorMemberId: z.string().min(1).nullable().optional(),
-    actorMemberName: z.string().min(1).nullable().optional(),
-  })),
+  recentActivity: z.array(projectReportActivitySummarySchema),
+  comparisonSummary: projectReportComparisonSummarySchema.nullable().optional(),
 });
 
 export const projectReportArtifactSchema = z.object({
@@ -380,6 +401,9 @@ export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;
 export type ProjectReportPeriod = z.infer<typeof projectReportPeriodSchema>;
 export type ProjectReportSource = z.infer<typeof projectReportSourceSchema>;
 export type ProjectReportActionItem = z.infer<typeof projectReportActionItemSchema>;
+export type ProjectReportTaskSummary = z.infer<typeof projectReportTaskSummarySchema>;
+export type ProjectReportActivitySummary = z.infer<typeof projectReportActivitySummarySchema>;
+export type ProjectReportComparisonSummary = z.infer<typeof projectReportComparisonSummarySchema>;
 export type ProjectProgressReport = z.infer<typeof projectProgressReportSchema>;
 export type ProjectReportInputSnapshot = z.infer<typeof projectReportInputSnapshotSchema>;
 export type ProjectReportArtifact = z.infer<typeof projectReportArtifactSchema>;

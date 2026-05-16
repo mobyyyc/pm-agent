@@ -459,6 +459,8 @@ export async function generateProjectProgressReportWithGemini(
     "- activityHighlights: recent activity summaries only. Mention a project member only when actorMemberName is present.",
     "- healthExplanation: explain the supplied health status and signals.",
     "- suggestedNextActions: practical next steps grounded in supplied risks/tasks/activity.",
+    "- Use comparisonSummary as the only source for changes since the previous report.",
+    "- Do not invent changes. Do not infer member attribution unless actorMemberId or actorMemberName exists.",
     "",
     "DETERMINISTIC INPUT",
     JSON.stringify(input, null, 2),

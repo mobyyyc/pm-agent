@@ -1,6 +1,11 @@
 "use client";
 
-import type { ProjectProgressReport, ProjectReportArtifact, ProjectReportPeriod } from "@/types/models";
+import type {
+  ProjectProgressReport,
+  ProjectReportArtifact,
+  ProjectReportComparisonSummary,
+  ProjectReportPeriod,
+} from "@/types/models";
 
 type ProjectReportSectionProps = {
   isGuest: boolean;
@@ -10,6 +15,7 @@ type ProjectReportSectionProps = {
   error: string | null;
   reportHistory?: ProjectReportArtifact[];
   selectedReportId?: string | null;
+  comparisonSummary?: ProjectReportComparisonSummary | null;
   onPeriodChange: (period: ProjectReportPeriod) => void;
   onGenerate: () => void;
   onReportSelect?: (report: ProjectReportArtifact) => void;
@@ -81,6 +87,66 @@ function ReportList({ title, items, tone = "default" }: { title: string; items: 
   );
 }
 
+function formatDelta(value: number, suffix = ""): string {
+  if (value > 0) return `+${value}${suffix}`;
+  return `${value}${suffix}`;
+}
+
+function ChangesSincePreviousReport({ comparison }: { comparison: ProjectReportComparisonSummary | null | undefined }) {
+  if (!comparison) return null;
+
+  const completedTasks = comparison.taskChanges.completedSinceLastReport.map((task) => task.title);
+  const newlyOverdueTasks = comparison.taskChanges.newlyOverdue.map((task) => task.title);
+
+  return (
+    <div className="project-report-section-block">
+      <h3 className="project-report-section-title">Changes since previous report</h3>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Progress</p>
+          <p className="text-sm font-semibold text-white">{formatDelta(comparison.progressDelta.completionPercentDelta, "%")}</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Health</p>
+          <p className="text-sm font-semibold text-white">
+            {comparison.healthChange.changed
+              ? `${comparison.healthChange.previousStatus} -> ${comparison.healthChange.currentStatus}`
+              : comparison.healthChange.currentStatus}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Activity</p>
+          <p className="text-sm font-semibold text-white">{comparison.activityChanges.newActivityCount} new</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Commits</p>
+          <p className="text-sm font-semibold text-white">{comparison.activityChanges.newCommitCount}</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Attributed</p>
+          <p className="text-sm font-semibold text-white">{comparison.activityChanges.newMemberAttributedActivity}</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-neutral-500">Risk Delta</p>
+          <p className="text-sm font-semibold text-white">
+            Overdue {formatDelta(comparison.progressDelta.overdueTasksDelta)}, due soon {formatDelta(comparison.progressDelta.dueSoonTasksDelta)}
+          </p>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <div>
+          <p className="text-xs font-semibold text-neutral-300">Completed tasks</p>
+          <p className="mt-1 text-xs text-neutral-500">{completedTasks.length > 0 ? completedTasks.join(", ") : "None"}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold text-neutral-300">Newly overdue tasks</p>
+          <p className="mt-1 text-xs text-neutral-500">{newlyOverdueTasks.length > 0 ? newlyOverdueTasks.join(", ") : "None"}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProjectReportSection({
   isGuest,
   selectedPeriod,
@@ -89,6 +155,7 @@ export function ProjectReportSection({
   error,
   reportHistory = [],
   selectedReportId = null,
+  comparisonSummary = null,
   onPeriodChange,
   onGenerate,
   onReportSelect,
@@ -98,6 +165,10 @@ export function ProjectReportSection({
   const isPreviewOnly = variant === "preview";
   const showControls = variant === "full" || isControlsOnly;
   const showPreview = variant === "full" || isPreviewOnly;
+  const selectedComparisonSummary =
+    comparisonSummary ||
+    reportHistory.find((artifact) => artifact.id === selectedReportId)?.inputSnapshot.comparisonSummary ||
+    null;
 
   return (
     <section className={`project-report-panel app-frame rounded-2xl bg-white/5 ${isControlsOnly ? "p-4" : "p-4 sm:p-5 md:p-6"}`}>
@@ -214,6 +285,8 @@ export function ProjectReportSection({
             <ReportList title="Risky Work" items={report.riskyWork} tone="risk" />
             <ReportList title="Activity Highlights" items={report.activityHighlights} />
           </div>
+
+          <ChangesSincePreviousReport comparison={selectedComparisonSummary} />
 
           <div className="project-report-section-block">
             <h3 className="project-report-section-title">Suggested Next Actions</h3>

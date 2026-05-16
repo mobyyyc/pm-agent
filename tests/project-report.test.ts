@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { compareProjectReportSnapshots } from "../lib/project-report-comparison";
 import { buildProjectReportInput } from "../lib/project-report-input";
 import { listProjectReportsQuerySchema } from "../lib/validators";
 import { projectProgressReportSchema, projectReportArtifactSchema, projectReportPeriodSchema } from "../types/models";
@@ -145,6 +146,109 @@ test("buildProjectReportInput carries deterministic actor member attribution", (
 
   assert.equal(reportInput.recentActivity[0].actorMemberId, "owner@example.com");
   assert.equal(reportInput.recentActivity[0].actorMemberName, "Project Owner");
+});
+
+test("compareProjectReportSnapshots detects completed, overdue, created, status, progress, health, and activity changes", () => {
+  const previousSnapshot = buildProjectReportInput({
+    project,
+    tasks: [
+      makeTask({ id: "task_completed", title: "Complete setup", status: "in_progress", deadline: "2026-05-12" }),
+      makeTask({ id: "task_overdue", title: "Fix billing", status: "todo", deadline: "2026-05-20" }),
+      makeTask({ id: "task_status", title: "Build onboarding", status: "todo", deadline: "2026-05-20" }),
+    ],
+    progress: {
+      ...progress,
+      completionPercent: 20,
+      overdueTasks: 0,
+      dueSoonTasks: 1,
+    },
+    health: {
+      ...health,
+      status: "healthy",
+      label: "Healthy",
+    },
+    activityEvents: [
+      makeEvent({ id: "activity_old", summary: "Old activity", createdAt: "2026-05-08T12:00:00.000Z" }),
+    ],
+    period: "weekly",
+    today: "2026-05-09",
+    generatedAt: "2026-05-09T12:00:00.000Z",
+  });
+  const currentSnapshot = buildProjectReportInput({
+    project,
+    tasks: [
+      makeTask({ id: "task_completed", title: "Complete setup", status: "done", deadline: "2026-05-12" }),
+      makeTask({ id: "task_overdue", title: "Fix billing", status: "todo", deadline: "2026-05-08" }),
+      makeTask({ id: "task_status", title: "Build onboarding", status: "in_progress", deadline: "2026-05-20" }),
+      makeTask({ id: "task_new", title: "Write launch notes", status: "todo", deadline: "2026-05-20" }),
+    ],
+    progress: {
+      ...progress,
+      completionPercent: 40,
+      overdueTasks: 1,
+      dueSoonTasks: 3,
+    },
+    health,
+    activityEvents: [
+      makeEvent({ id: "activity_old", summary: "Old activity", createdAt: "2026-05-08T12:00:00.000Z" }),
+      makeEvent({
+        id: "commit_new",
+        source: "github",
+        entityType: "github_commit",
+        entityId: "sha_1",
+        eventType: "github.commit.synced",
+        summary: "Commit: Ship comparison",
+        metadata: {
+          actorMemberId: "owner@example.com",
+          actorMemberName: "Owner",
+        },
+        createdAt: "2026-05-09T13:00:00.000Z",
+      }),
+      makeEvent({
+        id: "activity_new",
+        summary: "Task moved",
+        createdAt: "2026-05-09T14:00:00.000Z",
+      }),
+    ],
+    period: "weekly",
+    today: "2026-05-09",
+    generatedAt: "2026-05-09T15:00:00.000Z",
+  });
+
+  const comparison = compareProjectReportSnapshots(previousSnapshot, currentSnapshot, {
+    id: "report_previous",
+    createdAt: "2026-05-09T12:00:00.000Z",
+  });
+
+  assert.ok(comparison);
+  assert.deepEqual(comparison.taskChanges.completedSinceLastReport.map((task) => task.id), ["task_completed"]);
+  assert.deepEqual(comparison.taskChanges.newlyOverdue.map((task) => task.id), ["task_overdue"]);
+  assert.deepEqual(comparison.taskChanges.newlyCreated.map((task) => task.id), ["task_new"]);
+  assert.deepEqual(comparison.taskChanges.statusChanged.map((task) => task.id), ["task_completed", "task_status"]);
+  assert.equal(comparison.progressDelta.completionPercentDelta, 20);
+  assert.equal(comparison.progressDelta.overdueTasksDelta, 1);
+  assert.equal(comparison.progressDelta.dueSoonTasksDelta, 2);
+  assert.equal(comparison.healthChange.changed, true);
+  assert.equal(comparison.healthChange.previousStatus, "healthy");
+  assert.equal(comparison.healthChange.currentStatus, "watch");
+  assert.equal(comparison.activityChanges.newActivityCount, 2);
+  assert.equal(comparison.activityChanges.newCommitCount, 1);
+  assert.equal(comparison.activityChanges.newMemberAttributedActivity, 1);
+});
+
+test("compareProjectReportSnapshots returns null safely without a previous report", () => {
+  const currentSnapshot = buildProjectReportInput({
+    project,
+    tasks: [],
+    progress,
+    health,
+    activityEvents: [],
+    period: "weekly",
+    today: "2026-05-09",
+    generatedAt: "2026-05-09T12:00:00.000Z",
+  });
+
+  assert.equal(compareProjectReportSnapshots(null, currentSnapshot, null), null);
 });
 
 test("projectProgressReportSchema validates concise report output", () => {

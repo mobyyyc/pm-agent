@@ -922,6 +922,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             error={reportError}
             reportHistory={reportHistory}
             selectedReportId={selectedReportArtifact?.id || null}
+            comparisonSummary={selectedReportArtifact?.inputSnapshot.comparisonSummary || null}
             onPeriodChange={handleReportPeriodChange}
             onGenerate={() => void handleGenerateReport()}
             onReportSelect={(reportArtifact) => {
@@ -1107,6 +1108,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             report={generatedReport}
             isGenerating={isGeneratingReport}
             error={reportError}
+            comparisonSummary={selectedReportArtifact?.inputSnapshot.comparisonSummary || null}
             onPeriodChange={handleReportPeriodChange}
             onGenerate={() => void handleGenerateReport()}
             variant="preview"

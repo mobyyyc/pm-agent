@@ -17,11 +17,15 @@
     "lib/github-commits.ts",
     "lib/github-identities.ts",
     "lib/github-token-crypto.ts",
+    "lib/notifications/**/*.ts",
+    "lib/project-report-notifications.ts",
     "lib/project-health.ts",
     "lib/project-progress.ts",
     "lib/project-report-comparison.ts",
     "lib/project-report-input.ts",
-    "lib/rate-limit.ts"
+    "lib/rate-limit.ts",
+    "lib/storage.ts",
+    "lib/db.ts"
   ],
   "exclude": ["node_modules", ".next", ".test-dist"]
 }

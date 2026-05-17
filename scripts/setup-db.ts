@@ -197,12 +197,38 @@ async function main() {
       generated_at TEXT NOT NULL,
       report JSONB NOT NULL,
       input_snapshot JSONB NOT NULL,
-      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual')),
+      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'scheduled')),
       created_at TEXT NOT NULL
     )
   `;
 
   console.log("  ✓ project_reports table created");
+
+  await sql`ALTER TABLE project_reports DROP CONSTRAINT IF EXISTS project_reports_source_check`;
+  await sql`
+    ALTER TABLE project_reports
+    ADD CONSTRAINT project_reports_source_check CHECK (source IN ('manual', 'scheduled'))
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS notification_deliveries (
+      id TEXT PRIMARY KEY,
+      project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+      user_id TEXT,
+      recipient_email TEXT NOT NULL,
+      channel TEXT NOT NULL CHECK (channel IN ('email')),
+      event_type TEXT NOT NULL CHECK (event_type IN ('project_report_generated', 'login_info', 'project_risk_alert', 'task_deadline_alert')),
+      subject TEXT NOT NULL,
+      body_preview TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'sent', 'failed')),
+      provider_message_id TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      sent_at TEXT
+    )
+  `;
+
+  console.log("  notification_deliveries table created");
 
   // Add useful indexes
   await sql`CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id)`;
@@ -224,6 +250,8 @@ async function main() {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_period_generated_at ON project_reports(project_id, period, generated_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_notification_deliveries_project_id_created_at ON notification_deliveries(project_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_notification_deliveries_user_id_created_at ON notification_deliveries(user_id, created_at DESC)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)

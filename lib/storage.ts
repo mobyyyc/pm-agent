@@ -3,6 +3,7 @@ import { resolveGithubContributorFromMappings } from "@/lib/github-identities";
 import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypto";
 import {
   appUserSchema,
+  notificationDeliverySchema,
   projectMemberGithubIdentitySchema,
   projectReportArtifactSchema,
   projectAgentSchema,
@@ -16,6 +17,9 @@ import {
   type AppUser,
   type GithubContributorIdentity,
   type GithubIdentityMappingInput,
+  type NotificationChannel,
+  type NotificationDelivery,
+  type NotificationEventType,
   type ProjectAgent,
   type ProjectActivityEvent,
   type ProjectActivityEntityType,
@@ -25,6 +29,7 @@ import {
   type ProjectReportArtifact,
   type ProjectReportInputSnapshot,
   type ProjectReportPeriod,
+  type ProjectReportSource,
   type ProjectRepository,
   type ProjectInvitation,
   type ProjectMember,
@@ -160,8 +165,31 @@ async function initializeCollaborationSchema(): Promise<void> {
       generated_at TEXT NOT NULL,
       report JSONB NOT NULL,
       input_snapshot JSONB NOT NULL,
-      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual')),
+      source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'scheduled')),
       created_at TEXT NOT NULL
+    )
+  `;
+  await sql`ALTER TABLE project_reports DROP CONSTRAINT IF EXISTS project_reports_source_check`;
+  await sql`
+    ALTER TABLE project_reports
+    ADD CONSTRAINT project_reports_source_check CHECK (source IN ('manual', 'scheduled'))
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS notification_deliveries (
+      id TEXT PRIMARY KEY,
+      project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+      user_id TEXT,
+      recipient_email TEXT NOT NULL,
+      channel TEXT NOT NULL CHECK (channel IN ('email')),
+      event_type TEXT NOT NULL CHECK (event_type IN ('project_report_generated', 'login_info', 'project_risk_alert', 'task_deadline_alert')),
+      subject TEXT NOT NULL,
+      body_preview TEXT NOT NULL,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'sent', 'failed')),
+      provider_message_id TEXT,
+      error_message TEXT,
+      created_at TEXT NOT NULL,
+      sent_at TEXT
     )
   `;
 
@@ -177,6 +205,8 @@ async function initializeCollaborationSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_period_generated_at ON project_reports(project_id, period, generated_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_notification_deliveries_project_id_created_at ON notification_deliveries(project_id, created_at DESC)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_notification_deliveries_user_id_created_at ON notification_deliveries(user_id, created_at DESC)`;
   await sql`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_project_invitations_pending_unique
     ON project_invitations(project_id, invitee_user_id)
@@ -340,6 +370,24 @@ function mapProjectReportRow(row: Record<string, unknown>): ProjectReportArtifac
     inputSnapshot: row.input_snapshot,
     source: row.source,
     createdAt: String(row.created_at),
+  });
+}
+
+function mapNotificationDeliveryRow(row: Record<string, unknown>): NotificationDelivery {
+  return notificationDeliverySchema.parse({
+    id: String(row.id),
+    projectId: typeof row.project_id === "string" ? row.project_id : null,
+    userId: typeof row.user_id === "string" ? row.user_id : null,
+    recipientEmail: String(row.recipient_email),
+    channel: row.channel,
+    eventType: row.event_type,
+    subject: String(row.subject),
+    bodyPreview: String(row.body_preview || ""),
+    status: row.status,
+    providerMessageId: typeof row.provider_message_id === "string" ? row.provider_message_id : null,
+    errorMessage: typeof row.error_message === "string" ? row.error_message : null,
+    createdAt: String(row.created_at),
+    sentAt: typeof row.sent_at === "string" ? row.sent_at : null,
   });
 }
 
@@ -946,7 +994,7 @@ export async function insertProjectReport(input: {
   generatedAt: string;
   report: ProjectProgressReport;
   inputSnapshot: ProjectReportInputSnapshot;
-  source: "manual";
+  source: ProjectReportSource;
   createdAt: string;
 }): Promise<ProjectReportArtifact> {
   await ensureCollaborationSchema();
@@ -983,6 +1031,115 @@ export async function insertProjectReport(input: {
   `;
 
   return mapProjectReportRow(rows[0] as Record<string, unknown>);
+}
+
+// ---------------------------------------------------------------------------
+// Notification deliveries
+// ---------------------------------------------------------------------------
+
+export async function createNotificationDelivery(input: {
+  id?: string;
+  projectId: string | null;
+  userId: string | null;
+  recipientEmail: string;
+  channel: NotificationChannel;
+  eventType: NotificationEventType;
+  subject: string;
+  bodyPreview: string;
+  createdAt: string;
+}): Promise<NotificationDelivery> {
+  await ensureCollaborationSchema();
+
+  const id = input.id || `notification_delivery_${crypto.randomUUID()}`;
+  const userId = input.userId ? normalizeUserId(input.userId) : null;
+  const rows = await sql`
+    INSERT INTO notification_deliveries (
+      id,
+      project_id,
+      user_id,
+      recipient_email,
+      channel,
+      event_type,
+      subject,
+      body_preview,
+      status,
+      provider_message_id,
+      error_message,
+      created_at,
+      sent_at
+    )
+    VALUES (
+      ${id},
+      ${input.projectId},
+      ${userId},
+      ${input.recipientEmail.toLowerCase()},
+      ${input.channel},
+      ${input.eventType},
+      ${input.subject},
+      ${input.bodyPreview.slice(0, 500)},
+      'pending',
+      NULL,
+      NULL,
+      ${input.createdAt},
+      NULL
+    )
+    RETURNING *
+  `;
+
+  return mapNotificationDeliveryRow(rows[0] as Record<string, unknown>);
+}
+
+export async function markNotificationDeliverySent(
+  id: string,
+  providerMessageId: string | null,
+  sentAt = new Date().toISOString(),
+): Promise<NotificationDelivery | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    UPDATE notification_deliveries
+    SET
+      status = 'sent',
+      provider_message_id = ${providerMessageId},
+      error_message = NULL,
+      sent_at = ${sentAt}
+    WHERE id = ${id}
+    RETURNING *
+  `;
+
+  return rows.length > 0 ? mapNotificationDeliveryRow(rows[0] as Record<string, unknown>) : null;
+}
+
+export async function markNotificationDeliveryFailed(
+  id: string,
+  errorMessage: string,
+): Promise<NotificationDelivery | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    UPDATE notification_deliveries
+    SET
+      status = 'failed',
+      error_message = ${errorMessage.slice(0, 500)},
+      sent_at = NULL
+    WHERE id = ${id}
+    RETURNING *
+  `;
+
+  return rows.length > 0 ? mapNotificationDeliveryRow(rows[0] as Record<string, unknown>) : null;
+}
+
+export async function getNotificationDeliveriesByProjectId(projectId: string): Promise<NotificationDelivery[]> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM notification_deliveries
+    WHERE project_id = ${projectId}
+    ORDER BY created_at DESC
+  `;
+
+  return rows.map((row) => mapNotificationDeliveryRow(row as Record<string, unknown>));
 }
 
 export async function getProjectReportsByProjectId(input: {

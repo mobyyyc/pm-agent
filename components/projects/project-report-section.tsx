@@ -183,7 +183,9 @@ export function ProjectReportSection({
               <p className="project-report-muted mt-2">Sign in to generate reports from project activity.</p>
             ) : report && isControlsOnly ? (
               <p className="project-report-muted mt-2">Last generated {formatGeneratedTime(report.generatedAt)}</p>
-            ) : null}
+            ) : (
+              <p className="project-report-muted mt-2">Email notifications are sent to project members when scheduled reports are generated.</p>
+            )}
           </div>
 
           <div className={`flex flex-col gap-3 ${isControlsOnly ? "" : "sm:flex-row sm:items-center"}`}>

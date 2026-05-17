@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none .test-dist/tests/api-errors.test.js .test-dist/tests/github-commits.test.js .test-dist/tests/github-identities.test.js .test-dist/tests/github-token-crypto.test.js .test-dist/tests/project-health.test.js .test-dist/tests/project-progress.test.js .test-dist/tests/project-report.test.js .test-dist/tests/rate-limit.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test --experimental-test-isolation=none .test-dist/tests/api-errors.test.js .test-dist/tests/github-commits.test.js .test-dist/tests/github-identities.test.js .test-dist/tests/github-token-crypto.test.js .test-dist/tests/notifications.test.js .test-dist/tests/project-health.test.js .test-dist/tests/project-progress.test.js .test-dist/tests/project-report.test.js .test-dist/tests/rate-limit.test.js",
     "check": "npm run lint && npx tsc --noEmit && npm test"
   },
   "dependencies": {
@@ -18,6 +18,7 @@
     "next": "16.1.6",
     "next-auth": "^4.24.13",
     "next-themes": "^0.4.6",
+    "nodemailer": "^7.0.13",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "zod": "^3.24.1"
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

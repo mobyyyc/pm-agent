@@ -1,6 +1,7 @@
 
 import { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import { sendLoginInfoEmail } from "@/lib/notifications";
 import { normalizeUserId, upsertAppUser } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 
@@ -20,15 +21,28 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
 
+      const timestamp = isoNow();
+      const userId = normalizeUserId(user.email);
+
       try {
         await upsertAppUser({
-          userId: normalizeUserId(user.email),
+          userId,
           displayName: user.name || null,
           imageUrl: user.image || null,
-          timestamp: isoNow(),
+          timestamp,
         });
       } catch (error) {
         console.error("Failed to sync signed-in user:", error);
+      }
+
+      try {
+        await sendLoginInfoEmail({
+          email: userId,
+          displayName: user.name || null,
+          loggedInAt: timestamp,
+        });
+      } catch (error) {
+        console.error("Failed to send login notification:", error);
       }
 
       return true;

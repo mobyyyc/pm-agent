@@ -277,7 +277,43 @@ export const projectHealthSummarySchema = z.object({
 });
 
 export const projectReportPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
-export const projectReportSourceSchema = z.enum(["manual"]);
+export const projectReportSourceSchema = z.enum(["manual", "scheduled"]);
+
+export const notificationChannelSchema = z.enum(["email"]);
+export const notificationEventTypeSchema = z.enum([
+  "project_report_generated",
+  "login_info",
+  "project_risk_alert",
+  "task_deadline_alert",
+]);
+export const notificationDeliveryStatusSchema = z.enum(["pending", "sent", "failed"]);
+
+export const notificationRecipientSchema = z.object({
+  email: z.string().trim().email(),
+  userId: z.string().min(1).nullable().optional(),
+});
+
+export const sendEmailNotificationInputSchema = z.object({
+  to: z.string().trim().email(),
+  subject: z.string().trim().min(1),
+  text: z.string().min(1),
+});
+
+export const notificationDeliverySchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1).nullable(),
+  userId: z.string().min(1).nullable(),
+  recipientEmail: z.string().email(),
+  channel: notificationChannelSchema,
+  eventType: notificationEventTypeSchema,
+  subject: z.string().min(1),
+  bodyPreview: z.string(),
+  status: notificationDeliveryStatusSchema,
+  providerMessageId: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  sentAt: z.string().datetime().nullable(),
+});
 
 export const projectReportActionItemSchema = z.object({
   title: z.string().min(1),
@@ -400,6 +436,12 @@ export type ProjectRiskSignal = z.infer<typeof projectRiskSignalSchema>;
 export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;
 export type ProjectReportPeriod = z.infer<typeof projectReportPeriodSchema>;
 export type ProjectReportSource = z.infer<typeof projectReportSourceSchema>;
+export type NotificationChannel = z.infer<typeof notificationChannelSchema>;
+export type NotificationEventType = z.infer<typeof notificationEventTypeSchema>;
+export type NotificationDeliveryStatus = z.infer<typeof notificationDeliveryStatusSchema>;
+export type NotificationDelivery = z.infer<typeof notificationDeliverySchema>;
+export type NotificationRecipient = z.infer<typeof notificationRecipientSchema>;
+export type SendEmailNotificationInput = z.infer<typeof sendEmailNotificationInputSchema>;
 export type ProjectReportActionItem = z.infer<typeof projectReportActionItemSchema>;
 export type ProjectReportTaskSummary = z.infer<typeof projectReportTaskSummarySchema>;
 export type ProjectReportActivitySummary = z.infer<typeof projectReportActivitySummarySchema>;

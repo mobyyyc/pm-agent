@@ -303,7 +303,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-50 flex h-dvh w-[min(22rem,calc(100dvw_-_24px))] max-w-[calc(100dvw_-_env(safe-area-inset-left)_-_env(safe-area-inset-right))] transform flex-col overflow-hidden bg-neutral-900 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-in-out lg:w-64 ${
+        className={`fixed left-0 top-0 bottom-0 z-50 flex h-dvh w-[min(20rem,calc(100dvw_-_56px))] max-w-[calc(100dvw_-_56px_-_env(safe-area-inset-left)_-_env(safe-area-inset-right))] transform flex-col overflow-hidden bg-neutral-900 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-in-out lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

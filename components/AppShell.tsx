@@ -282,7 +282,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex h-dvh w-full max-w-full overflow-hidden bg-black text-white">
+    <div className="flex min-h-svh w-full max-w-full bg-black text-white lg:h-dvh lg:min-h-0 lg:overflow-hidden">
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -303,7 +303,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-50 flex h-dvh w-[min(20rem,calc(100dvw_-_56px))] max-w-[calc(100dvw_-_56px_-_env(safe-area-inset-left)_-_env(safe-area-inset-right))] transform flex-col overflow-hidden bg-neutral-900 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-in-out lg:w-64 ${
+        className={`fixed left-0 top-0 bottom-0 z-50 flex h-dvh w-[min(20rem,calc(100dvw_-_56px))] max-w-[calc(100dvw_-_56px_-_env(safe-area-inset-left)_-_env(safe-area-inset-right))] transform flex-col overflow-hidden bg-neutral-900 pt-[env(safe-area-inset-top)] pb-[calc(env(safe-area-inset-bottom)+24px)] transition-transform duration-300 ease-in-out lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -531,7 +531,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className={`flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
+      <div className={`flex min-h-svh min-w-0 flex-1 flex-col transition-all duration-300 lg:min-h-0 ${sidebarOpen ? "lg:ml-64" : ""}`}>
         {/* Top Navbar */}
         <header
           className={`pointer-events-none fixed top-0 right-0 z-40 flex h-16 items-center justify-between px-3 sm:px-4 transition-all duration-300 ${
@@ -568,7 +568,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="relative min-h-0 max-w-full flex-1 overflow-auto bg-black pt-20 pb-8 sm:pt-22 sm:pb-10 md:pt-24 md:pb-12">
+        <main className="relative max-w-full flex-1 overflow-visible bg-black pt-20 pb-[calc(env(safe-area-inset-bottom)+96px)] sm:pt-22 md:pt-24 lg:min-h-0 lg:overflow-auto lg:pb-12">
             {children}
         </main>
       </div>

@@ -21,7 +21,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   if (status === "loading") {
     return (
-      <div className="relative flex h-dvh w-full max-w-full items-center justify-center overflow-hidden bg-black text-white">
+      <div className="relative flex min-h-svh w-full max-w-full items-center justify-center overflow-x-hidden bg-black text-white lg:h-dvh lg:min-h-0 lg:overflow-hidden">
         <ThemeToggleButton className="absolute right-4 top-4" />
             <p>Loading...</p>
         </div>
@@ -34,7 +34,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div className="relative flex h-dvh w-full max-w-full flex-col items-center justify-center gap-6 overflow-hidden bg-black p-4 text-white">
+    <div className="relative flex min-h-svh w-full max-w-full flex-col items-center justify-center gap-6 overflow-x-hidden bg-black p-4 text-white lg:h-dvh lg:min-h-0 lg:overflow-hidden">
         <ThemeToggleButton className="absolute right-4 top-4" />
         <h1 className="text-4xl font-semibold tracking-tight">
           <span className="text-white/95">VERSOR</span>

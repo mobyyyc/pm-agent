@@ -10,8 +10,10 @@ import { ProjectHeader } from "@/components/projects/project-header";
 import { ProjectProgressSection } from "@/components/projects/project-progress-section";
 import { ProjectReportSection } from "@/components/projects/project-report-section";
 import { TaskListSection } from "@/components/projects/task-list-section";
+import { TeamActivityInsightCard } from "@/components/projects/team-activity-insight-card";
 import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
+import { calculateProjectTeamActivityInsight } from "@/lib/project-team-activity-insight";
 import type {
   Project,
   ProjectActivityEvent,
@@ -21,6 +23,7 @@ import type {
   ProjectProgressSummary,
   ProjectProgressReport,
   ProjectReportPeriod,
+  ProjectTeamActivityInsight,
   Task,
 } from "@/types/models";
 
@@ -37,6 +40,7 @@ type ProjectResponse = {
   members?: ProjectMember[];
   progress?: ProjectProgressSummary;
   health?: ProjectHealthSummary;
+  teamActivityInsight?: ProjectTeamActivityInsight;
 };
 type ActivityResponse = {
   events?: ProjectActivityEvent[];
@@ -71,6 +75,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   const [dbTasks, setDbTasks] = useState<Task[]>([]);
   const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
   const [dbActivityEvents, setDbActivityEvents] = useState<ProjectActivityEvent[]>([]);
+  const [dbTeamActivityInsight, setDbTeamActivityInsight] = useState<ProjectTeamActivityInsight | null>(null);
   const [renderedTimeline, setRenderedTimeline] = useState<Project["timeline"]>([]);
   const [renderedTasks, setRenderedTasks] = useState<Task[]>([]);
   const [notFoundState, setNotFoundState] = useState(false);
@@ -119,7 +124,9 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     if (!response.ok) return;
 
     const data = (await response.json().catch(() => null)) as ActivityResponse | null;
-    setDbActivityEvents(Array.isArray(data?.events) ? data.events : []);
+    const events = Array.isArray(data?.events) ? data.events : [];
+    setDbActivityEvents(events);
+    setDbTeamActivityInsight(calculateProjectTeamActivityInsight(events, new Date()));
   }, [id, isGuest, session?.user?.email]);
 
   const refreshReportHistory = useCallback(async () => {
@@ -164,6 +171,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
             setDbProject(data.project ?? null);
             setDbTasks(data.tasks || []);
             setDbMembers(Array.isArray(data.members) ? data.members : []);
+            setDbTeamActivityInsight(data.teamActivityInsight ?? null);
           }
         })
         .catch(() => setNotFoundState(true));
@@ -242,6 +250,11 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     today,
   );
   const projectHealth = calculateProjectHealth(projectProgress, today);
+  const liveTeamActivityInsight = calculateProjectTeamActivityInsight(isGuest ? [] : dbActivityEvents, new Date());
+  const teamActivityInsight =
+    !isGuest && dbActivityEvents.length === 0 && dbTeamActivityInsight
+      ? dbTeamActivityInsight
+      : liveTeamActivityInsight;
 
   const ownerMemberFallback: ProjectMember = {
     projectId: project.id,
@@ -913,6 +926,8 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(19rem,22.5rem)_minmax(0,1fr)] lg:items-start lg:gap-7 xl:gap-8">
         <aside className="min-w-0 space-y-5">
           <ProjectProgressSection progress={projectProgress} health={projectHealth} variant="compact" />
+
+          <TeamActivityInsightCard insight={teamActivityInsight} />
 
           <ProjectReportSection
             isGuest={isGuest}

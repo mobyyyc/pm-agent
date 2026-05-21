@@ -6,9 +6,11 @@ import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import { calculateProjectHealth } from "@/lib/project-health";
 import { calculateProjectProgress } from "@/lib/project-progress";
+import { calculateProjectTeamActivityInsight } from "@/lib/project-team-activity-insight";
 import { checkRateLimit, getRateLimitKey, RATE_LIMITS, rateLimitResponse } from "@/lib/rate-limit";
 import {
   deleteProject,
+  getProjectActivityEventsByProjectId,
   getProjectById,
   getProjectMembers,
   getTasksByProjectId,
@@ -53,13 +55,18 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const members = await getProjectMembers(id);
-    const projectTasks = await getTasksByProjectId(id);
-    const today = isoNow().slice(0, 10);
+    const [members, projectTasks, activityEvents] = await Promise.all([
+      getProjectMembers(id),
+      getTasksByProjectId(id),
+      getProjectActivityEventsByProjectId(id, 100),
+    ]);
+    const now = isoNow();
+    const today = now.slice(0, 10);
     const progress = calculateProjectProgress(project, projectTasks, today);
     const health = calculateProjectHealth(progress, today);
+    const teamActivityInsight = calculateProjectTeamActivityInsight(activityEvents, now);
 
-    return NextResponse.json({ project, tasks: projectTasks, members, progress, health });
+    return NextResponse.json({ project, tasks: projectTasks, members, progress, health, teamActivityInsight });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch project.", detail: getSafeErrorDetail(error) },

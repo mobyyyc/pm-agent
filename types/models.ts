@@ -276,6 +276,15 @@ export const projectHealthSummarySchema = z.object({
   evaluatedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
+export const projectTeamActivityInsightSchema = z.object({
+  lastActivityAt: z.string().datetime().nullable(),
+  activityCountLast7Days: z.number().int().nonnegative(),
+  commitCountLast7Days: z.number().int().nonnegative(),
+  attributedActivityCountLast7Days: z.number().int().nonnegative(),
+  topContributorName: z.string().min(1).nullable(),
+  topContributorActivityCount: z.number().int().nonnegative(),
+});
+
 export const projectReportPeriodSchema = z.enum(["daily", "weekly", "monthly"]);
 export const projectReportSourceSchema = z.enum(["manual", "scheduled"]);
 
@@ -434,6 +443,7 @@ export type ProjectHealthStatus = z.infer<typeof projectHealthStatusSchema>;
 export type ProjectRiskSeverity = z.infer<typeof projectRiskSeveritySchema>;
 export type ProjectRiskSignal = z.infer<typeof projectRiskSignalSchema>;
 export type ProjectHealthSummary = z.infer<typeof projectHealthSummarySchema>;
+export type ProjectTeamActivityInsight = z.infer<typeof projectTeamActivityInsightSchema>;
 export type ProjectReportPeriod = z.infer<typeof projectReportPeriodSchema>;
 export type ProjectReportSource = z.infer<typeof projectReportSourceSchema>;
 export type NotificationChannel = z.infer<typeof notificationChannelSchema>;

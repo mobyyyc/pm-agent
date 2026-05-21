@@ -21,6 +21,7 @@
     "lib/project-report-notifications.ts",
     "lib/project-health.ts",
     "lib/project-progress.ts",
+    "lib/project-team-activity-insight.ts",
     "lib/project-report-comparison.ts",
     "lib/project-report-input.ts",
     "lib/rate-limit.ts",

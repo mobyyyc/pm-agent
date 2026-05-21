@@ -111,7 +111,7 @@ export default function CodeRainBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 h-screen w-screen pointer-events-none opacity-65"
+      className="fixed inset-0 h-dvh w-full pointer-events-none opacity-65"
       style={{ background: 'transparent' }}
     />
   );

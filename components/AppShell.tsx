@@ -282,11 +282,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-black text-white overflow-x-clip">
+    <div className="flex h-dvh w-full max-w-full overflow-hidden bg-black text-white">
       {/* Fixed Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed left-3 top-3 z-70 cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white lg:left-6"
+        className="fixed left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-70 cursor-pointer rounded-full p-2 text-neutral-400 transition-colors hover:bg-white/10 hover:text-white lg:left-6 lg:top-3"
         aria-label="Toggle Sidebar"
       >
         <Bars3Icon className="h-6 w-6" />
@@ -303,13 +303,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] transform bg-neutral-900 transition-transform duration-300 ease-in-out lg:w-64 ${
+        className={`fixed left-0 top-0 bottom-0 z-50 flex h-dvh w-[min(22rem,calc(100dvw_-_24px))] max-w-[calc(100dvw_-_env(safe-area-inset-left)_-_env(safe-area-inset-right))] transform flex-col overflow-hidden bg-neutral-900 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] transition-transform duration-300 ease-in-out lg:w-64 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <button
           onClick={() => setSidebarView("main")}
-          className={`absolute left-14 top-3 z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 lg:left-16 ${
+          className={`absolute left-14 top-[max(0.75rem,env(safe-area-inset-top))] z-10 rounded-full p-2 text-neutral-400 transition-all duration-300 lg:left-16 lg:top-3 ${
             isProjectSidebar
               ? "cursor-pointer translate-x-0 opacity-100 hover:bg-white/10 hover:text-white"
               : "pointer-events-none -translate-x-1 opacity-0"
@@ -319,13 +319,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <ChevronLeftIcon className="h-6 w-6" />
         </button>
 
-        <div className="flex h-16 items-center justify-end px-4">
+        <div className="flex h-16 shrink-0 items-center justify-end px-4">
           <div className="lg:hidden">
             <ThemeToggleButton className="border-0! bg-transparent! px-0! hover:bg-transparent!" />
           </div>
         </div>
 
-        <div className="flex h-[calc(100vh-4rem)] flex-col overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="relative flex-1 overflow-hidden">
           <nav
             className={`absolute inset-0 flex flex-col p-4 transition-all duration-300 ease-in-out ${
@@ -471,7 +471,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </nav>
           </div>
 
-          <div className="px-4 pb-4">
+          <div className="shrink-0 px-4 pb-4">
             <div className="my-4 border-t border-white/10" />
             <div className="space-y-1">
               <div className="space-y-1 lg:hidden">
@@ -531,7 +531,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <div className={`flex min-h-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : ""}`}>
         {/* Top Navbar */}
         <header
           className={`pointer-events-none fixed top-0 right-0 z-40 flex h-16 items-center justify-between px-3 sm:px-4 transition-all duration-300 ${
@@ -568,7 +568,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="relative min-h-0 flex-1 overflow-auto bg-black pt-20 pb-8 sm:pt-22 sm:pb-10 md:pt-24 md:pb-12">
+        <main className="relative min-h-0 max-w-full flex-1 overflow-auto bg-black pt-20 pb-8 sm:pt-22 sm:pb-10 md:pt-24 md:pb-12">
             {children}
         </main>
       </div>

@@ -74,16 +74,22 @@ html[data-theme="light"] {
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   min-height: 100dvh;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-nunito), Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
 }
 
 html {
-  overflow-x: clip;
+  min-height: 100%;
 }
 
 .theme-toggle-button {

@@ -5,7 +5,9 @@ import { TaskListControls } from "./task-list-controls";
 import { TaskStatusSelect } from "@/app/projects/[id]/task-status-select";
 import type { ProjectMember, Task } from "@/types/models";
 
-type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">;
+type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "status"> & {
+  suggestedAssignee: string | null;
+};
 type TaskStatusFilter = "all" | "todo" | "in_progress" | "done";
 type TaskListMode = "mine" | "all";
 
@@ -23,13 +25,12 @@ type TaskListSectionProps = {
   isAddingTask: boolean;
   projectMembers: ProjectMember[];
   currentUserMember: ProjectMember | null;
-  ownerMember: ProjectMember;
   isGuest: boolean;
   statusCardStyles: Record<Task["status"], string>;
   frameEditButtonClass: string;
   framePrimaryActionButtonClass: string;
   onTaskEditStart: (task: Task) => void;
-  onTaskDraftChange: (field: keyof TaskDraft, value: string) => void;
+  onTaskDraftChange: (field: keyof TaskDraft, value: string | null) => void;
   onSaveTask: () => Promise<void>;
   onRemoveTask: (taskId: string) => Promise<void>;
   onAddTask: () => Promise<void>;
@@ -38,7 +39,7 @@ type TaskListSectionProps = {
   onTaskListModeChange: (mode: TaskListMode) => void;
   getMemberLabel: (member: ProjectMember) => string;
   getAssigneeLabel: (value?: string | null) => string;
-  isTaskAssignedToCurrentUser: (task: Task) => boolean;
+  isTaskAssignedToCurrentUser: (task: { suggestedAssignee: string | null }) => boolean;
   onStatusChange: (taskId: string, status: Task["status"]) => void;
   onStatusSaved: () => void | Promise<void>;
 };
@@ -57,7 +58,6 @@ export function TaskListSection({
   isAddingTask,
   projectMembers,
   currentUserMember,
-  ownerMember,
   isGuest,
   statusCardStyles,
   frameEditButtonClass,
@@ -223,10 +223,11 @@ export function TaskListSection({
                         <span>Assignee</span>
                         <div className="relative">
                           <select
-                            value={taskDraft?.suggestedAssignee || ownerMember.userId}
-                            onChange={(event) => onTaskDraftChange("suggestedAssignee", event.target.value)}
+                            value={taskDraft?.suggestedAssignee ?? ""}
+                            onChange={(event) => onTaskDraftChange("suggestedAssignee", event.target.value || null)}
                             className="w-full appearance-none rounded-xl border border-white/15 bg-black/25 px-3 py-2 pr-10 text-sm text-white outline-none transition-colors focus:border-white/40"
                           >
+                            <option value="">Unassigned</option>
                             {projectMembers.map((member) => (
                               <option key={member.userId} value={member.userId}>
                                 {getMemberLabel(member)}

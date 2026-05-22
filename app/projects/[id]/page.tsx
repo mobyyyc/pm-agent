@@ -32,7 +32,9 @@ type PageProps = {
 };
 
 type TimelineDraft = Project["timeline"][number];
-type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">;
+type TaskDraft = Pick<Task, "title" | "description" | "deadline" | "status"> & {
+  suggestedAssignee: string | null;
+};
 type ProjectTitleUpdatedDetail = { projectId: string; name: string };
 type ProjectResponse = {
   project?: Project;
@@ -288,13 +290,13 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       }) || null
     );
   };
-  const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || ownerMember.userId;
+  const getAssigneeValue = (value?: string | null) => findMemberByAssigneeValue(value)?.userId || null;
   const getAssigneeLabel = (value?: string | null) => {
     const member = findMemberByAssigneeValue(value);
     if (member) return getMemberLabel(member);
     return value?.trim() || "Unassigned";
   };
-  const isTaskAssignedToCurrentUser = (task: Task) => {
+  const isTaskAssignedToCurrentUser = (task: { suggestedAssignee: string | null }) => {
     if (!currentUserMember) {
       return false;
     }
@@ -337,7 +339,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     title: `New Task ${renderedTasks.length + 1}`,
     description: "Describe what this task needs to deliver.",
     deadline: getTodayDate(),
-    suggestedAssignee: ownerMember.userId,
+    suggestedAssignee: null,
     status: "todo",
   });
 
@@ -613,7 +615,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
     setFrameActionError(null);
   };
 
-  const handleTaskDraftChange = (field: keyof TaskDraft, value: string) => {
+  const handleTaskDraftChange = (field: keyof TaskDraft, value: string | null) => {
     setTaskDraft((currentDraft) => {
       if (!currentDraft) return currentDraft;
 
@@ -624,9 +626,16 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         };
       }
 
+      if (field === "suggestedAssignee") {
+        return {
+          ...currentDraft,
+          suggestedAssignee: value,
+        };
+      }
+
       return {
         ...currentDraft,
-        [field]: value,
+        [field]: value ?? "",
       };
     });
   };
@@ -636,7 +645,10 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
     const taskId = editingTaskId;
     const previousTasks = renderedTasks;
-    const nextTasks = renderedTasks.map((task) => (task.id === taskId ? { ...task, ...taskDraft } : task));
+    const nextSuggestedAssignee = taskDraft.suggestedAssignee ?? "Unassigned";
+    const nextTasks = renderedTasks.map((task) =>
+      task.id === taskId ? { ...task, ...taskDraft, suggestedAssignee: nextSuggestedAssignee } : task,
+    );
 
     setRenderedTasks(nextTasks);
     setPendingTaskId(taskId);
@@ -790,7 +802,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
           title: taskTemplate.title,
           description: taskTemplate.description,
           deadline: taskTemplate.deadline,
-          suggestedAssignee: taskTemplate.suggestedAssignee,
+          suggestedAssignee: taskTemplate.suggestedAssignee ?? "Unassigned",
           status: taskTemplate.status,
           createdAt: timestamp,
           updatedAt: timestamp,
@@ -1097,7 +1109,6 @@ export default function ProjectDashboardPage({ params }: PageProps) {
         isAddingTask={isAddingTask}
         projectMembers={projectMembers}
         currentUserMember={currentUserMember}
-        ownerMember={ownerMember}
         isGuest={isGuest}
         statusCardStyles={statusCardStyles}
         frameEditButtonClass={frameEditButtonClass}

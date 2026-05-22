@@ -8,7 +8,9 @@ type GuestProject = {
   tasks: Task[];
 };
 
-type GuestTaskUpdates = Partial<Pick<Task, "title" | "description" | "deadline" | "suggestedAssignee" | "status">>;
+type GuestTaskUpdates = Partial<Pick<Task, "title" | "description" | "deadline" | "status">> & {
+  suggestedAssignee?: string | null;
+};
 
 type GuestContextValue = {
   isGuest: boolean;
@@ -143,6 +145,15 @@ export function GuestProvider({ children }: { children: ReactNode }) {
 
   const updateGuestTask = useCallback((taskId: string, updates: GuestTaskUpdates) => {
     const now = new Date().toISOString();
+    const { suggestedAssignee, ...restUpdates } = updates;
+    const normalizedUpdates: Partial<Task> = { ...restUpdates };
+
+    if (Object.prototype.hasOwnProperty.call(updates, "suggestedAssignee")) {
+      normalizedUpdates.suggestedAssignee =
+        typeof suggestedAssignee === "string" && suggestedAssignee.trim().length > 0
+          ? suggestedAssignee.trim()
+          : "Unassigned";
+    }
 
     setGuestProjects((prev) =>
       prev.map((gp) => {
@@ -153,7 +164,7 @@ export function GuestProvider({ children }: { children: ReactNode }) {
 
         return {
           ...gp,
-          tasks: gp.tasks.map((task) => (task.id === taskId ? { ...task, ...updates, updatedAt: now } : task)),
+          tasks: gp.tasks.map((task) => (task.id === taskId ? { ...task, ...normalizedUpdates, updatedAt: now } : task)),
           project: {
             ...gp.project,
             updatedAt: now,

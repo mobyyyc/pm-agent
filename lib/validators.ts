@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   agentStatusSchema,
   aiPlanSchema,
+  assignTaskOwnerActionPayloadSchema,
   githubIdentityMappingInputSchema,
   repositoryVisibilitySchema,
   teamImportAnalysisSchema,
@@ -115,6 +116,15 @@ export const updateProjectAgentRequestSchema = z
   .refine((value) => value.status !== undefined || value.schedule !== undefined || value.config !== undefined, {
     message: "At least one agent field must be provided.",
   });
+
+export const approveProjectAgentActionProposalRequestSchema = z.object({
+  payload: assignTaskOwnerActionPayloadSchema.partial().optional().default({}),
+  reviewNote: z.string().trim().max(1000).nullable().optional(),
+});
+
+export const rejectProjectAgentActionProposalRequestSchema = z.object({
+  reviewNote: z.string().trim().max(1000).nullable().optional(),
+});
 
 export const generateProjectReportRequestSchema = z.object({
   period: projectReportPeriodSchema,

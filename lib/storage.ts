@@ -3,6 +3,8 @@ import { resolveGithubContributorFromMappings } from "@/lib/github-identities";
 import { decryptGithubToken, encryptGithubToken } from "@/lib/github-token-crypto";
 import {
   appUserSchema,
+  projectAgentActionProposalSchema,
+  projectAgentRunSchema,
   notificationDeliverySchema,
   projectMemberGithubIdentitySchema,
   projectReportArtifactSchema,
@@ -21,6 +23,13 @@ import {
   type NotificationDelivery,
   type NotificationEventType,
   type ProjectAgent,
+  type ProjectAgentActionProposal,
+  type ProjectAgentActionProposalSourceType,
+  type ProjectAgentActionProposalStatus,
+  type ProjectAgentActionType,
+  type ProjectAgentRun,
+  type ProjectAgentRunStatus,
+  type ProjectAgentRunTriggerType,
   type ProjectActivityEvent,
   type ProjectActivityEntityType,
   type ProjectActivitySource,
@@ -137,6 +146,51 @@ async function initializeCollaborationSchema(): Promise<void> {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_agent_runs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      agent_id TEXT,
+      trigger_type TEXT NOT NULL CHECK (trigger_type IN ('manual', 'scheduled', 'activity', 'report')),
+      status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
+      started_by_user_id TEXT,
+      input_snapshot JSONB,
+      summary TEXT,
+      error_message TEXT,
+      started_at TEXT,
+      completed_at TEXT,
+      created_at TEXT NOT NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS project_agent_action_proposals (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      run_id TEXT REFERENCES project_agent_runs(id) ON DELETE SET NULL,
+      agent_id TEXT,
+      source_type TEXT NOT NULL CHECK (source_type IN ('health_signal', 'task', 'activity_event', 'report', 'github_commit')),
+      source_id TEXT,
+      dedupe_key TEXT NOT NULL,
+      proposed_action_type TEXT NOT NULL CHECK (proposed_action_type IN ('assign_task_owner')),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected', 'executing', 'executed', 'failed', 'cancelled')),
+      created_by TEXT NOT NULL CHECK (created_by IN ('system', 'ai', 'user')),
+      confidence DOUBLE PRECISION,
+      requires_approval BOOLEAN NOT NULL DEFAULT TRUE,
+      reviewed_by_user_id TEXT,
+      reviewed_at TEXT,
+      review_note TEXT,
+      executed_by_user_id TEXT,
+      executed_at TEXT,
+      execution_error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
   await initializeGithubIdentityMappingsSchema();
 
   await sql`
@@ -146,12 +200,18 @@ async function initializeCollaborationSchema(): Promise<void> {
       actor_user_id TEXT,
       source TEXT NOT NULL CHECK (source IN ('user', 'github', 'system')),
       event_type TEXT NOT NULL,
-      entity_type TEXT NOT NULL CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit')),
+      entity_type TEXT NOT NULL CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit', 'agent_run', 'agent_action_proposal')),
       entity_id TEXT,
       summary TEXT NOT NULL,
       metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
       created_at TEXT NOT NULL
     )
+  `;
+  await sql`ALTER TABLE project_activity_events DROP CONSTRAINT IF EXISTS project_activity_events_entity_type_check`;
+  await sql`
+    ALTER TABLE project_activity_events
+    ADD CONSTRAINT project_activity_events_entity_type_check
+    CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit', 'agent_run', 'agent_action_proposal'))
   `;
 
   await sql`
@@ -201,6 +261,17 @@ async function initializeCollaborationSchema(): Promise<void> {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_project_id ON project_agents(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_runs_project_id ON project_agent_runs(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_runs_status ON project_agent_runs(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_project_id ON project_agent_action_proposals(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_run_id ON project_agent_action_proposals(run_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_status ON project_agent_action_proposals(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_dedupe_key ON project_agent_action_proposals(dedupe_key)`;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_project_agent_action_proposals_pending_dedupe
+    ON project_agent_action_proposals(project_id, dedupe_key)
+    WHERE status = 'pending'
+  `;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_project_id_created_at ON project_activity_events(project_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;
@@ -337,6 +408,51 @@ function mapProjectAgentRow(row: Record<string, unknown>): ProjectAgent {
     lastRunAt: typeof row.last_run_at === "string" ? row.last_run_at : null,
     nextRunAt: typeof row.next_run_at === "string" ? row.next_run_at : null,
     createdByUserId: String(row.created_by_user_id),
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  });
+}
+
+function mapProjectAgentRunRow(row: Record<string, unknown>): ProjectAgentRun {
+  return projectAgentRunSchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    agentId: typeof row.agent_id === "string" ? row.agent_id : null,
+    triggerType: row.trigger_type,
+    status: row.status,
+    startedByUserId: typeof row.started_by_user_id === "string" ? row.started_by_user_id : null,
+    inputSnapshot: (row.input_snapshot as Record<string, unknown> | null) || null,
+    summary: typeof row.summary === "string" ? row.summary : null,
+    errorMessage: typeof row.error_message === "string" ? row.error_message : null,
+    startedAt: typeof row.started_at === "string" ? row.started_at : null,
+    completedAt: typeof row.completed_at === "string" ? row.completed_at : null,
+    createdAt: String(row.created_at),
+  });
+}
+
+function mapProjectAgentActionProposalRow(row: Record<string, unknown>): ProjectAgentActionProposal {
+  return projectAgentActionProposalSchema.parse({
+    id: String(row.id),
+    projectId: String(row.project_id),
+    runId: typeof row.run_id === "string" ? row.run_id : null,
+    agentId: typeof row.agent_id === "string" ? row.agent_id : null,
+    sourceType: row.source_type,
+    sourceId: typeof row.source_id === "string" ? row.source_id : null,
+    dedupeKey: String(row.dedupe_key),
+    proposedActionType: row.proposed_action_type,
+    title: String(row.title),
+    description: String(row.description),
+    payload: (row.payload as Record<string, unknown>) || {},
+    status: row.status,
+    createdBy: row.created_by,
+    confidence: row.confidence === null || row.confidence === undefined ? null : Number(row.confidence),
+    requiresApproval: Boolean(row.requires_approval),
+    reviewedByUserId: typeof row.reviewed_by_user_id === "string" ? row.reviewed_by_user_id : null,
+    reviewedAt: typeof row.reviewed_at === "string" ? row.reviewed_at : null,
+    reviewNote: typeof row.review_note === "string" ? row.review_note : null,
+    executedByUserId: typeof row.executed_by_user_id === "string" ? row.executed_by_user_id : null,
+    executedAt: typeof row.executed_at === "string" ? row.executed_at : null,
+    executionError: typeof row.execution_error === "string" ? row.execution_error : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   });
@@ -836,6 +952,406 @@ export async function deleteProjectAgent(projectId: string, agentId: string): Pr
     DELETE FROM project_agents
     WHERE project_id = ${projectId} AND agent_id = ${agentId}
   `;
+}
+
+// ---------------------------------------------------------------------------
+// Project agent runs and action proposals
+// ---------------------------------------------------------------------------
+
+export async function createProjectAgentRun(input: {
+  id?: string;
+  projectId: string;
+  agentId: string | null;
+  triggerType: ProjectAgentRunTriggerType;
+  status: ProjectAgentRunStatus;
+  startedByUserId: string | null;
+  inputSnapshot?: Record<string, unknown> | null;
+  summary?: string | null;
+  errorMessage?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+}): Promise<ProjectAgentRun> {
+  await ensureCollaborationSchema();
+
+  const runId = input.id || `agent_run_${crypto.randomUUID()}`;
+  const startedByUserId = input.startedByUserId ? normalizeUserId(input.startedByUserId) : null;
+  const inputSnapshotJson =
+    input.inputSnapshot === undefined || input.inputSnapshot === null ? null : JSON.stringify(input.inputSnapshot);
+  const rows = await sql`
+    INSERT INTO project_agent_runs (
+      id,
+      project_id,
+      agent_id,
+      trigger_type,
+      status,
+      started_by_user_id,
+      input_snapshot,
+      summary,
+      error_message,
+      started_at,
+      completed_at,
+      created_at
+    )
+    VALUES (
+      ${runId},
+      ${input.projectId},
+      ${input.agentId},
+      ${input.triggerType},
+      ${input.status},
+      ${startedByUserId},
+      ${inputSnapshotJson}::jsonb,
+      ${input.summary ?? null},
+      ${input.errorMessage ?? null},
+      ${input.startedAt ?? null},
+      ${input.completedAt ?? null},
+      ${input.createdAt}
+    )
+    RETURNING *
+  `;
+
+  return mapProjectAgentRunRow(rows[0] as Record<string, unknown>);
+}
+
+export async function updateProjectAgentRunStatus(input: {
+  projectId: string;
+  runId: string;
+  status: ProjectAgentRunStatus;
+  summary?: string | null;
+  errorMessage?: string | null;
+  completedAt?: string | null;
+}): Promise<ProjectAgentRun | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    UPDATE project_agent_runs
+    SET
+      status = ${input.status},
+      summary = COALESCE(${input.summary ?? null}, summary),
+      error_message = ${input.errorMessage ?? null},
+      completed_at = COALESCE(${input.completedAt ?? null}, completed_at)
+    WHERE id = ${input.runId} AND project_id = ${input.projectId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentRunRow(rows[0] as Record<string, unknown>);
+}
+
+export async function getProjectAgentRunsByProjectId(projectId: string, limit = 10): Promise<ProjectAgentRun[]> {
+  await ensureCollaborationSchema();
+
+  const safeLimit = Math.min(50, Math.max(1, Math.floor(limit)));
+  const rows = await sql`
+    SELECT *
+    FROM project_agent_runs
+    WHERE project_id = ${projectId}
+    ORDER BY created_at DESC
+    LIMIT ${safeLimit}
+  `;
+
+  return rows.map((row) => mapProjectAgentRunRow(row as Record<string, unknown>));
+}
+
+export async function createProjectAgentActionProposal(input: {
+  id?: string;
+  projectId: string;
+  runId: string | null;
+  agentId: string | null;
+  sourceType: ProjectAgentActionProposalSourceType;
+  sourceId: string | null;
+  dedupeKey: string;
+  proposedActionType: ProjectAgentActionType;
+  title: string;
+  description: string;
+  payload: Record<string, unknown>;
+  status?: ProjectAgentActionProposalStatus;
+  createdBy: "system" | "ai" | "user";
+  confidence?: number | null;
+  requiresApproval: boolean;
+  timestamp: string;
+}): Promise<ProjectAgentActionProposal> {
+  await ensureCollaborationSchema();
+
+  const proposalId = input.id || `agent_action_${crypto.randomUUID()}`;
+  const rows = await sql`
+    INSERT INTO project_agent_action_proposals (
+      id,
+      project_id,
+      run_id,
+      agent_id,
+      source_type,
+      source_id,
+      dedupe_key,
+      proposed_action_type,
+      title,
+      description,
+      payload,
+      status,
+      created_by,
+      confidence,
+      requires_approval,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${proposalId},
+      ${input.projectId},
+      ${input.runId},
+      ${input.agentId},
+      ${input.sourceType},
+      ${input.sourceId},
+      ${input.dedupeKey},
+      ${input.proposedActionType},
+      ${input.title},
+      ${input.description},
+      ${JSON.stringify(input.payload)}::jsonb,
+      ${input.status || "pending"},
+      ${input.createdBy},
+      ${input.confidence ?? null},
+      ${input.requiresApproval},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    RETURNING *
+  `;
+
+  return mapProjectAgentActionProposalRow(rows[0] as Record<string, unknown>);
+}
+
+export async function createProjectAgentActionProposalIfNotExists(input: Parameters<
+  typeof createProjectAgentActionProposal
+>[0]): Promise<{ proposal: ProjectAgentActionProposal; created: boolean }> {
+  await ensureCollaborationSchema();
+
+  const proposalId = input.id || `agent_action_${crypto.randomUUID()}`;
+  const rows = await sql`
+    INSERT INTO project_agent_action_proposals (
+      id,
+      project_id,
+      run_id,
+      agent_id,
+      source_type,
+      source_id,
+      dedupe_key,
+      proposed_action_type,
+      title,
+      description,
+      payload,
+      status,
+      created_by,
+      confidence,
+      requires_approval,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${proposalId},
+      ${input.projectId},
+      ${input.runId},
+      ${input.agentId},
+      ${input.sourceType},
+      ${input.sourceId},
+      ${input.dedupeKey},
+      ${input.proposedActionType},
+      ${input.title},
+      ${input.description},
+      ${JSON.stringify(input.payload)}::jsonb,
+      ${input.status || "pending"},
+      ${input.createdBy},
+      ${input.confidence ?? null},
+      ${input.requiresApproval},
+      ${input.timestamp},
+      ${input.timestamp}
+    )
+    ON CONFLICT DO NOTHING
+    RETURNING *
+  `;
+
+  if (rows.length > 0) {
+    return {
+      proposal: mapProjectAgentActionProposalRow(rows[0] as Record<string, unknown>),
+      created: true,
+    };
+  }
+
+  const existingRows = await sql`
+    SELECT *
+    FROM project_agent_action_proposals
+    WHERE project_id = ${input.projectId}
+      AND dedupe_key = ${input.dedupeKey}
+      AND status = 'pending'
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  if (existingRows.length === 0) {
+    throw new Error("Agent action proposal was not created and no duplicate pending proposal was found.");
+  }
+
+  return {
+    proposal: mapProjectAgentActionProposalRow(existingRows[0] as Record<string, unknown>),
+    created: false,
+  };
+}
+
+export async function getProjectAgentActionProposalsByProjectId(
+  projectId: string,
+  filters: { status?: ProjectAgentActionProposalStatus; limit?: number } = {},
+): Promise<ProjectAgentActionProposal[]> {
+  await ensureCollaborationSchema();
+
+  const safeLimit = Math.min(100, Math.max(1, Math.floor(filters.limit ?? 50)));
+  if (filters.status) {
+    const rows = await sql`
+      SELECT *
+      FROM project_agent_action_proposals
+      WHERE project_id = ${projectId} AND status = ${filters.status}
+      ORDER BY created_at DESC
+      LIMIT ${safeLimit}
+    `;
+
+    return rows.map((row) => mapProjectAgentActionProposalRow(row as Record<string, unknown>));
+  }
+
+  const rows = await sql`
+    SELECT *
+    FROM project_agent_action_proposals
+    WHERE project_id = ${projectId}
+    ORDER BY created_at DESC
+    LIMIT ${safeLimit}
+  `;
+
+  return rows.map((row) => mapProjectAgentActionProposalRow(row as Record<string, unknown>));
+}
+
+export async function getProjectAgentActionProposalById(
+  projectId: string,
+  proposalId: string,
+): Promise<ProjectAgentActionProposal | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_agent_action_proposals
+    WHERE project_id = ${projectId} AND id = ${proposalId}
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentActionProposalRow(rows[0] as Record<string, unknown>);
+}
+
+export async function updateProjectAgentActionProposalStatus(input: {
+  projectId: string;
+  proposalId: string;
+  status: ProjectAgentActionProposalStatus;
+  payload?: Record<string, unknown>;
+  reviewedByUserId?: string | null;
+  reviewedAt?: string | null;
+  reviewNote?: string | null;
+  executedByUserId?: string | null;
+  executedAt?: string | null;
+  executionError?: string | null;
+  timestamp: string;
+}): Promise<ProjectAgentActionProposal | null> {
+  await ensureCollaborationSchema();
+
+  const shouldUpdatePayload = Object.prototype.hasOwnProperty.call(input, "payload");
+  const shouldUpdateReviewedBy = Object.prototype.hasOwnProperty.call(input, "reviewedByUserId");
+  const shouldUpdateReviewedAt = Object.prototype.hasOwnProperty.call(input, "reviewedAt");
+  const shouldUpdateReviewNote = Object.prototype.hasOwnProperty.call(input, "reviewNote");
+  const shouldUpdateExecutedBy = Object.prototype.hasOwnProperty.call(input, "executedByUserId");
+  const shouldUpdateExecutedAt = Object.prototype.hasOwnProperty.call(input, "executedAt");
+  const shouldUpdateExecutionError = Object.prototype.hasOwnProperty.call(input, "executionError");
+  const payloadJson = shouldUpdatePayload ? JSON.stringify(input.payload || {}) : "{}";
+  const reviewedByUserId = input.reviewedByUserId ? normalizeUserId(input.reviewedByUserId) : null;
+  const executedByUserId = input.executedByUserId ? normalizeUserId(input.executedByUserId) : null;
+
+  const rows = await sql`
+    UPDATE project_agent_action_proposals
+    SET
+      status = ${input.status},
+      payload = CASE WHEN ${shouldUpdatePayload} THEN ${payloadJson}::jsonb ELSE payload END,
+      reviewed_by_user_id = CASE WHEN ${shouldUpdateReviewedBy} THEN ${reviewedByUserId} ELSE reviewed_by_user_id END,
+      reviewed_at = CASE WHEN ${shouldUpdateReviewedAt} THEN ${input.reviewedAt ?? null} ELSE reviewed_at END,
+      review_note = CASE WHEN ${shouldUpdateReviewNote} THEN ${input.reviewNote ?? null} ELSE review_note END,
+      executed_by_user_id = CASE WHEN ${shouldUpdateExecutedBy} THEN ${executedByUserId} ELSE executed_by_user_id END,
+      executed_at = CASE WHEN ${shouldUpdateExecutedAt} THEN ${input.executedAt ?? null} ELSE executed_at END,
+      execution_error = CASE WHEN ${shouldUpdateExecutionError} THEN ${input.executionError ?? null} ELSE execution_error END,
+      updated_at = ${input.timestamp}
+    WHERE project_id = ${input.projectId} AND id = ${input.proposalId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentActionProposalRow(rows[0] as Record<string, unknown>);
+}
+
+export async function markProjectAgentActionProposalRejected(input: {
+  projectId: string;
+  proposalId: string;
+  reviewedByUserId: string;
+  reviewedAt: string;
+  reviewNote?: string | null;
+}): Promise<ProjectAgentActionProposal | null> {
+  return updateProjectAgentActionProposalStatus({
+    projectId: input.projectId,
+    proposalId: input.proposalId,
+    status: "rejected",
+    reviewedByUserId: input.reviewedByUserId,
+    reviewedAt: input.reviewedAt,
+    reviewNote: input.reviewNote ?? null,
+    timestamp: input.reviewedAt,
+  });
+}
+
+export async function markProjectAgentActionProposalExecuting(input: {
+  projectId: string;
+  proposalId: string;
+  timestamp: string;
+}): Promise<ProjectAgentActionProposal | null> {
+  return updateProjectAgentActionProposalStatus({
+    projectId: input.projectId,
+    proposalId: input.proposalId,
+    status: "executing",
+    timestamp: input.timestamp,
+  });
+}
+
+export async function markProjectAgentActionProposalExecuted(input: {
+  projectId: string;
+  proposalId: string;
+  executedByUserId: string;
+  executedAt: string;
+}): Promise<ProjectAgentActionProposal | null> {
+  return updateProjectAgentActionProposalStatus({
+    projectId: input.projectId,
+    proposalId: input.proposalId,
+    status: "executed",
+    executedByUserId: input.executedByUserId,
+    executedAt: input.executedAt,
+    executionError: null,
+    timestamp: input.executedAt,
+  });
+}
+
+export async function markProjectAgentActionProposalFailed(input: {
+  projectId: string;
+  proposalId: string;
+  executedByUserId: string | null;
+  failedAt: string;
+  executionError: string;
+}): Promise<ProjectAgentActionProposal | null> {
+  return updateProjectAgentActionProposalStatus({
+    projectId: input.projectId,
+    proposalId: input.proposalId,
+    status: "failed",
+    executedByUserId: input.executedByUserId,
+    executedAt: input.failedAt,
+    executionError: input.executionError,
+    timestamp: input.failedAt,
+  });
 }
 
 // ---------------------------------------------------------------------------

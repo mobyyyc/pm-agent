@@ -12,6 +12,8 @@ async function main() {
   await sql`DROP TABLE IF EXISTS notification_deliveries CASCADE`;
   await sql`DROP TABLE IF EXISTS project_reports CASCADE`;
   await sql`DROP TABLE IF EXISTS project_activity_events CASCADE`;
+  await sql`DROP TABLE IF EXISTS project_agent_action_proposals CASCADE`;
+  await sql`DROP TABLE IF EXISTS project_agent_runs CASCADE`;
   await sql`DROP TABLE IF EXISTS project_agents CASCADE`;
   await sql`DROP TABLE IF EXISTS project_repositories CASCADE`;
   await sql`DROP TABLE IF EXISTS project_members CASCADE`;
@@ -171,13 +173,60 @@ async function main() {
   console.log("  ✓ project_agents");
 
   await sql`
+    CREATE TABLE project_agent_runs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      agent_id TEXT,
+      trigger_type TEXT NOT NULL CHECK (trigger_type IN ('manual', 'scheduled', 'activity', 'report')),
+      status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
+      started_by_user_id TEXT,
+      input_snapshot JSONB,
+      summary TEXT,
+      error_message TEXT,
+      started_at TEXT,
+      completed_at TEXT,
+      created_at TEXT NOT NULL
+    )
+  `;
+  console.log("  project_agent_runs");
+
+  await sql`
+    CREATE TABLE project_agent_action_proposals (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      run_id TEXT REFERENCES project_agent_runs(id) ON DELETE SET NULL,
+      agent_id TEXT,
+      source_type TEXT NOT NULL CHECK (source_type IN ('health_signal', 'task', 'activity_event', 'report', 'github_commit')),
+      source_id TEXT,
+      dedupe_key TEXT NOT NULL,
+      proposed_action_type TEXT NOT NULL CHECK (proposed_action_type IN ('assign_task_owner')),
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+      status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected', 'executing', 'executed', 'failed', 'cancelled')),
+      created_by TEXT NOT NULL CHECK (created_by IN ('system', 'ai', 'user')),
+      confidence DOUBLE PRECISION,
+      requires_approval BOOLEAN NOT NULL DEFAULT TRUE,
+      reviewed_by_user_id TEXT,
+      reviewed_at TEXT,
+      review_note TEXT,
+      executed_by_user_id TEXT,
+      executed_at TEXT,
+      execution_error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+  console.log("  project_agent_action_proposals");
+
+  await sql`
     CREATE TABLE project_activity_events (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       actor_user_id TEXT,
       source TEXT NOT NULL CHECK (source IN ('user', 'github', 'system')),
       event_type TEXT NOT NULL,
-      entity_type TEXT NOT NULL CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit')),
+      entity_type TEXT NOT NULL CHECK (entity_type IN ('project', 'task', 'timeline', 'repository', 'member', 'github_commit', 'agent_run', 'agent_action_proposal')),
       entity_id TEXT,
       summary TEXT NOT NULL,
       metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -237,6 +286,17 @@ async function main() {
   await sql`CREATE INDEX IF NOT EXISTS idx_project_repositories_provider ON project_repositories(provider)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_project_id ON project_agents(project_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_agents_status ON project_agents(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_runs_project_id ON project_agent_runs(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_runs_status ON project_agent_runs(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_project_id ON project_agent_action_proposals(project_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_run_id ON project_agent_action_proposals(run_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_status ON project_agent_action_proposals(status)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_project_agent_action_proposals_dedupe_key ON project_agent_action_proposals(dedupe_key)`;
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_project_agent_action_proposals_pending_dedupe
+    ON project_agent_action_proposals(project_id, dedupe_key)
+    WHERE status = 'pending'
+  `;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_project_id_created_at ON project_activity_events(project_id, created_at DESC)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_activity_events_event_type ON project_activity_events(event_type)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_project_reports_project_id_generated_at ON project_reports(project_id, generated_at DESC)`;

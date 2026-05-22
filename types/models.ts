@@ -152,6 +152,8 @@ export const projectActivityEntityTypeSchema = z.enum([
   "repository",
   "member",
   "github_commit",
+  "agent_run",
+  "agent_action_proposal",
 ]);
 
 export const projectActivityEventSchema = z.object({
@@ -195,6 +197,79 @@ export const projectAgentSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const projectAgentRunTriggerTypeSchema = z.enum(["manual", "scheduled", "activity", "report"]);
+export const projectAgentRunStatusSchema = z.enum(["queued", "running", "completed", "failed", "cancelled"]);
+
+export const projectAgentRunSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  agentId: z.string().min(1).nullable(),
+  triggerType: projectAgentRunTriggerTypeSchema,
+  status: projectAgentRunStatusSchema,
+  startedByUserId: z.string().min(1).nullable(),
+  inputSnapshot: z.record(z.unknown()).nullable(),
+  summary: z.string().nullable(),
+  errorMessage: z.string().nullable(),
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+
+export const projectAgentActionProposalSourceTypeSchema = z.enum([
+  "health_signal",
+  "task",
+  "activity_event",
+  "report",
+  "github_commit",
+]);
+export const projectAgentActionTypeSchema = z.enum(["assign_task_owner"]);
+export const projectAgentActionProposalStatusSchema = z.enum([
+  "pending",
+  "approved",
+  "rejected",
+  "executing",
+  "executed",
+  "failed",
+  "cancelled",
+]);
+export const projectAgentActionProposalCreatedBySchema = z.enum(["system", "ai", "user"]);
+
+export const assignTaskOwnerActionPayloadSchema = z.object({
+  taskId: z.string().min(1),
+  assigneeMemberId: z.string().min(1).nullable(),
+  reason: z.string().min(1).nullable(),
+});
+
+export const executableAssignTaskOwnerActionPayloadSchema = assignTaskOwnerActionPayloadSchema.extend({
+  assigneeMemberId: z.string().min(1),
+});
+
+export const projectAgentActionProposalSchema = z.object({
+  id: z.string().min(1),
+  projectId: z.string().min(1),
+  runId: z.string().min(1).nullable(),
+  agentId: z.string().min(1).nullable(),
+  sourceType: projectAgentActionProposalSourceTypeSchema,
+  sourceId: z.string().min(1).nullable(),
+  dedupeKey: z.string().min(1),
+  proposedActionType: projectAgentActionTypeSchema,
+  title: z.string().min(1),
+  description: z.string().min(1),
+  payload: z.record(z.unknown()),
+  status: projectAgentActionProposalStatusSchema,
+  createdBy: projectAgentActionProposalCreatedBySchema,
+  confidence: z.number().min(0).max(1).nullable(),
+  requiresApproval: z.boolean(),
+  reviewedByUserId: z.string().min(1).nullable(),
+  reviewedAt: z.string().datetime().nullable(),
+  reviewNote: z.string().nullable(),
+  executedByUserId: z.string().min(1).nullable(),
+  executedAt: z.string().datetime().nullable(),
+  executionError: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+
 export type TeamKnowledge = z.infer<typeof teamKnowledgeSchema>;
 export type UserTeam = z.infer<typeof userTeamSchema>;
 export type TeamImportAnalysis = z.infer<typeof teamImportAnalysisSchema>;
@@ -214,6 +289,16 @@ export type ProjectActivityEvent = z.infer<typeof projectActivityEventSchema>;
 export type AgentStatus = z.infer<typeof agentStatusSchema>;
 export type AgentDefinition = z.infer<typeof agentDefinitionSchema>;
 export type ProjectAgent = z.infer<typeof projectAgentSchema>;
+export type ProjectAgentRunTriggerType = z.infer<typeof projectAgentRunTriggerTypeSchema>;
+export type ProjectAgentRunStatus = z.infer<typeof projectAgentRunStatusSchema>;
+export type ProjectAgentRun = z.infer<typeof projectAgentRunSchema>;
+export type ProjectAgentActionProposalSourceType = z.infer<typeof projectAgentActionProposalSourceTypeSchema>;
+export type ProjectAgentActionType = z.infer<typeof projectAgentActionTypeSchema>;
+export type ProjectAgentActionProposalStatus = z.infer<typeof projectAgentActionProposalStatusSchema>;
+export type ProjectAgentActionProposalCreatedBy = z.infer<typeof projectAgentActionProposalCreatedBySchema>;
+export type AssignTaskOwnerActionPayload = z.infer<typeof assignTaskOwnerActionPayloadSchema>;
+export type ExecutableAssignTaskOwnerActionPayload = z.infer<typeof executableAssignTaskOwnerActionPayloadSchema>;
+export type ProjectAgentActionProposal = z.infer<typeof projectAgentActionProposalSchema>;
 
 export const projectSchema = z.object({
   id: z.string().min(1),

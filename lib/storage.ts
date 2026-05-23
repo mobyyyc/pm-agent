@@ -172,7 +172,7 @@ async function initializeCollaborationSchema(): Promise<void> {
       source_type TEXT NOT NULL CHECK (source_type IN ('health_signal', 'task', 'activity_event', 'report', 'github_commit')),
       source_id TEXT,
       dedupe_key TEXT NOT NULL,
-      proposed_action_type TEXT NOT NULL CHECK (proposed_action_type IN ('assign_task_owner')),
+      proposed_action_type TEXT NOT NULL CHECK (proposed_action_type IN ('assign_task_owner', 'suggest_task_progress_update')),
       title TEXT NOT NULL,
       description TEXT NOT NULL,
       payload JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -189,6 +189,12 @@ async function initializeCollaborationSchema(): Promise<void> {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
+  `;
+  await sql`ALTER TABLE project_agent_action_proposals DROP CONSTRAINT IF EXISTS project_agent_action_proposals_proposed_action_type_check`;
+  await sql`
+    ALTER TABLE project_agent_action_proposals
+    ADD CONSTRAINT project_agent_action_proposals_proposed_action_type_check
+    CHECK (proposed_action_type IN ('assign_task_owner', 'suggest_task_progress_update'))
   `;
 
   await initializeGithubIdentityMappingsSchema();

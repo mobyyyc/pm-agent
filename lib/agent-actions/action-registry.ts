@@ -1,10 +1,14 @@
 import {
   assignTaskOwnerActionPayloadSchema,
   executableAssignTaskOwnerActionPayloadSchema,
+  executableSuggestTaskProgressUpdateActionPayloadSchema,
+  suggestTaskProgressUpdateActionPayloadSchema,
   type AssignTaskOwnerActionPayload,
   type ExecutableAssignTaskOwnerActionPayload,
+  type ExecutableSuggestTaskProgressUpdateActionPayload,
   type ProjectAgentActionProposal,
   type ProjectMember,
+  type SuggestTaskProgressUpdateActionPayload,
   type Task,
 } from "../../types/models";
 
@@ -105,8 +109,11 @@ function getErrorMessage(error: unknown): string {
 }
 
 function getProposalTaskId(proposal: ProjectAgentActionProposal): string | null {
-  const parsed = assignTaskOwnerActionPayloadSchema.safeParse(proposal.payload);
-  return parsed.success ? parsed.data.taskId : null;
+  const assignPayload = assignTaskOwnerActionPayloadSchema.safeParse(proposal.payload);
+  if (assignPayload.success) return assignPayload.data.taskId;
+
+  const progressPayload = suggestTaskProgressUpdateActionPayloadSchema.safeParse(proposal.payload);
+  return progressPayload.success ? progressPayload.data.taskId : null;
 }
 
 function buildMetadata(proposal: ProjectAgentActionProposal, extra: Record<string, unknown> = {}) {
@@ -150,6 +157,43 @@ export function buildApprovedAssignTaskOwnerPayload(
   });
 }
 
+export function buildApprovedSuggestTaskProgressUpdatePayload(
+  proposal: ProjectAgentActionProposal,
+  approvedPayload: Partial<SuggestTaskProgressUpdateActionPayload> = {},
+): ExecutableSuggestTaskProgressUpdateActionPayload {
+  const basePayload = suggestTaskProgressUpdateActionPayloadSchema.parse(proposal.payload);
+
+  if (approvedPayload.taskId && approvedPayload.taskId !== basePayload.taskId) {
+    throw new Error("Approved payload cannot target a different task.");
+  }
+
+  return executableSuggestTaskProgressUpdateActionPayloadSchema.parse({
+    ...basePayload,
+    suggestedStatus:
+      Object.prototype.hasOwnProperty.call(approvedPayload, "suggestedStatus")
+        ? approvedPayload.suggestedStatus
+        : basePayload.suggestedStatus,
+  });
+}
+
+function buildApprovedActionPayload(
+  proposal: ProjectAgentActionProposal,
+  approvedPayload: Record<string, unknown>,
+): Record<string, unknown> {
+  if (proposal.proposedActionType === "assign_task_owner") {
+    return buildApprovedAssignTaskOwnerPayload(proposal, approvedPayload as Partial<AssignTaskOwnerActionPayload>);
+  }
+
+  if (proposal.proposedActionType === "suggest_task_progress_update") {
+    return buildApprovedSuggestTaskProgressUpdatePayload(
+      proposal,
+      approvedPayload as Partial<SuggestTaskProgressUpdateActionPayload>,
+    );
+  }
+
+  throw new Error(`Unsupported agent action type: ${proposal.proposedActionType}`);
+}
+
 export async function rejectAgentActionProposal(input: {
   proposal: ProjectAgentActionProposal;
   userId: string;
@@ -189,7 +233,7 @@ export async function rejectAgentActionProposal(input: {
 
 export async function approveAndExecuteAgentActionProposal(input: {
   proposal: ProjectAgentActionProposal;
-  approvedPayload: Partial<AssignTaskOwnerActionPayload>;
+  approvedPayload: Record<string, unknown>;
   userId: string;
   reviewNote?: string | null;
   dependencies?: AgentActionWorkflowDependencies;
@@ -198,7 +242,7 @@ export async function approveAndExecuteAgentActionProposal(input: {
 
   const dependencies = await resolveDependencies(input.dependencies);
   const approvedAt = dependencies.now();
-  const executablePayload = buildApprovedAssignTaskOwnerPayload(input.proposal, input.approvedPayload);
+  const executablePayload = buildApprovedActionPayload(input.proposal, input.approvedPayload);
   const approved = await dependencies.updateProjectAgentActionProposalStatus({
     projectId: input.proposal.projectId,
     proposalId: input.proposal.id,
@@ -222,7 +266,7 @@ export async function approveAndExecuteAgentActionProposal(input: {
     entityType: "agent_action_proposal",
     entityId: approved.id,
     summary: `Agent action approved: ${approved.title}`,
-    metadata: buildMetadata(approved, { assigneeMemberId: executablePayload.assigneeMemberId }),
+    metadata: buildMetadata(approved, executablePayload),
     createdAt: approvedAt,
   });
 
@@ -236,7 +280,7 @@ export async function approveAndExecuteAgentActionProposal(input: {
 
 export async function executeAgentActionProposal(input: {
   proposal: ProjectAgentActionProposal;
-  approvedPayload: Partial<AssignTaskOwnerActionPayload>;
+  approvedPayload: Record<string, unknown>;
   userId: string;
   dependencies?: AgentActionWorkflowDependencies;
 }): Promise<ExecuteAgentActionProposalResult> {
@@ -257,24 +301,47 @@ export async function executeAgentActionProposal(input: {
   }
 
   try {
-    if (input.proposal.proposedActionType !== "assign_task_owner") {
-      throw new Error(`Unsupported agent action type: ${input.proposal.proposedActionType}`);
-    }
-
-    const payload = buildApprovedAssignTaskOwnerPayload(currentProposal, input.approvedPayload);
-    const task = await dependencies.getTaskById(payload.taskId);
+    const payload = buildApprovedActionPayload(currentProposal, input.approvedPayload);
+    const taskId = String(payload.taskId);
+    const task = await dependencies.getTaskById(taskId);
 
     if (!task || task.projectId !== currentProposal.projectId) {
       throw new Error("Task does not belong to this project.");
     }
 
-    const members = await dependencies.getProjectMembers(currentProposal.projectId);
-    const assigneeMember = members.find(
-      (member) => normalizeMemberId(member.userId) === normalizeMemberId(payload.assigneeMemberId),
-    );
+    let nextTaskStatus = task.status;
+    let nextAssignee = task.suggestedAssignee;
+    let taskEventType: string;
+    let taskSummary: string;
+    let actionMetadata: Record<string, unknown>;
 
-    if (!assigneeMember) {
-      throw new Error("Selected assignee is not a project member.");
+    if (currentProposal.proposedActionType === "assign_task_owner") {
+      const assignPayload = payload as ExecutableAssignTaskOwnerActionPayload;
+      const members = await dependencies.getProjectMembers(currentProposal.projectId);
+      const assigneeMember = members.find(
+        (member) => normalizeMemberId(member.userId) === normalizeMemberId(assignPayload.assigneeMemberId),
+      );
+
+      if (!assigneeMember) {
+        throw new Error("Selected assignee is not a project member.");
+      }
+
+      nextAssignee = assigneeMember.userId;
+      taskEventType = "task.assigned_by_agent";
+      taskSummary = `Agent assigned task owner: ${task.title}`;
+      actionMetadata = { assigneeMemberId: assigneeMember.userId };
+    } else if (currentProposal.proposedActionType === "suggest_task_progress_update") {
+      const progressPayload = payload as ExecutableSuggestTaskProgressUpdateActionPayload;
+      nextTaskStatus = progressPayload.suggestedStatus;
+      taskEventType = "task.status_updated_by_agent";
+      taskSummary = `Agent-updated task status: ${task.title} (${task.status} -> ${nextTaskStatus})`;
+      actionMetadata = {
+        taskId: task.id,
+        commitSha: progressPayload.commitSha,
+        suggestedStatus: progressPayload.suggestedStatus,
+      };
+    } else {
+      throw new Error(`Unsupported agent action type: ${currentProposal.proposedActionType}`);
     }
 
     const updatedAt = dependencies.now();
@@ -284,8 +351,8 @@ export async function executeAgentActionProposal(input: {
         title: task.title,
         description: task.description,
         deadline: task.deadline,
-        suggestedAssignee: assigneeMember.userId,
-        status: task.status,
+        suggestedAssignee: nextAssignee,
+        status: nextTaskStatus,
       },
       updatedAt,
     );
@@ -307,19 +374,21 @@ export async function executeAgentActionProposal(input: {
       projectId: updatedTask.projectId,
       actorUserId: input.userId,
       source: "system",
-      eventType: "task.assigned_by_agent",
+      eventType: taskEventType,
       entityType: "task",
       entityId: updatedTask.id,
-      summary: `Agent assigned task owner: ${updatedTask.title}`,
+      summary: taskSummary,
       metadata: {
         proposalId: currentProposal.id,
         runId: currentProposal.runId,
         proposedActionType: currentProposal.proposedActionType,
         previous: {
           suggestedAssignee: task.suggestedAssignee,
+          status: task.status,
         },
         next: {
           suggestedAssignee: updatedTask.suggestedAssignee,
+          status: updatedTask.status,
         },
       },
       createdAt: executedAt,
@@ -333,10 +402,7 @@ export async function executeAgentActionProposal(input: {
       entityType: "agent_action_proposal",
       entityId: currentProposal.id,
       summary: `Agent action executed: ${currentProposal.title}`,
-      metadata: buildMetadata(currentProposal, {
-        taskId: updatedTask.id,
-        assigneeMemberId: assigneeMember.userId,
-      }),
+      metadata: buildMetadata(currentProposal, actionMetadata),
       createdAt: executedAt,
     });
 

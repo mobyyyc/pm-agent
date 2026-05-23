@@ -82,6 +82,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
   const [recentProposals, setRecentProposals] = useState<ProjectAgentActionProposal[]>([]);
   const [recentRuns, setRecentRuns] = useState<ProjectAgentRun[]>([]);
   const [proposalAssignees, setProposalAssignees] = useState<Record<string, string>>({});
+  const [proposalStatuses, setProposalStatuses] = useState<Record<string, Task["status"]>>({});
   const [canManage, setCanManage] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -89,6 +90,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
   const [isSavingAgentId, setIsSavingAgentId] = useState<string | null>(null);
   const [isRemovingAgentId, setIsRemovingAgentId] = useState<string | null>(null);
   const [isRunningRiskWatch, setIsRunningRiskWatch] = useState(false);
+  const [isRunningGithubTaskReview, setIsRunningGithubTaskReview] = useState(false);
   const [reviewingProposalId, setReviewingProposalId] = useState<string | null>(null);
   const [notFoundState, setNotFoundState] = useState(false);
 
@@ -244,6 +246,15 @@ export default function ProjectAgentsPage({ params }: PageProps) {
     const payloadAssignee = typeof proposal.payload.assigneeMemberId === "string" ? proposal.payload.assigneeMemberId : "";
     return proposalAssignees[proposal.id] || payloadAssignee;
   };
+  const getSelectedStatus = (proposal: ProjectAgentActionProposal) => {
+    const suggestedStatus =
+      proposal.payload.suggestedStatus === "todo" ||
+      proposal.payload.suggestedStatus === "in_progress" ||
+      proposal.payload.suggestedStatus === "done"
+        ? proposal.payload.suggestedStatus
+        : "in_progress";
+    return proposalStatuses[proposal.id] || suggestedStatus;
+  };
 
   const handleRunRiskWatch = async () => {
     if (isRunningRiskWatch) return;
@@ -277,12 +288,49 @@ export default function ProjectAgentsPage({ params }: PageProps) {
     }
   };
 
+  const handleRunGithubTaskReview = async () => {
+    if (isRunningGithubTaskReview) return;
+
+    setActionError(null);
+    setActionSuccess(null);
+    setIsRunningGithubTaskReview(true);
+
+    try {
+      const response = await fetch(`/api/projects/${id}/agent-runs/github-task-review`, { method: "POST" });
+      const body = (await response.json().catch(() => ({}))) as {
+        createdProposalCount?: number;
+        skippedProposalCount?: number;
+        error?: string;
+        detail?: string;
+      };
+      if (!response.ok) {
+        throw new Error(body.detail || body.error || "Failed to run GitHub Task Review.");
+      }
+
+      setActionSuccess(
+        `GitHub Task Review created ${body.createdProposalCount ?? 0} proposal${
+          body.createdProposalCount === 1 ? "" : "s"
+        }. ${body.skippedProposalCount ?? 0} duplicate${body.skippedProposalCount === 1 ? "" : "s"} skipped.`,
+      );
+      await refreshAgentActions();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Failed to run GitHub Task Review.");
+    } finally {
+      setIsRunningGithubTaskReview(false);
+    }
+  };
+
   const handleApproveProposal = async (proposal: ProjectAgentActionProposal) => {
+    const isAssignment = proposal.proposedActionType === "assign_task_owner";
     const assigneeMemberId = getSelectedAssignee(proposal);
-    if (!assigneeMemberId) {
+    if (isAssignment && !assigneeMemberId) {
       setActionError("Choose a project member before approving this action.");
       return;
     }
+    const payload =
+      proposal.proposedActionType === "suggest_task_progress_update"
+        ? { suggestedStatus: getSelectedStatus(proposal) }
+        : { assigneeMemberId };
 
     setActionError(null);
     setActionSuccess(null);
@@ -293,9 +341,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          payload: {
-            assigneeMemberId,
-          },
+          payload,
         }),
       });
       const body = (await response.json().catch(() => ({}))) as ApproveProposalResponse;
@@ -391,17 +437,27 @@ export default function ProjectAgentsPage({ params }: PageProps) {
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-white">Agent Suggestions</h2>
             <p className="mt-1 max-w-2xl text-sm text-neutral-400">
-              Risk Watch detects unassigned active work and proposes an owner assignment for review.
+              Risk Watch proposes task owners, and GitHub Task Review proposes status updates from related commits.
             </p>
           </div>
-          <button
-            type="button"
-            disabled={!canManage || isGuest || isRunningRiskWatch}
-            onClick={() => void handleRunRiskWatch()}
-            className="key-button inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isRunningRiskWatch ? "Running..." : "Run Risk Watch"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={!canManage || isGuest || isRunningGithubTaskReview}
+              onClick={() => void handleRunGithubTaskReview()}
+              className="key-button inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRunningGithubTaskReview ? "Reviewing..." : "Review GitHub Commits"}
+            </button>
+            <button
+              type="button"
+              disabled={!canManage || isGuest || isRunningRiskWatch}
+              onClick={() => void handleRunRiskWatch()}
+              className="normal-button inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRunningRiskWatch ? "Running..." : "Run Risk Watch"}
+            </button>
+          </div>
         </div>
 
         {!canManage && !isGuest ? (
@@ -417,6 +473,8 @@ export default function ProjectAgentsPage({ params }: PageProps) {
             {pendingProposals.map((proposal) => {
               const task = findTask(getProposalTaskId(proposal));
               const selectedAssignee = getSelectedAssignee(proposal);
+              const selectedStatus = getSelectedStatus(proposal);
+              const isProgressProposal = proposal.proposedActionType === "suggest_task_progress_update";
               const isReviewing = reviewingProposalId === proposal.id;
 
               return (
@@ -432,37 +490,66 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       </div>
                       {task ? (
                         <p className="mt-3 text-xs text-neutral-500">
-                          Source task: <span className="text-neutral-300">{task.title}</span>
+                          Related task: <span className="text-neutral-300">{task.title}</span>
+                        </p>
+                      ) : null}
+                      {isProgressProposal && typeof proposal.payload.commitMessage === "string" ? (
+                        <p className="mt-2 text-xs text-neutral-500">
+                          Commit: <span className="text-neutral-300">{proposal.payload.commitMessage}</span>
+                          {typeof proposal.payload.commitSha === "string" ? (
+                            <span className="ml-2 font-mono text-neutral-500">({proposal.payload.commitSha.slice(0, 8)})</span>
+                          ) : null}
                         </p>
                       ) : null}
                     </div>
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
-                    <label className="text-sm text-neutral-300">
-                      Assignee
-                      <select
-                        disabled={!canManage || isReviewing}
-                        value={selectedAssignee}
-                        onChange={(event) =>
-                          setProposalAssignees((current) => ({
-                            ...current,
-                            [proposal.id]: event.target.value,
-                          }))
-                        }
-                        className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <option value="">Select member</option>
-                        {dbMembers.map((member) => (
-                          <option key={member.userId} value={member.userId}>
-                            {getMemberLabel(member)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    {isProgressProposal ? (
+                      <label className="text-sm text-neutral-300">
+                        Confirm status
+                        <select
+                          disabled={!canManage || isReviewing}
+                          value={selectedStatus}
+                          onChange={(event) =>
+                            setProposalStatuses((current) => ({
+                              ...current,
+                              [proposal.id]: event.target.value as Task["status"],
+                            }))
+                          }
+                          className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <option value="todo">todo</option>
+                          <option value="in_progress">in progress</option>
+                          <option value="done">done</option>
+                        </select>
+                      </label>
+                    ) : (
+                      <label className="text-sm text-neutral-300">
+                        Assignee
+                        <select
+                          disabled={!canManage || isReviewing}
+                          value={selectedAssignee}
+                          onChange={(event) =>
+                            setProposalAssignees((current) => ({
+                              ...current,
+                              [proposal.id]: event.target.value,
+                            }))
+                          }
+                          className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <option value="">Select member</option>
+                          {dbMembers.map((member) => (
+                            <option key={member.userId} value={member.userId}>
+                              {getMemberLabel(member)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                     <button
                       type="button"
-                      disabled={!canManage || isReviewing || !selectedAssignee}
+                      disabled={!canManage || isReviewing || (!isProgressProposal && !selectedAssignee)}
                       onClick={() => void handleApproveProposal(proposal)}
                       className="key-button h-10 cursor-pointer rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                     >

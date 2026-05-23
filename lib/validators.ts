@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   agentStatusSchema,
   aiPlanSchema,
-  assignTaskOwnerActionPayloadSchema,
   githubIdentityMappingInputSchema,
   repositoryVisibilitySchema,
   teamImportAnalysisSchema,
@@ -129,7 +128,7 @@ export const updateProjectAgentRequestSchema = z
   });
 
 export const approveProjectAgentActionProposalRequestSchema = z.object({
-  payload: assignTaskOwnerActionPayloadSchema.partial().optional().default({}),
+  payload: z.record(z.unknown()).optional().default({}),
   reviewNote: z.string().trim().max(1000).nullable().optional(),
 });
 

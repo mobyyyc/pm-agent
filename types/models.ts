@@ -222,7 +222,7 @@ export const projectAgentActionProposalSourceTypeSchema = z.enum([
   "report",
   "github_commit",
 ]);
-export const projectAgentActionTypeSchema = z.enum(["assign_task_owner"]);
+export const projectAgentActionTypeSchema = z.enum(["assign_task_owner", "suggest_task_progress_update"]);
 export const projectAgentActionProposalStatusSchema = z.enum([
   "pending",
   "approved",
@@ -243,6 +243,20 @@ export const assignTaskOwnerActionPayloadSchema = z.object({
 export const executableAssignTaskOwnerActionPayloadSchema = assignTaskOwnerActionPayloadSchema.extend({
   assigneeMemberId: z.string().min(1),
 });
+
+export const suggestTaskProgressUpdateActionPayloadSchema = z.object({
+  taskId: z.string().min(1),
+  commitSha: z.string().min(1),
+  commitMessage: z.string(),
+  suggestedStatus: taskStatusSchema.nullable(),
+  suggestedProgress: z.number().min(0).max(100).nullable(),
+  reason: z.string().min(1),
+});
+
+export const executableSuggestTaskProgressUpdateActionPayloadSchema =
+  suggestTaskProgressUpdateActionPayloadSchema.extend({
+    suggestedStatus: taskStatusSchema,
+  });
 
 export const projectAgentActionProposalSchema = z.object({
   id: z.string().min(1),
@@ -298,6 +312,10 @@ export type ProjectAgentActionProposalStatus = z.infer<typeof projectAgentAction
 export type ProjectAgentActionProposalCreatedBy = z.infer<typeof projectAgentActionProposalCreatedBySchema>;
 export type AssignTaskOwnerActionPayload = z.infer<typeof assignTaskOwnerActionPayloadSchema>;
 export type ExecutableAssignTaskOwnerActionPayload = z.infer<typeof executableAssignTaskOwnerActionPayloadSchema>;
+export type SuggestTaskProgressUpdateActionPayload = z.infer<typeof suggestTaskProgressUpdateActionPayloadSchema>;
+export type ExecutableSuggestTaskProgressUpdateActionPayload = z.infer<
+  typeof executableSuggestTaskProgressUpdateActionPayloadSchema
+>;
 export type ProjectAgentActionProposal = z.infer<typeof projectAgentActionProposalSchema>;
 
 export const projectSchema = z.object({

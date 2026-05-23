@@ -440,12 +440,12 @@ export default function ProjectAgentsPage({ params }: PageProps) {
               Risk Watch proposes task owners, and GitHub Task Review proposes status updates from related commits.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:shrink-0 sm:flex-row sm:self-end">
             <button
               type="button"
               disabled={!canManage || isGuest || isRunningGithubTaskReview}
               onClick={() => void handleRunGithubTaskReview()}
-              className="key-button inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+              className="normal-button inline-flex h-10 w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
             >
               {isRunningGithubTaskReview ? "Reviewing..." : "Review GitHub Commits"}
             </button>
@@ -453,7 +453,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
               type="button"
               disabled={!canManage || isGuest || isRunningRiskWatch}
               onClick={() => void handleRunRiskWatch()}
-              className="normal-button inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+              className="normal-button inline-flex h-10 w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
             >
               {isRunningRiskWatch ? "Running..." : "Run Risk Watch"}
             </button>

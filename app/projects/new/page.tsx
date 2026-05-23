@@ -471,9 +471,9 @@ export default function CreateProjectPage() {
             <div className="mx-auto w-full max-w-xl bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 text-center animate-in zoom-in-95 fade-in duration-500 shadow-2xl relative overflow-hidden flex flex-col items-center">
                 <div className="success-accent-gradient absolute top-0 left-0 h-1 w-full"></div>
                 
-                <div className="inline-flex items-center justify-center p-4 bg-green-500/20 rounded-full mb-6 relative">
-                    <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full"></div>
-                    <CheckCircle2 className="h-8 w-8 text-green-400 relative z-10" />
+                <div className="bg-success-soft inline-flex items-center justify-center rounded-full p-4 mb-6 relative">
+                    <div className="bg-success-soft absolute inset-0 blur-xl rounded-full"></div>
+                    <CheckCircle2 className="text-success relative z-10 h-8 w-8" />
                 </div>
                 
                 <h2 className="mb-4 text-3xl font-bold text-white">You&apos;re all set!</h2>

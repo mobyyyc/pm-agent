@@ -193,7 +193,7 @@ export default function RepoCommits({
         </button>
       </div>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
-      {syncMessage ? <p className="mb-3 text-sm font-semibold text-green-400">{syncMessage}</p> : null}
+      {syncMessage ? <p className="text-success mb-3 text-sm font-semibold">{syncMessage}</p> : null}
 
       <div className="relative">
         <div className="absolute left-4 top-0 bottom-0 w-px commit-card-line" />
@@ -220,7 +220,7 @@ export default function RepoCommits({
                       {commit.message.split("\n")[0] || "(no message)"}
                     </a>
                     {commit.verified ? (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/12 px-2 py-0.5 text-[11px] font-semibold verified-commit-badge">
+                      <span className="verified-commit-badge inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold">
                         <svg viewBox="0 0 16 16" aria-hidden="true" className="h-3 w-3 fill-current">
                           <path d="M8 1.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 0 0 0-13Zm3.03 5.22-3.4 3.4a.75.75 0 0 1-1.06 0L4.97 8.48a.75.75 0 1 1 1.06-1.06l1.06 1.06 2.87-2.87a.75.75 0 1 1 1.06 1.06Z" />
                         </svg>

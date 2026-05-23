@@ -82,7 +82,7 @@ const previewItems = [
   {
     label: "Task distribution",
     value: "8 tasks across design, API, QA",
-    tone: "text-emerald-300",
+    tone: "text-success",
   },
   {
     label: "Progress report",
@@ -161,7 +161,7 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Operational preview</p>
                 <h2 className="mt-1 text-xl font-semibold text-white">Launch readiness board</h2>
               </div>
-              <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <span className="success-badge rounded-full border px-3 py-1 text-xs font-semibold">
                 Active
               </span>
             </div>

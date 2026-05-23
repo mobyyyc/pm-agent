@@ -210,7 +210,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
             Add Member
           </button>
 
-          {inviteSuccess ? <p className="text-sm text-green-400">{inviteSuccess}</p> : null}
+          {inviteSuccess ? <p className="text-success text-sm">{inviteSuccess}</p> : null}
         </div>
       </section>
 

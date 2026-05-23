@@ -147,7 +147,7 @@ export function TaskListSection({
                     <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
                       {getAssigneeLabel(taskView.suggestedAssignee)}
                       {currentUserMember && isTaskAssignedToCurrentUser(taskView) ? (
-                        <span className="ml-2 task-assignee-you-badge inline-flex rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold leading-none text-emerald-300">
+                        <span className="app-you-badge task-assignee-you-badge ml-2 px-2 py-0.5">
                           You
                         </span>
                       ) : null}

@@ -454,7 +454,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           </div>
           {loadError ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{loadError}</div> : null}
           {actionError && !isUnlinkModalOpen ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{actionError}</div> : null}
-          {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
+          {actionSuccess ? <p className="text-success mt-3 text-sm">{actionSuccess}</p> : null}
           {canManage ? (
             <button
               type="button"

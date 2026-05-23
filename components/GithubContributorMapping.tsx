@@ -261,7 +261,7 @@ export default function GithubContributorMapping({
       </div>
 
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
-      {success ? <p className="mb-3 text-sm font-semibold text-green-400">{success}</p> : null}
+      {success ? <p className="text-success mb-3 text-sm font-semibold">{success}</p> : null}
 
       {contributors.length === 0 ? (
         <p className="text-sm text-neutral-400">Sync commits to detect GitHub contributors.</p>

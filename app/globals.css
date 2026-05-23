@@ -31,6 +31,9 @@
   --status-control-gradient: linear-gradient(to left, rgba(255, 255, 255, 0.09), transparent);
   --heading-gradient: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0) 100%);
   --success-accent-gradient: linear-gradient(to right, rgba(34, 197, 94, 0), rgba(34, 197, 94, 0.5), rgba(34, 197, 94, 0));
+  --success-text: #6ee7b7;
+  --success-surface-soft: rgba(16, 185, 129, 0.15);
+  --success-border-soft: rgba(52, 211, 153, 0.3);
   color-scheme: dark;
 }
 
@@ -64,6 +67,9 @@ html[data-theme="light"] {
   --status-control-gradient: linear-gradient(to left, rgba(15, 23, 42, 0.12), transparent);
   --heading-gradient: linear-gradient(180deg, #0f172a 0%, #334155 58%, #64748b 100%);
   --success-accent-gradient: linear-gradient(to right, rgba(22, 163, 74, 0), rgba(22, 163, 74, 0.52), rgba(22, 163, 74, 0));
+  --success-text: #047857;
+  --success-surface-soft: #eaf8f1;
+  --success-border-soft: rgba(4, 120, 87, 0.28);
   color-scheme: light;
 }
 
@@ -352,21 +358,40 @@ html[data-theme="light"] [class~="text-white"] {
   color: #0f172a !important;
 }
 
+.text-success {
+  color: var(--success-text) !important;
+}
+
+.bg-success-soft {
+  background-color: var(--success-surface-soft) !important;
+}
+
+.border-success-soft {
+  border-color: var(--success-border-soft) !important;
+}
+
+.success-badge {
+  border-color: var(--success-border-soft) !important;
+  background-color: var(--success-surface-soft) !important;
+  color: var(--success-text) !important;
+}
+
 .app-you-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background-color: rgba(16, 185, 129, 0.15);
-  color: #6ee7b7;
+  border: 1px solid var(--success-border-soft);
+  background-color: var(--success-surface-soft);
+  color: var(--success-text);
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
 }
 
 html[data-theme="light"] .app-you-badge {
-  background-color: rgba(0, 255, 157, 0.322) !important;
-  color: #007740 !important;
+  background-color: var(--success-surface-soft) !important;
+  color: var(--success-text) !important;
 }
 
 /* Owner badge shown beside project owner in member lists */
@@ -388,11 +413,13 @@ html[data-theme="light"] .app-owner-badge {
 }
 
 .verified-commit-badge {
-  color: #6ee7b7;
+  border-color: var(--success-border-soft) !important;
+  background-color: var(--success-surface-soft) !important;
+  color: var(--success-text);
 }
 
 html[data-theme="light"] .verified-commit-badge {
-  color: #007740;
+  color: var(--success-text);
 }
 
 html[data-theme="light"] [class~="text-white/95"] {
@@ -448,7 +475,8 @@ html[data-theme="light"] [class~="text-neutral-500"] {
 }
 
 html[data-theme="light"] .task-assignee-you-badge {
-  color: #009643 !important;
+  background-color: var(--success-surface-soft) !important;
+  color: var(--success-text) !important;
 }
 
 html[data-theme="light"] [class~="text-neutral-600"] {

@@ -430,7 +430,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
 
       {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
       {actionError ? <p className="text-sm text-red-300">{actionError}</p> : null}
-      {actionSuccess ? <p className="text-sm text-emerald-300">{actionSuccess}</p> : null}
+      {actionSuccess ? <p className="text-success text-sm">{actionSuccess}</p> : null}
 
       <section className="outer-frame outer-frame-hover rounded-2xl p-6 transition-all duration-300 ease-in-out">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

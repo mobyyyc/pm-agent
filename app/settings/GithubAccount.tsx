@@ -123,7 +123,7 @@ export default function GithubAccountSettings() {
         {linkStatusMessage ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{linkStatusMessage}</div> : null}
         {loadError ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{loadError}</div> : null}
         {actionError ? <div className="error-msg mt-3 px-4 py-2 text-sm font-semibold">{actionError}</div> : null}
-        {actionSuccess ? <p className="mt-3 text-sm text-green-400">{actionSuccess}</p> : null}
+        {actionSuccess ? <p className="text-success mt-3 text-sm">{actionSuccess}</p> : null}
 
         {linkedAccount ? (
           <div className={`${framedItemClass} mt-4 px-4 py-3 text-sm text-neutral-300`}>

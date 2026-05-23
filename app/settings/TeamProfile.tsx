@@ -264,7 +264,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
       {activeTab === "overview" && (
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold text-white">Profile Overview</h2>
-          {success === "Profile analyzed" && <p className="text-sm text-green-400">{success}</p>}
+          {success === "Profile analyzed" && <p className="text-success text-sm">{success}</p>}
 
           {loadingProfile ? (
             <div className={`${framedItemClass} p-5`}>
@@ -339,7 +339,7 @@ export function TeamProfile({ activeTab, onChangeTab }: TeamProfileProps) {
                 ))}
               </div>
 
-              {success === "Profile imported" && <p className="text-sm text-green-400">{success}</p>}
+              {success === "Profile imported" && <p className="text-success text-sm">{success}</p>}
             </>
           )}
 

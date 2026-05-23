@@ -26,9 +26,9 @@ export function ProjectProgressSection({ progress, health, variant = "default" }
     textClassName: string;
   }> = {
     healthy: {
-      badgeClassName: "project-progress-health-badge--healthy border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
+      badgeClassName: "success-badge project-progress-health-badge--healthy",
       barClassName: "project-progress-bar--healthy bg-emerald-300",
-      textClassName: "project-progress-health-text--healthy text-emerald-200",
+      textClassName: "text-success project-progress-health-text--healthy",
     },
     watch: {
       badgeClassName: "project-progress-health-badge--watch border-amber-300/35 bg-amber-300/10 text-amber-200",

@@ -190,13 +190,13 @@ export function ProjectReportSection({
 
           <div className={`flex flex-col gap-3 ${isControlsOnly ? "" : "sm:flex-row sm:items-center"}`}>
             <div
-              className="relative flex h-8 w-full min-w-0 max-w-full flex-nowrap overflow-hidden rounded-full bg-white/15 p-1"
+              className="relative flex w-full min-w-0 max-w-full flex-nowrap overflow-hidden rounded-full bg-(--surface-soft) p-1"
               role="tablist"
               aria-label="Report period"
             >
               <span
                 aria-hidden="true"
-                className={`absolute inset-y-1 rounded-full bg-white transition-[left,right] duration-300 ease-in-out ${
+                className={`absolute inset-y-1 rounded-full bg-(--frame-surface-hover) shadow-sm transition-[left,right,background-color] duration-150 ease-out ${
                   selectedPeriod === "daily"
                     ? "left-1 right-[calc(66.666667%+0.125rem)]"
                     : selectedPeriod === "weekly"
@@ -211,8 +211,8 @@ export function ProjectReportSection({
                   role="tab"
                   aria-selected={selectedPeriod === period.value}
                   onClick={() => onPeriodChange(period.value)}
-                  className={`relative z-10 flex-1 whitespace-nowrap rounded-full px-2 text-xs font-semibold transition-colors duration-300 ease-in-out ${
-                    selectedPeriod === period.value ? "text-black" : "text-white/80 hover:text-white"
+                  className={`relative z-10 h-8 flex-1 whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors duration-150 ${
+                    selectedPeriod === period.value ? "text-(--foreground)" : "text-neutral-400 hover:text-(--foreground)"
                   }`}
                 >
                   {period.label}

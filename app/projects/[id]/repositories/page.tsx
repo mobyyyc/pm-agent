@@ -174,7 +174,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
   if (isPageLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="page-shell items-center justify-center">
         <p className="text-neutral-400">Loading repositories...</p>
       </div>
     );
@@ -385,17 +385,17 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:py-8 md:gap-8 md:px-6 md:py-12">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Repository</h1>
-        <p className="max-w-2xl text-base leading-relaxed text-neutral-400">
+    <main className="page-shell">
+      <header className="page-header">
+        <h1 className="page-title">Repository</h1>
+        <p className="page-description">
           Connect or create a repository for this project.
         </p>
-        <p className="text-sm text-neutral-500">Project: {project.name || project.idea}</p>
+        <p className="page-meta">Project: {project.name || project.idea}</p>
       </header>
 
       {isGuest ? (
-        <section className="app-frame app-frame-hover rounded-2xl border border-amber-200/25 bg-amber-100/5 p-6 transition-colors">
+        <section className="app-notice app-notice-warning px-5 py-4 text-sm">
           <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Sign In Required</h2>
           <p className="text-sm text-neutral-300">
             Repository management requires a signed-in account. Guest projects cannot create or link remote repositories.
@@ -403,7 +403,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: `/projects/${id}/repositories` })}
-            className="key-button mt-5 cursor-pointer rounded-full px-5 py-2 text-sm font-semibold transition-colors"
+            className="app-button app-button-primary mt-5 cursor-pointer"
           >
             Sign in to Manage Repositories
           </button>
@@ -412,7 +412,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
 
       {!isGuest && repository ? (
         <>
-        <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+        <section className="app-frame app-frame-hover rounded-2xl p-6 transition-colors">
           <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Current Repository</h2>
           <div className="space-y-1 text-sm text-neutral-300">
             <p>
@@ -435,7 +435,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
               {repositoryCreator ? (
                 <Link
                   href={`/projects/${id}/members`}
-                  className="inline-flex items-center gap-1 rounded-full bg-white/5 px-1.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+                  className="app-badge inline-flex items-center gap-1 transition-colors"
                 >
                   <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-semibold leading-none text-white/90">
                     {getMemberLabel(repositoryCreator)?.charAt(0).toUpperCase() || "?"}
@@ -459,7 +459,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
             <button
               type="button"
               onClick={handleOpenUnlinkModal}
-              className="normal-button mt-4 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors"
+            className="app-button app-button-secondary mt-4 cursor-pointer"
             >
               Unlink Repo
             </button>
@@ -468,7 +468,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
           )}
         </section>
 
-        <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+        <section className="app-frame app-frame-hover rounded-2xl p-6 transition-colors">
           <RepoCommits
             projectId={id}
             owner={repository.ownerLogin}
@@ -483,31 +483,31 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
         <section className="grid gap-6 md:grid-cols-2">
           <form
             onSubmit={(event) => void handleCreateGithubRepository(event)}
-            className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors"
+            className="app-frame app-frame-hover rounded-2xl p-6 transition-colors"
           >
             <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Create in Github</h2>
             {githubLinked ? (
               <p className="mb-3 text-xs text-neutral-400">Creating under @{githubLogin}</p>
             ) : (
-              <p className="mb-3 text-xs text-amber-300">Link your Github account in Settings to create repos.</p>
+              <p className="app-notice app-notice-warning mb-3 px-3 py-2 text-xs font-semibold">Link your Github account in Settings to create repos.</p>
             )}
             <div className="space-y-3">
               <input
                 value={createRepoName}
                 onChange={(event) => setCreateRepoName(event.target.value)}
                 placeholder="Repository name (letters, numbers, ., _, -)"
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+                className="app-field"
               />
               <textarea
                 value={createDescription}
                 onChange={(event) => setCreateDescription(event.target.value)}
                 placeholder="Description (optional)"
-                className="min-h-20 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+                className="app-field min-h-20"
               />
               <select
                 value={createVisibility}
                 onChange={(event) => setCreateVisibility(event.target.value as RepositoryVisibility)}
-                className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 focus:border-white/30"
+                className="app-field"
               >
                 <option value="private">Private</option>
                 <option value="public">Public</option>
@@ -515,7 +515,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
               <button
                 type="submit"
                 disabled={!githubLinked || isCreatingGithubRepo}
-                className="key-button cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button app-button-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isCreatingGithubRepo ? "Creating..." : "Create and Link Repository"}
               </button>
@@ -526,9 +526,9 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
             githubLinked ? (
               <GithubRepoPicker projectId={id} onLinked={(repo) => setRepository(repo)} />
             ) : (
-              <div className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+              <div className="app-frame app-frame-hover rounded-2xl p-6 transition-colors">
                 <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Link Existing Repository</h2>
-                <p className="text-sm text-amber-300">Link your Github account in Settings to choose a repository.</p>
+                <p className="app-notice app-notice-warning px-3 py-2 text-sm font-semibold">Link your Github account in Settings to choose a repository.</p>
               </div>
             )
           ) : null}
@@ -587,14 +587,14 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
                         placeholder="DELETE"
                         spellCheck={false}
                         autoComplete="off"
-                        className="mt-3 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none ring-0 placeholder:text-neutral-500 focus:border-white/30"
+                      className="app-field mt-3"
                       />
                       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                         {githubDeleteReauthorizeUrl ? (
                           <button
                             type="button"
                             onClick={() => window.location.assign(githubDeleteReauthorizeUrl)}
-                            className="key-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold"
+                            className="app-button app-button-primary flex-1 cursor-pointer"
                           >
                             Allow GitHub delete permission
                           </button>
@@ -603,7 +603,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
                           type="button"
                           onClick={() => void handleUnlinkRepository("unlink_and_delete")}
                           disabled={!canConfirmGithubDelete || unlinkingAction !== null || githubDeleteReauthorizeUrl !== null}
-                          className="app-destructive-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-button app-destructive-button flex-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {unlinkingAction === "unlink_and_delete" ? "Deleting..." : "Delete repository"}
                         </button>
@@ -617,7 +617,7 @@ export default function ProjectRepositoriesPage({ params }: PageProps) {
                             setGithubDeleteReauthorizeUrl(null);
                           }}
                           disabled={unlinkingAction !== null}
-                          className="sub-button flex-1 cursor-pointer rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-button app-button-ghost flex-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Back
                         </button>

@@ -247,24 +247,24 @@ export default function GithubContributorMapping({
   };
 
   return (
-    <section className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+    <section className="app-frame app-frame-hover rounded-2xl p-6 transition-colors">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-xl font-semibold tracking-tight text-white">GitHub Contributor Mapping</h2>
         <button
           type="button"
           onClick={() => void loadMappingData()}
           disabled={loading}
-          className="sub-button self-start rounded-full px-3 py-1 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+          className="app-button app-button-ghost min-h-8 self-start px-3 py-1 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
         >
           {loading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
-      {success ? <p className="text-success mb-3 text-sm font-semibold">{success}</p> : null}
+      {success ? <p className="app-notice app-notice-success mb-3 px-3 py-2 text-sm font-semibold">{success}</p> : null}
 
       {contributors.length === 0 ? (
-        <p className="text-sm text-neutral-400">Sync commits to detect GitHub contributors.</p>
+        <p className="app-empty-state">Sync commits to detect GitHub contributors.</p>
       ) : (
         <div className="space-y-3">
           {contributors.map((contributor) => {
@@ -275,7 +275,7 @@ export default function GithubContributorMapping({
             const isPending = pendingKey === key;
 
             return (
-              <div key={key} className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <div key={key} className="surface-card rounded-xl p-4">
                 <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(13rem,16rem)_auto] md:items-center">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-white">{getContributorLabel(contributor)}</p>
@@ -288,7 +288,7 @@ export default function GithubContributorMapping({
                   <select
                     value={selectedMemberId}
                     onChange={(event) => setDraftMembers((currentDrafts) => ({ ...currentDrafts, [key]: event.target.value }))}
-                    className="w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white outline-none ring-0 focus:border-white/30"
+                    className="app-field"
                   >
                     <option value="">Choose member</option>
                     {members.map((member) => (
@@ -303,7 +303,7 @@ export default function GithubContributorMapping({
                       type="button"
                       onClick={() => void handleSave(contributor)}
                       disabled={isPending || !selectedMemberId}
-                      className="key-button rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-button app-button-primary disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPending ? "Saving..." : "Save"}
                     </button>
@@ -312,7 +312,7 @@ export default function GithubContributorMapping({
                         type="button"
                         onClick={() => void handleRemove(contributor)}
                         disabled={isPending}
-                        className="app-destructive-button rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                        className="app-button app-destructive-button disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Remove
                       </button>

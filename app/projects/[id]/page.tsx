@@ -228,7 +228,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
 
   if (isPageLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="page-shell items-center justify-center">
         <p className="text-neutral-400">Loading project...</p>
       </div>
     );
@@ -898,7 +898,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
   };
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl min-w-0 flex-col gap-6 px-4 py-6 sm:py-8 md:gap-8 md:px-6 md:py-10 xl:px-8">
+    <main className="page-shell page-shell-wide min-w-0">
       <ProjectHeader
         projectName={project.name}
         projectIdea={project.idea}
@@ -973,7 +973,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
       <section className="app-frame min-w-0 rounded-2xl bg-white/5 p-4 sm:p-5 md:p-6">
         <h2 className="mb-4 text-xl font-semibold tracking-tight text-white">Project Timeline</h2>
         {renderedTimeline.length === 0 ? (
-          <p className="text-sm text-neutral-400">No timeline items available.</p>
+          <p className="app-empty-state">No timeline items available.</p>
         ) : (
           <ul className="space-y-3">
             {renderedTimeline.map((item, index) => {
@@ -1027,7 +1027,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                             type="text"
                             value={timelineDraft?.phase || ""}
                             onChange={(event) => handleTimelineDraftChange("phase", event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            className="app-field"
                           />
                         </label>
                         <label className="space-y-1 text-xs text-neutral-400">
@@ -1036,7 +1036,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                             type="text"
                             value={timelineDraft?.deliverable || ""}
                             onChange={(event) => handleTimelineDraftChange("deliverable", event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            className="app-field"
                           />
                         </label>
                         <label className="space-y-1 text-xs text-neutral-400">
@@ -1045,7 +1045,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                             type="date"
                             value={timelineDraft?.startDate || ""}
                             onChange={(event) => handleTimelineDraftChange("startDate", event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            className="app-field"
                           />
                         </label>
                         <label className="space-y-1 text-xs text-neutral-400">
@@ -1054,7 +1054,7 @@ export default function ProjectDashboardPage({ params }: PageProps) {
                             type="date"
                             value={timelineDraft?.endDate || ""}
                             onChange={(event) => handleTimelineDraftChange("endDate", event.target.value)}
-                            className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            className="app-field"
                           />
                         </label>
                       </div>

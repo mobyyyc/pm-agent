@@ -473,7 +473,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
 
   if (isPageLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="page-shell items-center justify-center">
         <p className="text-neutral-400">Loading agents...</p>
       </div>
     );
@@ -487,24 +487,24 @@ export default function ProjectAgentsPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:py-8 md:gap-8 md:px-6 md:py-12">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Project Agents</h1>
-        <p className="max-w-3xl text-sm leading-relaxed text-neutral-400">
+    <main className="page-shell">
+      <header className="page-header">
+        <h1 className="page-title">Project Agents</h1>
+        <p className="page-description">
           Manage attached agents and review proposed PM actions. Agent actions execute only after owner approval.
         </p>
-        <p className="text-xs text-neutral-500">Project: {project.name || project.idea}</p>
+        <p className="page-meta">Project: {project.name || project.idea}</p>
       </header>
 
       {isGuest ? (
-        <section className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-100">
+        <section className="app-notice app-notice-warning px-4 py-3 text-sm">
           Agent assignment requires a signed-in account. Guest mode project data is temporary.
         </section>
       ) : null}
 
-      {loadError ? <p className="text-sm text-red-300">{loadError}</p> : null}
-      {actionError ? <p className="text-sm text-red-300">{actionError}</p> : null}
-      {actionSuccess ? <p className="text-success text-sm">{actionSuccess}</p> : null}
+      {loadError ? <p className="app-notice app-notice-danger px-4 py-3 text-sm font-semibold">{loadError}</p> : null}
+      {actionError ? <p className="app-notice app-notice-danger px-4 py-3 text-sm font-semibold">{actionError}</p> : null}
+      {actionSuccess ? <p className="app-notice app-notice-success px-4 py-3 text-sm font-semibold">{actionSuccess}</p> : null}
 
       <section className="outer-frame outer-frame-hover rounded-2xl p-6 transition-all duration-300 ease-in-out">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -519,7 +519,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
               type="button"
               disabled={!canManage || isGuest || isRunningGithubTaskReview}
               onClick={() => void handleRunGithubTaskReview()}
-              className="normal-button inline-flex h-10 w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
+              className="app-button app-button-secondary h-10 w-full cursor-pointer whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
             >
               {isRunningGithubTaskReview ? "Reviewing..." : "Review GitHub Commits"}
             </button>
@@ -527,7 +527,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
               type="button"
               disabled={!canManage || isGuest || isRunningRiskWatch}
               onClick={() => void handleRunRiskWatch()}
-              className="normal-button inline-flex h-10 w-full cursor-pointer items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
+              className="app-button app-button-secondary h-10 w-full cursor-pointer whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60 sm:w-48 sm:shrink-0"
             >
               {isRunningRiskWatch ? "Running..." : "Run Risk Watch"}
             </button>
@@ -539,7 +539,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
         ) : null}
 
         {pendingProposals.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-neutral-400">
+          <div className="app-empty-state">
             No pending agent actions.
           </div>
         ) : (
@@ -558,9 +558,9 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       <h3 className="wrap-break-word text-base font-semibold text-white">{proposal.title}</h3>
                       <p className="mt-1 text-sm leading-relaxed text-neutral-400">{proposal.description}</p>
                       <div className="mt-3 flex flex-wrap gap-2 text-xs text-neutral-500">
-                        <span className="rounded-md bg-white/5 px-2 py-1">{proposal.status}</span>
-                        <span className="rounded-md bg-white/5 px-2 py-1">{proposal.proposedActionType}</span>
-                        <span className="rounded-md bg-white/5 px-2 py-1">{formatDateTime(proposal.createdAt)}</span>
+                        <span className="app-badge">{proposal.status}</span>
+                        <span className="app-badge">{proposal.proposedActionType}</span>
+                        <span className="app-badge">{formatDateTime(proposal.createdAt)}</span>
                       </div>
                       {task ? (
                         <p className="mt-3 text-xs text-neutral-500">
@@ -591,7 +591,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                               [proposal.id]: event.target.value as Task["status"],
                             }))
                           }
-                          className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <option value="todo">todo</option>
                           <option value="in_progress">in progress</option>
@@ -610,7 +610,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                               [proposal.id]: event.target.value,
                             }))
                           }
-                          className="mt-1 h-10 w-full rounded-lg border border-white/15 bg-black/40 px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                          className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <option value="">Select member</option>
                           {dbMembers.map((member) => (
@@ -625,7 +625,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       type="button"
                       disabled={!canManage || isReviewing || (!isProgressProposal && !selectedAssignee)}
                       onClick={() => void handleApproveProposal(proposal)}
-                      className="key-button h-10 cursor-pointer rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-button app-button-primary h-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isReviewing ? "Reviewing..." : "Approve"}
                     </button>
@@ -633,7 +633,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       type="button"
                       disabled={!canManage || isReviewing}
                       onClick={() => void handleRejectProposal(proposal)}
-                      className="normal-button h-10 cursor-pointer rounded-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-button app-button-secondary h-10 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Reject
                     </button>
@@ -649,7 +649,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
             <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500">Recent History</h3>
             <div className="mt-3 space-y-2">
               {visibleHistoryItems.map((item) => (
-                <div key={item.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <div key={item.id} className="surface-card flex flex-col gap-1 rounded-lg px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-neutral-300">{item.label}</span>
                   <span className="text-xs text-neutral-500">
                     {item.status} - {formatDateTime(item.timestamp)}
@@ -679,7 +679,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                   >
                     <div className="space-y-2">
                       {olderHistoryItems.map((item) => (
-                        <div key={item.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                        <div key={item.id} className="surface-card flex flex-col gap-1 rounded-lg px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
                           <span className="text-neutral-300">{item.label}</span>
                           <span className="text-xs text-neutral-500">
                             {item.status} - {formatDateTime(item.timestamp)}
@@ -700,14 +700,14 @@ export default function ProjectAgentsPage({ params }: PageProps) {
           <h2 className="text-xl font-semibold tracking-tight text-white">Attached Agents</h2>
           <Link
             href="/agents/browse"
-            className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm text-neutral-200 transition-colors hover:bg-white/10"
+            className="app-button app-button-ghost"
           >
             Browse Agents
           </Link>
         </div>
 
         {agents.length === 0 ? (
-          <p className="text-sm text-neutral-400">No agents attached yet.</p>
+          <p className="app-empty-state">No agents attached yet.</p>
         ) : (
           <div className="space-y-4">
             {agents.map((agent) => (
@@ -720,7 +720,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       {agent.scheduleDisplayLabel || getScheduleDisplayLabel(getAgentScheduleConfig(agent))}
                     </p>
                   </div>
-                  <span className="rounded-full border border-white/15 px-2.5 py-1 text-xs text-neutral-300">{agent.category}</span>
+                  <span className="app-badge">{agent.category}</span>
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
@@ -730,7 +730,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                       disabled={!canManage}
                       value={agent.status}
                       onChange={(event) => handleAgentStatusChange(agent.agentId, event.target.value)}
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option value="active">active</option>
                       <option value="paused">paused</option>
@@ -751,7 +751,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                           return config.type;
                         })()}
                         onChange={(event) => handleSchedulePresetChange(agent.agentId, event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {getAgentScheduleConfigOrNull(agent) === null && agent.schedule?.trim() ? (
                           <option value="custom">Custom schedule</option>
@@ -783,7 +783,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                             return config;
                           })
                         }
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </label>
 
@@ -802,7 +802,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                               : config,
                           )
                         }
-                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                        className="app-field mt-1 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="MON">Monday</option>
                         <option value="TUE">Tuesday</option>
@@ -821,7 +821,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                     type="button"
                     disabled={!canManage || isSavingAgentId === agent.agentId}
                     onClick={() => handleSave(agent)}
-                    className="key-button cursor-pointer rounded-full px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    className="app-button app-button-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSavingAgentId === agent.agentId ? "Saving..." : "Save"}
                   </button>
@@ -829,7 +829,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                     type="button"
                     disabled={!canManage || isRemovingAgentId === agent.agentId}
                     onClick={() => handleRemove(agent)}
-                    className="normal-button cursor-pointer rounded-full px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    className="app-button app-button-secondary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isRemovingAgentId === agent.agentId ? "Removing..." : "Remove"}
                   </button>

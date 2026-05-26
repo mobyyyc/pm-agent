@@ -22,18 +22,18 @@ const statusStyles: Record<
 > = {
   todo: {
     dot: "bg-sky-300",
-    active: "bg-sky-500/20 text-white",
-    inactive: "text-neutral-300 hover:bg-white/10",
+    active: "app-badge-info",
+    inactive: "text-neutral-400 hover:bg-white/10",
   },
   in_progress: {
     dot: "bg-amber-300",
-    active: "bg-amber-500/20 text-white",
-    inactive: "text-neutral-300 hover:bg-white/10",
+    active: "app-badge-warning",
+    inactive: "text-neutral-400 hover:bg-white/10",
   },
   done: {
     dot: "bg-emerald-300",
-    active: "bg-emerald-500/20 text-white",
-    inactive: "text-neutral-300 hover:bg-white/10",
+    active: "app-badge-success",
+    inactive: "text-neutral-400 hover:bg-white/10",
   },
 };
 
@@ -107,7 +107,7 @@ export function TaskStatusSelect({
                 aria-checked={isActive}
                 disabled={isPending}
                 onClick={() => onChange(option.value)}
-                className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition sm:text-[13px] disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg border border-transparent px-2 py-2 text-xs font-semibold transition sm:text-[13px] disabled:cursor-not-allowed disabled:opacity-60 ${
                   isActive ? theme.active : theme.inactive
                 }`}
               >

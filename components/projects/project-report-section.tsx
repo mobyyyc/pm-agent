@@ -190,13 +190,13 @@ export function ProjectReportSection({
 
           <div className={`flex flex-col gap-3 ${isControlsOnly ? "" : "sm:flex-row sm:items-center"}`}>
             <div
-              className="relative flex w-full min-w-0 max-w-full flex-nowrap overflow-hidden rounded-full bg-(--surface-soft) p-1"
+              className="app-segmented w-full flex-nowrap"
               role="tablist"
               aria-label="Report period"
             >
               <span
                 aria-hidden="true"
-                className={`absolute inset-y-1 rounded-full bg-(--frame-surface-hover) shadow-sm transition-[left,right,background-color] duration-150 ease-out ${
+                className={`app-segmented-thumb ${
                   selectedPeriod === "daily"
                     ? "left-1 right-[calc(66.666667%+0.125rem)]"
                     : selectedPeriod === "weekly"
@@ -211,9 +211,7 @@ export function ProjectReportSection({
                   role="tab"
                   aria-selected={selectedPeriod === period.value}
                   onClick={() => onPeriodChange(period.value)}
-                  className={`relative z-10 h-8 flex-1 whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors duration-150 ${
-                    selectedPeriod === period.value ? "text-(--foreground)" : "text-neutral-400 hover:text-(--foreground)"
-                  }`}
+                  className="whitespace-nowrap"
                 >
                   {period.label}
                 </button>

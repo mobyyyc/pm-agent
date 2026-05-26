@@ -89,18 +89,18 @@ export default function GithubRepoPicker({
   }
 
   return (
-    <div className="app-frame app-frame-hover rounded-2xl border border-white/10 bg-white/5 p-6 transition-colors">
+    <div className="app-frame app-frame-hover rounded-2xl p-6 transition-colors">
       <h2 className="mb-3 text-xl font-semibold tracking-tight text-white">Link Existing Github Repository</h2>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
 
       {loading && repos.length === 0 ? (
         <p className="text-sm text-neutral-400">Loading repositories...</p>
       ) : repos.length === 0 ? (
-        <p className="text-sm text-neutral-400">No repositories found for your Github account.</p>
+        <p className="app-empty-state">No repositories found for your Github account.</p>
       ) : (
         <ul className="grid gap-3">
           {repos.map((r) => (
-            <li key={r.id} className="flex items-start justify-between gap-3 rounded-xl border border-white/6 bg-black/20 p-3">
+            <li key={r.id} className="surface-card flex items-start justify-between gap-3 rounded-xl p-3">
               <div>
                 <a href={r.htmlUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-white hover:underline">
                   {r.fullName}
@@ -112,7 +112,7 @@ export default function GithubRepoPicker({
                 <button
                   type="button"
                   onClick={() => void handleLink(r)}
-                  className="key-button rounded-full px-3 py-1 text-sm"
+                  className="app-button app-button-primary min-h-8 px-3 py-1 text-sm"
                 >
                   Link
                 </button>
@@ -127,7 +127,7 @@ export default function GithubRepoPicker({
           type="button"
           disabled={page === 1 || loading}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="sub-button rounded-full px-3 py-1 text-sm disabled:opacity-60"
+          className="app-button app-button-ghost min-h-8 px-3 py-1 text-sm disabled:opacity-60"
         >
           Prev
         </button>
@@ -135,7 +135,7 @@ export default function GithubRepoPicker({
           type="button"
           disabled={loading}
           onClick={() => setPage((p) => p + 1)}
-          className="key-button rounded-full px-3 py-1 text-sm disabled:opacity-60"
+          className="app-button app-button-primary min-h-8 px-3 py-1 text-sm disabled:opacity-60"
         >
           {loading ? "Loading..." : "More"}
         </button>

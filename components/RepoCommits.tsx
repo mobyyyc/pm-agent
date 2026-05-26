@@ -187,13 +187,13 @@ export default function RepoCommits({
           type="button"
           onClick={() => void handleSyncCommits()}
           disabled={syncing}
-          className="normal-button self-start rounded-full px-3 py-1 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
+          className="app-button app-button-secondary min-h-8 self-start px-3 py-1 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60 sm:self-auto"
         >
           {syncing ? "Syncing..." : "Sync commits"}
         </button>
       </div>
       {error ? <div className="error-msg mb-3 px-3 py-2 text-sm font-semibold">{error}</div> : null}
-      {syncMessage ? <p className="text-success mb-3 text-sm font-semibold">{syncMessage}</p> : null}
+      {syncMessage ? <p className="app-notice app-notice-success mb-3 px-3 py-2 text-sm font-semibold">{syncMessage}</p> : null}
 
       <div className="relative">
         <div className="absolute left-4 top-0 bottom-0 w-px commit-card-line" />
@@ -251,7 +251,7 @@ export default function RepoCommits({
           type="button"
           disabled={page === 1 || loading}
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="sub-button rounded-full px-3 py-1 text-sm disabled:opacity-60"
+          className="app-button app-button-ghost min-h-8 px-3 py-1 text-sm disabled:opacity-60"
         >
           Prev
         </button>
@@ -260,7 +260,7 @@ export default function RepoCommits({
           type="button"
           disabled={!hasMore || loading}
           onClick={() => setPage((p) => p + 1)}
-          className="key-button rounded-full px-3 py-1 text-sm disabled:opacity-60"
+          className="app-button app-button-primary min-h-8 px-3 py-1 text-sm disabled:opacity-60"
         >
           {loading ? "Loading..." : hasMore ? "Load more" : "No more"}
         </button>

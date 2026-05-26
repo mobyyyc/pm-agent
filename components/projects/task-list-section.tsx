@@ -92,7 +92,7 @@ export function TaskListSection({
         />
       </div>
       {visibleTasks.length === 0 ? (
-        <p className="text-sm text-neutral-400">No tasks generated.</p>
+        <p className="app-empty-state">No tasks generated.</p>
       ) : (
         <ul className="space-y-3">
           {visibleTasks.map((task, index) => {
@@ -110,7 +110,7 @@ export function TaskListSection({
                 <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-md bg-black/25 px-2 py-0.5 text-xs font-medium text-neutral-300">
+                      <span className="app-badge">
                         Task {index + 1}
                       </span>
                       <p className="text-lg font-medium text-white">{taskView.title}</p>
@@ -141,10 +141,10 @@ export function TaskListSection({
 
                 <div className="mt-2 flex items-end justify-between gap-3">
                   <div className="flex min-w-0 flex-wrap gap-2">
-                    <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
+                    <span className="app-badge">
                       Deadline: {taskView.deadline}
                     </span>
-                    <span className="inline-flex h-7 items-center rounded-md bg-white/5 px-2 text-xs text-neutral-500">
+                    <span className="app-badge">
                       {getAssigneeLabel(taskView.suggestedAssignee)}
                       {currentUserMember && isTaskAssignedToCurrentUser(taskView) ? (
                         <span className="app-you-badge task-assignee-you-badge ml-2 px-2 py-0.5">
@@ -198,7 +198,7 @@ export function TaskListSection({
                           type="text"
                           value={taskDraft?.title || ""}
                           onChange={(event) => onTaskDraftChange("title", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          className="app-field"
                         />
                       </label>
                       <label className="space-y-1 text-xs text-neutral-400 sm:col-span-2">
@@ -207,7 +207,7 @@ export function TaskListSection({
                           value={taskDraft?.description || ""}
                           onChange={(event) => onTaskDraftChange("description", event.target.value)}
                           rows={4}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          className="app-field"
                         />
                       </label>
                       <label className="space-y-1 text-xs text-neutral-400">
@@ -216,7 +216,7 @@ export function TaskListSection({
                           type="date"
                           value={taskDraft?.deadline || ""}
                           onChange={(event) => onTaskDraftChange("deadline", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          className="app-field"
                         />
                       </label>
                       <label className="space-y-1 text-xs text-neutral-400">
@@ -225,7 +225,7 @@ export function TaskListSection({
                           <select
                             value={taskDraft?.suggestedAssignee ?? ""}
                             onChange={(event) => onTaskDraftChange("suggestedAssignee", event.target.value || null)}
-                            className="w-full appearance-none rounded-xl border border-white/15 bg-black/25 px-3 py-2 pr-10 text-sm text-white outline-none transition-colors focus:border-white/40"
+                            className="app-field appearance-none pr-10"
                           >
                             <option value="">Unassigned</option>
                             {projectMembers.map((member) => (
@@ -245,7 +245,7 @@ export function TaskListSection({
                         <select
                           value={taskDraft?.status || "todo"}
                           onChange={(event) => onTaskDraftChange("status", event.target.value)}
-                          className="w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40"
+                          className="app-field"
                         >
                           <option value="todo">To do</option>
                           <option value="in_progress">In progress</option>

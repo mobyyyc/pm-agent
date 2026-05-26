@@ -28,9 +28,9 @@ type Feedback = {
 };
 
 const feedbackToneClass: Record<Feedback["tone"], string> = {
-  success: "text-success",
-  error: "text-red-300",
-  info: "text-amber-200",
+  success: "app-notice app-notice-success px-4 py-3",
+  error: "app-notice app-notice-danger px-4 py-3",
+  info: "app-notice app-notice-info px-4 py-3",
 };
 
 export default function BrowseAgentsPage() {
@@ -121,7 +121,7 @@ export default function BrowseAgentsPage() {
 
   if (isLoading || sessionStatus === "loading") {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-6xl items-center justify-center px-4 py-8">
+      <main className="page-shell items-center justify-center">
         <p className="text-neutral-400">Loading agent catalog...</p>
       </main>
     );
@@ -130,21 +130,21 @@ export default function BrowseAgentsPage() {
   const isAuthed = !!session?.user?.email;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:py-8 md:px-6 md:py-10">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Browse Agents</h1>
-        <p className="max-w-3xl text-sm text-neutral-400">
-          Pick an agent template and attach it to a project. This is a foundation layer, so agents can be managed now and automated behavior can be added later.
+    <main className="page-shell">
+      <header className="page-header">
+        <h1 className="page-title">Browse Agents</h1>
+        <p className="page-description">
+          Pick an agent template and attach it to a project. Agents can be managed now, with execution still controlled from project-level approvals.
         </p>
       </header>
 
       {loadError ? (
-        <section className="rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-200">{loadError}</section>
+        <section className="app-notice app-notice-danger px-4 py-3 text-sm font-semibold">{loadError}</section>
       ) : null}
 
       {isAuthed ? (
-        <section className="app-frame app-frame-hover rounded-2xl bg-white/5 p-4 transition-all hover:bg-white/10">
-          <label className="mb-2 block text-sm font-medium text-neutral-200" htmlFor="project-select">
+        <section className="app-frame app-frame-hover rounded-2xl p-4 transition-all">
+          <label className="app-label mb-2 block" htmlFor="project-select">
             Target project
           </label>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -152,7 +152,7 @@ export default function BrowseAgentsPage() {
               id="project-select"
               value={selectedProjectId}
               onChange={(event) => setSelectedProjectId(event.target.value)}
-              className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white focus:border-white/35 focus:outline-hidden sm:max-w-md"
+              className="app-field sm:max-w-md"
             >
               {projects.length === 0 ? <option value="">No projects found</option> : null}
               {projects.map((project) => (
@@ -164,7 +164,7 @@ export default function BrowseAgentsPage() {
             {selectedProjectId ? (
               <Link
                 href={`/projects/${selectedProjectId}/agents`}
-                className="inline-flex items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm text-neutral-200 transition-colors hover:bg-white/10"
+                className="app-button app-button-ghost"
               >
                 Open Project Agents
               </Link>
@@ -172,43 +172,43 @@ export default function BrowseAgentsPage() {
           </div>
         </section>
       ) : (
-        <section className="rounded-2xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-100">
+        <section className="app-notice app-notice-warning px-4 py-3 text-sm">
           <p className="mb-3">Sign in to attach agents to your projects.</p>
           <button
             type="button"
             onClick={() => signIn("google", { callbackUrl: "/agents/browse" })}
-            className="normal-button cursor-pointer rounded-full px-4 py-2 text-sm"
+            className="app-button app-button-secondary cursor-pointer"
           >
             Sign in with Google
           </button>
         </section>
       )}
 
-      {feedback ? <p className={`text-sm ${feedbackToneClass[feedback.tone]}`}>{feedback.message}</p> : null}
+      {feedback ? <p className={`text-sm font-semibold ${feedbackToneClass[feedback.tone]}`}>{feedback.message}</p> : null}
 
       <section className="grid gap-4 md:grid-cols-2">
         {agents.map((agent) => (
           <article
             key={agent.id}
-            className="timeline-frame-item app-frame-item app-frame-hover group relative rounded-xl bg-white/5 p-4 transition-all duration-300 ease-in-out hover:bg-white/10"
+            className="timeline-frame-item app-frame-item app-frame-hover group relative rounded-xl p-5 transition-all duration-300 ease-in-out"
           >
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-white">{agent.name}</h2>
                 <p className="mt-1 text-sm text-neutral-400">{agent.tagline}</p>
               </div>
-              <span className="rounded-full border border-white/15 px-2.5 py-1 text-xs text-neutral-300">{agent.category}</span>
+              <span className="app-badge">{agent.category}</span>
             </div>
 
             <p className="text-sm leading-relaxed text-neutral-300">{agent.description}</p>
 
-            <p className="mt-3 text-xs text-neutral-400">
+            <p className="mt-3 text-xs font-semibold text-neutral-400">
               Recommended schedule: {getScheduleDisplayLabel(agent.recommendedSchedule)}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
               {agent.tags.map((tag) => (
-                <span key={`${agent.id}-${tag}`} className="rounded-full bg-white/8 px-2 py-1 text-xs text-neutral-300">
+                <span key={`${agent.id}-${tag}`} className="app-badge">
                   {tag}
                 </span>
               ))}
@@ -219,7 +219,7 @@ export default function BrowseAgentsPage() {
                 type="button"
                 disabled={!isAuthed || !selectedProjectId || isAddingAgentId === agent.id}
                 onClick={() => handleAddAgent(agent.id)}
-                className="key-button cursor-pointer rounded-full px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button app-button-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isAddingAgentId === agent.id ? "Adding..." : "Add to Project"}
               </button>

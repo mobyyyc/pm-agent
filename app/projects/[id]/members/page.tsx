@@ -139,7 +139,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
 
   if (isPageLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="page-shell items-center justify-center">
         <p className="text-neutral-400">Loading members...</p>
       </div>
     );
@@ -153,13 +153,13 @@ export default function ProjectMembersPage({ params }: PageProps) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-6 sm:py-8 md:gap-8 md:px-6 md:py-12">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Members</h1>
-        <p className="text-base text-neutral-400 max-w-2xl leading-relaxed">
+    <main className="page-shell">
+      <header className="page-header">
+        <h1 className="page-title">Members</h1>
+        <p className="page-description">
           Manage who can access this project.
         </p>
-        <p className="text-sm text-neutral-500">Project: {project.name || project.idea}</p>
+        <p className="page-meta">Project: {project.name || project.idea}</p>
       </header>
 
       <section className="outer-frame outer-frame-hover rounded-2xl p-6 transition-all duration-300 ease-in-out">
@@ -168,7 +168,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
           <div className="inner-frame inner-frame-hover rounded-xl p-4 transition-all duration-300 ease-in-out">
             <p className="text-sm text-neutral-300">Member list</p>
             {members.length === 0 ? (
-              <p className="mt-1 text-xs text-neutral-500">No members added yet.</p>
+              <p className="app-empty-state mt-3">No members added yet.</p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {members.map((member) => (
@@ -205,12 +205,12 @@ export default function ProjectMembersPage({ params }: PageProps) {
           <button
             type="button"
             onClick={handleOpenInviteModal}
-            className="key-button cursor-pointer self-start rounded-full px-4 py-2 text-sm font-semibold"
+            className="app-button app-button-primary cursor-pointer self-start"
           >
             Add Member
           </button>
 
-          {inviteSuccess ? <p className="text-success text-sm">{inviteSuccess}</p> : null}
+          {inviteSuccess ? <p className="app-notice app-notice-success px-4 py-3 text-sm font-semibold">{inviteSuccess}</p> : null}
         </div>
       </section>
 
@@ -241,7 +241,7 @@ export default function ProjectMembersPage({ params }: PageProps) {
                         }
                       }}
                       placeholder="name@example.com"
-                      className={`w-full rounded-xl bg-white/5 px-3 py-2 text-sm text-white outline-none transition-colors focus:border-white/40 ${
+                      className={`app-field ${
                         inviteError ? "border border-red-500/70" : "border border-white/15"
                       }`}
                       disabled={isInviting}
@@ -255,14 +255,14 @@ export default function ProjectMembersPage({ params }: PageProps) {
                     <button
                       type="button"
                       onClick={() => setIsAddMemberModalOpen(false)}
-                      className="normal-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold"
+                      className="app-button app-button-secondary cursor-pointer"
                       disabled={isInviting}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="key-button cursor-pointer rounded-full px-4 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                      className="app-button app-button-primary cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                       disabled={isInviting}
                     >
                       {isInviting ? "Sending..." : "Send Invitation"}

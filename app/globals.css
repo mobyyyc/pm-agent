@@ -260,6 +260,36 @@ html[data-theme="light"] .commit-node {
   background-color: rgba(15, 23, 42, 0.045);
 }
 
+.agent-history-toggle {
+  color: rgba(212, 212, 216, 0.72);
+}
+
+.agent-history-toggle-line {
+  background-color: var(--border-soft);
+}
+
+.agent-history-toggle:hover {
+  color: var(--foreground);
+}
+
+.agent-history-toggle:hover .agent-history-toggle-line {
+  background-color: var(--border-medium);
+}
+
+.agent-history-toggle:hover .agent-history-toggle-label {
+  background-color: var(--surface-medium);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme="light"] .agent-history-toggle {
+  color: rgba(51, 65, 85, 0.72);
+}
+
+html[data-theme="light"] .agent-history-toggle:hover .agent-history-toggle-label {
+  background-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 24px -20px rgba(42, 74, 114, 0.35);
+}
+
 .commit-card-line {
   background-color: rgba(255, 255, 255, 0.16);
 }

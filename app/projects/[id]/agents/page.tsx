@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 
 import { useGuest } from "@/components/GuestContext";
 import {
@@ -70,6 +70,13 @@ type RejectProposalResponse = {
   issues?: string[];
 };
 
+type HistoryItem = {
+  id: string;
+  label: string;
+  status: string;
+  timestamp: string;
+};
+
 function formatDateTime(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
@@ -102,6 +109,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
   const [isRemovingAgentId, setIsRemovingAgentId] = useState<string | null>(null);
   const [isRunningRiskWatch, setIsRunningRiskWatch] = useState(false);
   const [isRunningGithubTaskReview, setIsRunningGithubTaskReview] = useState(false);
+  const [showMoreHistory, setShowMoreHistory] = useState(false);
   const [reviewingProposalId, setReviewingProposalId] = useState<string | null>(null);
   const [notFoundState, setNotFoundState] = useState(false);
 
@@ -299,6 +307,28 @@ export default function ProjectAgentsPage({ params }: PageProps) {
         : "in_progress";
     return proposalStatuses[proposal.id] || suggestedStatus;
   };
+
+  const historyItems = useMemo<HistoryItem[]>(() => {
+    const proposalHistory = recentProposals.map((proposal) => ({
+      id: `proposal-${proposal.id}`,
+      label: proposal.title,
+      status: proposal.status,
+      timestamp: proposal.updatedAt,
+    }));
+    const runHistory = recentRuns.map((run) => ({
+      id: `run-${run.id}`,
+      label: run.summary || "Risk Watch run",
+      status: run.status,
+      timestamp: run.completedAt || run.createdAt,
+    }));
+
+    return [...proposalHistory, ...runHistory].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+  }, [recentProposals, recentRuns]);
+
+  const visibleHistoryItems = historyItems.slice(0, 3);
+  const olderHistoryItems = historyItems.slice(3);
 
   const handleRunRiskWatch = async () => {
     if (isRunningRiskWatch) return;
@@ -614,26 +644,52 @@ export default function ProjectAgentsPage({ params }: PageProps) {
           </div>
         )}
 
-        {recentProposals.length > 0 || recentRuns.length > 0 ? (
+        {historyItems.length > 0 ? (
           <div className="mt-6 border-t border-white/10 pt-5">
             <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500">Recent History</h3>
             <div className="mt-3 space-y-2">
-              {recentProposals.slice(0, 6).map((proposal) => (
-                <div key={proposal.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-neutral-300">{proposal.title}</span>
+              {visibleHistoryItems.map((item) => (
+                <div key={item.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-neutral-300">{item.label}</span>
                   <span className="text-xs text-neutral-500">
-                    {proposal.status} - {formatDateTime(proposal.updatedAt)}
+                    {item.status} - {formatDateTime(item.timestamp)}
                   </span>
                 </div>
               ))}
-              {recentRuns.slice(0, 3).map((run) => (
-                <div key={run.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-neutral-300">{run.summary || "Risk Watch run"}</span>
-                  <span className="text-xs text-neutral-500">
-                    {run.status} - {formatDateTime(run.createdAt)}
-                  </span>
+
+              {olderHistoryItems.length > 0 ? (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    aria-expanded={showMoreHistory}
+                    onClick={() => setShowMoreHistory((current) => !current)}
+                    className="agent-history-toggle group grid w-full cursor-pointer grid-cols-[1fr_auto_1fr] items-center gap-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-300"
+                  >
+                    <span className="agent-history-toggle-line h-px transition-colors duration-300" />
+                    <span className="agent-history-toggle-label rounded-full px-3 py-1 transition-all duration-300">
+                      {showMoreHistory ? "Less" : "More"}
+                    </span>
+                    <span className="agent-history-toggle-line h-px transition-colors duration-300" />
+                  </button>
+
+                  <div
+                    className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-in-out ${
+                      showMoreHistory ? "mt-2 max-h-160 opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      {olderHistoryItems.map((item) => (
+                        <div key={item.id} className="flex flex-col gap-1 rounded-lg bg-white/5 px-3 py-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                          <span className="text-neutral-300">{item.label}</span>
+                          <span className="text-xs text-neutral-500">
+                            {item.status} - {formatDateTime(item.timestamp)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
+              ) : null}
             </div>
           </div>
         ) : null}

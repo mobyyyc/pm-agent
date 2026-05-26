@@ -7,7 +7,7 @@ import {
 import type { AIPlan, AIAnalysis, ProjectProgressReport, TeamImportAnalysis } from "@/types/models";
 import type { ProjectReportInput } from "@/lib/project-report-input";
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite-preview";
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 const GEMINI_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const ANALYZE_MAX_HISTORY_MESSAGES = 4;

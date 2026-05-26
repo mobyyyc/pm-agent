@@ -7,12 +7,14 @@ function getCronAuthorizationError(request: Request): NextResponse | null {
   const cronSecret = process.env.CRON_SECRET?.trim();
   if (!cronSecret) {
     // Local/dev default: allow calls when no secret is configured. Set CRON_SECRET
-    // in production and send it as x-cron-secret from the cron provider.
+    // in production. Vercel Cron sends Authorization: Bearer <CRON_SECRET>;
+    // x-cron-secret remains supported for local/manual smoke tests.
     return null;
   }
 
+  const authorization = request.headers.get("authorization")?.trim();
   const providedSecret = request.headers.get("x-cron-secret")?.trim();
-  if (providedSecret !== cronSecret) {
+  if (authorization !== `Bearer ${cronSecret}` && providedSecret !== cronSecret) {
     return NextResponse.json({ error: "Unauthorized scheduled runner." }, { status: 401 });
   }
 

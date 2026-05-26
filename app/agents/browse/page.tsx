@@ -20,6 +20,17 @@ type ProjectItem = {
   idea: string;
 };
 
+type Feedback = {
+  message: string;
+  tone: "success" | "error" | "info";
+};
+
+const feedbackToneClass: Record<Feedback["tone"], string> = {
+  success: "text-success",
+  error: "text-red-300",
+  info: "text-amber-200",
+};
+
 export default function BrowseAgentsPage() {
   const { data: session, status: sessionStatus } = useSession();
 
@@ -28,7 +39,7 @@ export default function BrowseAgentsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingAgentId, setIsAddingAgentId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,7 +86,7 @@ export default function BrowseAgentsPage() {
 
   const handleAddAgent = async (agentId: string) => {
     if (!selectedProjectId) {
-      setFeedback("Select a project first.");
+      setFeedback({ message: "Select a project first.", tone: "info" });
       return;
     }
 
@@ -98,9 +109,9 @@ export default function BrowseAgentsPage() {
         throw new Error(body.error || (Array.isArray(body.issues) ? body.issues.join(" ") : "Failed to add agent."));
       }
 
-      setFeedback("Agent added to your project.");
+      setFeedback({ message: "Agent added to your project.", tone: "success" });
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : "Failed to add agent.");
+      setFeedback({ message: error instanceof Error ? error.message : "Failed to add agent.", tone: "error" });
     } finally {
       setIsAddingAgentId(null);
     }
@@ -171,7 +182,7 @@ export default function BrowseAgentsPage() {
         </section>
       )}
 
-      {feedback ? <p className="text-sm text-cyan-300">{feedback}</p> : null}
+      {feedback ? <p className={`text-sm ${feedbackToneClass[feedback.tone]}`}>{feedback.message}</p> : null}
 
       <section className="grid gap-4 md:grid-cols-2">
         {agents.map((agent) => (

@@ -852,6 +852,19 @@ export async function getProjectAgentByProjectIdAndAgentId(
   return mapProjectAgentRow(rows[0] as Record<string, unknown>);
 }
 
+export async function getActiveProjectAgents(): Promise<ProjectAgent[]> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    SELECT *
+    FROM project_agents
+    WHERE status = 'active'
+    ORDER BY COALESCE(next_run_at, created_at) ASC, created_at ASC
+  `;
+
+  return rows.map((row) => mapProjectAgentRow(row as Record<string, unknown>));
+}
+
 export async function upsertProjectAgent(input: {
   projectId: string;
   agentId: string;
@@ -944,6 +957,29 @@ export async function updateProjectAgent(
       config = CASE WHEN ${shouldUpdateConfig} THEN ${nextConfigJson}::jsonb ELSE config END,
       updated_at = ${timestamp}
     WHERE project_id = ${projectId} AND agent_id = ${agentId}
+    RETURNING *
+  `;
+
+  if (rows.length === 0) return null;
+  return mapProjectAgentRow(rows[0] as Record<string, unknown>);
+}
+
+export async function updateProjectAgentScheduleState(input: {
+  projectId: string;
+  agentId: string;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+  timestamp: string;
+}): Promise<ProjectAgent | null> {
+  await ensureCollaborationSchema();
+
+  const rows = await sql`
+    UPDATE project_agents
+    SET
+      last_run_at = ${input.lastRunAt},
+      next_run_at = ${input.nextRunAt},
+      updated_at = ${input.timestamp}
+    WHERE project_id = ${input.projectId} AND agent_id = ${input.agentId}
     RETURNING *
   `;
 

@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import {
+  cronToScheduleConfig,
+  getScheduleDisplayLabel,
+  parseScheduleConfig,
+  scheduleConfigToCron,
+  type AgentScheduleConfig,
+} from "@/lib/agent-runs/schedule-config";
 import { getSafeErrorDetail } from "@/lib/api-errors";
 import { authOptions } from "@/lib/auth";
 import {
@@ -15,6 +22,7 @@ import {
 } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { updateProjectAgentRequestSchema } from "@/lib/validators";
+import type { ProjectAgent } from "@/types/models";
 
 type RouteContext = {
   params: Promise<{ id: string; agentId: string }>;
@@ -33,6 +41,24 @@ async function getAuthorizedProject(projectId: string, sessionUserId: string) {
 
   const canManage = normalizeUserId(project.userId) === sessionUserId;
   return { project, canManage };
+}
+
+function parseScheduleConfigSafe(value: unknown): AgentScheduleConfig | null {
+  try {
+    return parseScheduleConfig(value);
+  } catch {
+    return null;
+  }
+}
+
+function buildProjectAgentResponse(agent: ProjectAgent) {
+  const scheduleConfig = parseScheduleConfigSafe(agent.config.scheduleConfig) || cronToScheduleConfig(agent.schedule);
+
+  return {
+    ...agent,
+    scheduleConfig,
+    scheduleDisplayLabel: getScheduleDisplayLabel(scheduleConfig || agent.schedule),
+  };
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -68,13 +94,43 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = await request.json();
     const parsed = updateProjectAgentRequestSchema.parse(body);
+    const schedule =
+      parsed.scheduleConfig !== undefined
+        ? scheduleConfigToCron(parsed.scheduleConfig)
+        : Object.prototype.hasOwnProperty.call(parsed, "schedule")
+          ? parsed.schedule
+          : undefined;
+    const hasRawSchedule = Object.prototype.hasOwnProperty.call(parsed, "schedule");
+    const { scheduleConfig: _oldScheduleConfig, ...existingConfigWithoutSchedule } = existing.config;
+    void _oldScheduleConfig;
+    const nextConfig =
+      parsed.scheduleConfig !== undefined
+        ? {
+            ...(parsed.config || existing.config),
+            scheduleConfig: parsed.scheduleConfig,
+          }
+        : hasRawSchedule
+          ? {
+              ...existingConfigWithoutSchedule,
+              ...(parsed.config || {}),
+            }
+          : parsed.config;
 
-    const updated = await updateProjectAgent(id, agentId, parsed, isoNow());
+    const updates: {
+      status?: "active" | "paused";
+      schedule?: string | null;
+      config?: Record<string, unknown>;
+    } = {};
+    if (parsed.status !== undefined) updates.status = parsed.status;
+    if (schedule !== undefined) updates.schedule = schedule;
+    if (nextConfig !== undefined) updates.config = nextConfig;
+
+    const updated = await updateProjectAgent(id, agentId, updates, isoNow());
     if (!updated) {
       return NextResponse.json({ error: "Project agent not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ agent: updated });
+    return NextResponse.json({ agent: buildProjectAgentResponse(updated) });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

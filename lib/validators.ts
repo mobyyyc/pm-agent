@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { agentScheduleConfigSchema } from "./agent-runs/schedule-config";
 import {
   agentStatusSchema,
   aiPlanSchema,
@@ -114,6 +115,7 @@ export const createGithubRepositoryRequestSchema = z.object({
 export const attachProjectAgentRequestSchema = z.object({
   agentId: z.string().trim().min(1, "Agent ID is required."),
   schedule: z.string().trim().min(1).nullable().optional(),
+  scheduleConfig: agentScheduleConfigSchema.optional(),
   config: z.record(z.unknown()).optional(),
 });
 
@@ -121,11 +123,19 @@ export const updateProjectAgentRequestSchema = z
   .object({
     status: agentStatusSchema.optional(),
     schedule: z.string().trim().min(1).nullable().optional(),
+    scheduleConfig: agentScheduleConfigSchema.optional(),
     config: z.record(z.unknown()).optional(),
   })
-  .refine((value) => value.status !== undefined || value.schedule !== undefined || value.config !== undefined, {
-    message: "At least one agent field must be provided.",
-  });
+  .refine(
+    (value) =>
+      value.status !== undefined ||
+      value.schedule !== undefined ||
+      value.scheduleConfig !== undefined ||
+      value.config !== undefined,
+    {
+      message: "At least one agent field must be provided.",
+    },
+  );
 
 export const approveProjectAgentActionProposalRequestSchema = z.object({
   payload: z.record(z.unknown()).optional().default({}),

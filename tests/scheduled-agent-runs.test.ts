@@ -3,6 +3,13 @@ import test from "node:test";
 
 import { runDeterministicProjectAgent, type DeterministicAgentRunDependencies } from "../lib/agent-runs/run-agent";
 import {
+  calculateNextRunFromScheduleConfig,
+  cronToScheduleConfig,
+  getScheduleDisplayLabel,
+  parseScheduleConfig,
+  scheduleConfigToCron,
+} from "../lib/agent-runs/schedule-config";
+import {
   calculateNextRunAt,
   getDueProjectAgents,
   runScheduledProjectAgents,
@@ -161,6 +168,78 @@ test("nextRunAt calculation supports current catalog cron formats", () => {
     calculateNextRunAt("0 9 * * MON-FRI", "2026-05-29T09:01:00.000Z"),
     "2026-06-01T09:00:00.000Z",
   );
+});
+
+test("friendly schedule config converts to internal cron safely", () => {
+  assert.equal(scheduleConfigToCron({ type: "manual" }), null);
+  assert.equal(scheduleConfigToCron({ type: "interval", every: 6, unit: "hour" }), "0 */6 * * *");
+  assert.equal(scheduleConfigToCron({ type: "daily", time: "09:00" }), "0 9 * * *");
+  assert.equal(scheduleConfigToCron({ type: "weekdays", time: "09:00" }), "0 9 * * MON-FRI");
+  assert.equal(scheduleConfigToCron({ type: "weekly", dayOfWeek: "MON", time: "09:00" }), "0 9 * * MON");
+});
+
+test("existing cron strings convert to readable display labels", () => {
+  assert.equal(getScheduleDisplayLabel(null), "Runs manually");
+  assert.equal(getScheduleDisplayLabel("0 */6 * * *"), "Runs every 6 hours");
+  assert.equal(getScheduleDisplayLabel("0 9 * * *"), "Runs every day at 9:00 AM");
+  assert.equal(getScheduleDisplayLabel("0 9 * * MON-FRI"), "Runs every weekday at 9:00 AM");
+  assert.equal(getScheduleDisplayLabel("0 9 * * MON"), "Runs every Monday at 9:00 AM");
+  assert.equal(getScheduleDisplayLabel("not cron"), "Runs on a custom schedule");
+});
+
+test("daily schedule config calculates the next run", () => {
+  assert.equal(
+    calculateNextRunFromScheduleConfig({ type: "daily", time: "09:00" }, "2026-05-25T08:59:00.000Z"),
+    "2026-05-25T09:00:00.000Z",
+  );
+  assert.equal(
+    calculateNextRunFromScheduleConfig({ type: "daily", time: "09:00" }, "2026-05-25T09:00:00.000Z"),
+    "2026-05-26T09:00:00.000Z",
+  );
+});
+
+test("weekday schedule config skips weekends", () => {
+  assert.equal(
+    calculateNextRunFromScheduleConfig({ type: "weekdays", time: "09:00" }, "2026-05-29T09:01:00.000Z"),
+    "2026-06-01T09:00:00.000Z",
+  );
+});
+
+test("weekly schedule config calculates the selected day", () => {
+  assert.equal(
+    calculateNextRunFromScheduleConfig(
+      { type: "weekly", dayOfWeek: "TUE", time: "14:30" },
+      "2026-05-25T12:00:00.000Z",
+    ),
+    "2026-05-26T14:30:00.000Z",
+  );
+});
+
+test("manual schedule config is never due automatically", () => {
+  assert.equal(calculateNextRunFromScheduleConfig({ type: "manual" }, baseTime), null);
+  assert.deepEqual(
+    getDueProjectAgents([makeAgent({ schedule: null })], baseTime),
+    [],
+  );
+});
+
+test("invalid schedule config is rejected safely", () => {
+  assert.throws(() => parseScheduleConfig({ type: "daily", time: "25:00" }));
+  assert.throws(() => scheduleConfigToCron({ type: "interval", every: 5, unit: "hour" }));
+  assert.throws(() => scheduleConfigToCron({ type: "interval", every: 2, unit: "day" }));
+});
+
+test("existing raw cron strings still drive due selection", () => {
+  const agent = makeAgent({
+    schedule: "0 9 * * MON-FRI",
+    lastRunAt: "2026-05-22T09:00:00.000Z",
+    nextRunAt: null,
+  });
+
+  assert.equal(cronToScheduleConfig(agent.schedule)?.type, "weekdays");
+  assert.deepEqual(getDueProjectAgents([agent], "2026-05-25T09:00:00.000Z").map((item) => item.agentId), [
+    "risk-watch",
+  ]);
 });
 
 test("scheduled deterministic runner creates pending proposals without executing task mutations", async () => {

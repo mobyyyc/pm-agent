@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 
+import {
+  cronToScheduleConfig,
+  getScheduleDisplayLabel,
+  parseScheduleConfig,
+  scheduleConfigToCron,
+  type AgentScheduleConfig,
+} from "@/lib/agent-runs/schedule-config";
 import { getSafeErrorDetail } from "@/lib/api-errors";
 import { findAgentDefinition } from "@/lib/agents";
 import { authOptions } from "@/lib/auth";
@@ -15,6 +22,7 @@ import {
 } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
 import { attachProjectAgentRequestSchema } from "@/lib/validators";
+import type { ProjectAgent } from "@/types/models";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -33,6 +41,30 @@ async function getAuthorizedProject(projectId: string, sessionUserId: string) {
 
   const canManage = normalizeUserId(project.userId) === sessionUserId;
   return { project, canManage };
+}
+
+function buildProjectAgentResponse(agent: ProjectAgent) {
+  const storedScheduleConfig = parseStoredScheduleConfig(agent.config.scheduleConfig);
+  const parsedConfig = storedScheduleConfig || cronToScheduleConfig(agent.schedule);
+
+  return {
+    ...agent,
+    scheduleConfig: parsedConfig,
+    scheduleDisplayLabel: getScheduleDisplayLabel(parsedConfig || agent.schedule),
+  };
+}
+
+function parseStoredScheduleConfig(value: unknown): AgentScheduleConfig | null {
+  const parsed = parseScheduleConfigSafe(value);
+  return parsed;
+}
+
+function parseScheduleConfigSafe(value: unknown): AgentScheduleConfig | null {
+  try {
+    return parseScheduleConfig(value);
+  } catch {
+    return null;
+  }
 }
 
 export async function GET(_request: Request, context: RouteContext) {
@@ -57,7 +89,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return accessResult.error;
     }
 
-    const agents = await getProjectAgentsByProjectId(id);
+    const agents = (await getProjectAgentsByProjectId(id)).map(buildProjectAgentResponse);
     return NextResponse.json({ agents, canManage: accessResult.canManage });
   } catch (error) {
     return NextResponse.json(
@@ -105,6 +137,17 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     const timestamp = isoNow();
+    const scheduleConfig = parsed.scheduleConfig ?? null;
+    const schedule =
+      scheduleConfig !== null
+        ? scheduleConfigToCron(scheduleConfig)
+        : parsed.schedule !== undefined
+          ? parsed.schedule
+          : agentDefinition.recommendedSchedule;
+    const config = {
+      ...(parsed.config || {}),
+      ...(scheduleConfig ? { scheduleConfig } : {}),
+    };
     const projectAgent = await upsertProjectAgent({
       projectId: id,
       agentId: agentDefinition.id,
@@ -112,15 +155,15 @@ export async function POST(request: Request, context: RouteContext) {
       description: agentDefinition.description,
       category: agentDefinition.category,
       status: "active",
-      schedule: parsed.schedule ?? agentDefinition.recommendedSchedule,
-      config: parsed.config || {},
+      schedule,
+      config,
       lastRunAt: null,
       nextRunAt: null,
       createdByUserId: sessionUserId,
       timestamp,
     });
 
-    return NextResponse.json({ agent: projectAgent }, { status: 201 });
+    return NextResponse.json({ agent: buildProjectAgentResponse(projectAgent) }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

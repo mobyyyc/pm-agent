@@ -6,6 +6,11 @@ import { useSession } from "next-auth/react";
 import { use, useCallback, useEffect, useState } from "react";
 
 import { useGuest } from "@/components/GuestContext";
+import {
+  cronToScheduleConfig,
+  getScheduleDisplayLabel,
+  type AgentScheduleConfig,
+} from "@/lib/agent-runs/schedule-config";
 import type {
   Project,
   ProjectAgent,
@@ -27,10 +32,16 @@ type ProjectResponse = {
 };
 
 type ProjectAgentsResponse = {
-  agents?: ProjectAgent[];
+  agents?: ProjectAgentView[];
   canManage?: boolean;
   error?: string;
 };
+
+type ProjectAgentView = ProjectAgent & {
+  scheduleConfig?: AgentScheduleConfig | null;
+  scheduleDisplayLabel?: string;
+};
+type ScheduleDayOfWeek = Extract<AgentScheduleConfig, { type: "weekly" }>["dayOfWeek"];
 
 type AgentActionsResponse = {
   pendingProposals?: ProjectAgentActionProposal[];
@@ -77,7 +88,7 @@ export default function ProjectAgentsPage({ params }: PageProps) {
   const [dbProject, setDbProject] = useState<Project | null>(null);
   const [dbTasks, setDbTasks] = useState<Task[]>([]);
   const [dbMembers, setDbMembers] = useState<ProjectMember[]>([]);
-  const [agents, setAgents] = useState<ProjectAgent[]>([]);
+  const [agents, setAgents] = useState<ProjectAgentView[]>([]);
   const [pendingProposals, setPendingProposals] = useState<ProjectAgentActionProposal[]>([]);
   const [recentProposals, setRecentProposals] = useState<ProjectAgentActionProposal[]>([]);
   const [recentRuns, setRecentRuns] = useState<ProjectAgentRun[]>([]);
@@ -165,26 +176,57 @@ export default function ProjectAgentsPage({ params }: PageProps) {
     }
   }, [id, isGuest, session?.user?.email, sessionStatus]);
 
-  const handleAgentFieldChange = (agentId: string, field: "status" | "schedule", value: string) => {
+  const handleAgentStatusChange = (agentId: string, value: string) => {
     setAgents((current) =>
       current.map((agent) => {
         if (agent.agentId !== agentId) {
           return agent;
         }
 
-        if (field === "status") {
-          return {
-            ...agent,
-            status: value as ProjectAgent["status"],
-          };
-        }
-
         return {
           ...agent,
-          schedule: value,
+          status: value as ProjectAgent["status"],
         };
       }),
     );
+  };
+
+  const getAgentScheduleConfig = (agent: ProjectAgentView): AgentScheduleConfig => {
+    return getAgentScheduleConfigOrNull(agent) || { type: "manual" };
+  };
+
+  const getAgentScheduleConfigOrNull = (agent: ProjectAgentView): AgentScheduleConfig | null => {
+    return agent.scheduleConfig || cronToScheduleConfig(agent.schedule);
+  };
+
+  const updateAgentScheduleConfig = (agentId: string, updater: (current: AgentScheduleConfig) => AgentScheduleConfig) => {
+    setAgents((current) =>
+      current.map((agent) => {
+        if (agent.agentId !== agentId) return agent;
+        const nextScheduleConfig = updater(getAgentScheduleConfig(agent));
+        return {
+          ...agent,
+          scheduleConfig: nextScheduleConfig,
+          scheduleDisplayLabel: getScheduleDisplayLabel(nextScheduleConfig),
+        };
+      }),
+    );
+  };
+
+  const handleSchedulePresetChange = (agentId: string, value: string) => {
+    const currentConfig = getAgentScheduleConfig(agents.find((agent) => agent.agentId === agentId) || ({} as ProjectAgentView));
+    const currentTime =
+      currentConfig.type === "daily" || currentConfig.type === "weekdays" || currentConfig.type === "weekly"
+        ? currentConfig.time
+        : "09:00";
+
+    updateAgentScheduleConfig(agentId, () => {
+      if (value === "manual") return { type: "manual" };
+      if (value === "interval_6_hours") return { type: "interval", every: 6, unit: "hour" };
+      if (value === "daily") return { type: "daily", time: currentTime };
+      if (value === "weekdays") return { type: "weekdays", time: currentTime };
+      return { type: "weekly", dayOfWeek: "MON", time: currentTime };
+    });
   };
 
   const handleSave = async (agent: ProjectAgent) => {
@@ -198,16 +240,18 @@ export default function ProjectAgentsPage({ params }: PageProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: agent.status,
-          schedule: agent.schedule?.trim() ? agent.schedule.trim() : null,
+          ...(getAgentScheduleConfigOrNull(agent)
+            ? { scheduleConfig: getAgentScheduleConfig(agent) }
+            : { schedule: agent.schedule }),
         }),
       });
 
-      const body = (await response.json().catch(() => ({}))) as { agent?: ProjectAgent; error?: string; issues?: string[] };
+      const body = (await response.json().catch(() => ({}))) as { agent?: ProjectAgentView; error?: string; issues?: string[] };
       if (!response.ok || !body.agent) {
         throw new Error(body.error || (Array.isArray(body.issues) ? body.issues.join(" ") : "Failed to save agent."));
       }
 
-      setAgents((current) => current.map((item) => (item.agentId === body.agent?.agentId ? body.agent : item)));
+      setAgents((current) => current.map((item) => (item.agentId === body.agent?.agentId ? body.agent as ProjectAgentView : item)));
       setActionSuccess(`${agent.name} updated.`);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Failed to save agent.");
@@ -612,21 +656,24 @@ export default function ProjectAgentsPage({ params }: PageProps) {
           <div className="space-y-4">
             {agents.map((agent) => (
               <article key={agent.agentId} className="inner-frame inner-frame-hover rounded-xl p-4 transition-all duration-300 ease-in-out">
-                <div className="mb-2 flex items-start justify-between gap-4">
+                <div className="mb-4 flex items-start justify-between gap-4">
                   <div>
                     <h3 className="text-base font-semibold text-white">{agent.name}</h3>
                     <p className="mt-1 text-sm text-neutral-400">{agent.description}</p>
+                    <p className="mt-2 text-xs font-medium text-neutral-300">
+                      {agent.scheduleDisplayLabel || getScheduleDisplayLabel(getAgentScheduleConfig(agent))}
+                    </p>
                   </div>
                   <span className="rounded-full border border-white/15 px-2.5 py-1 text-xs text-neutral-300">{agent.category}</span>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
                   <label className="text-sm text-neutral-300">
                     Status
                     <select
                       disabled={!canManage}
                       value={agent.status}
-                      onChange={(event) => handleAgentFieldChange(agent.agentId, "status", event.target.value)}
+                      onChange={(event) => handleAgentStatusChange(agent.agentId, event.target.value)}
                       className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option value="active">active</option>
@@ -634,16 +681,83 @@ export default function ProjectAgentsPage({ params }: PageProps) {
                     </select>
                   </label>
 
-                  <label className="text-sm text-neutral-300">
-                    Schedule (cron)
-                    <input
-                      disabled={!canManage}
-                      value={agent.schedule || ""}
-                      onChange={(event) => handleAgentFieldChange(agent.agentId, "schedule", event.target.value)}
-                      placeholder="0 9 * * MON"
-                      className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-neutral-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                  </label>
+                  <div className="grid gap-3 sm:grid-cols-[minmax(0,1.15fr)_minmax(8rem,0.5fr)_minmax(8rem,0.65fr)]">
+                    <label className="text-sm text-neutral-300">
+                      Schedule
+                      <select
+                        disabled={!canManage}
+                        value={(() => {
+                          const config = getAgentScheduleConfigOrNull(agent);
+                          if (!config && agent.schedule?.trim()) return "custom";
+                          if (!config) return "manual";
+                          if (config.type === "manual") return "manual";
+                          if (config.type === "interval") return "interval_6_hours";
+                          return config.type;
+                        })()}
+                        onChange={(event) => handleSchedulePresetChange(agent.agentId, event.target.value)}
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {getAgentScheduleConfigOrNull(agent) === null && agent.schedule?.trim() ? (
+                          <option value="custom">Custom schedule</option>
+                        ) : null}
+                        <option value="manual">Manual only</option>
+                        <option value="interval_6_hours">Every 6 hours</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekdays">Weekdays</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                    </label>
+
+                    <label className="text-sm text-neutral-300">
+                      Time
+                      <input
+                        type="time"
+                        disabled={!canManage || ["manual", "interval"].includes(getAgentScheduleConfig(agent).type)}
+                        value={(() => {
+                          const config = getAgentScheduleConfig(agent);
+                          return config.type === "daily" || config.type === "weekdays" || config.type === "weekly"
+                            ? config.time
+                            : "09:00";
+                        })()}
+                        onChange={(event) =>
+                          updateAgentScheduleConfig(agent.agentId, (config) => {
+                            if (config.type === "daily" || config.type === "weekdays" || config.type === "weekly") {
+                              return { ...config, time: event.target.value };
+                            }
+                            return config;
+                          })
+                        }
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </label>
+
+                    <label className="text-sm text-neutral-300">
+                      Day
+                      <select
+                        disabled={!canManage || getAgentScheduleConfig(agent).type !== "weekly"}
+                        value={(() => {
+                          const config = getAgentScheduleConfig(agent);
+                          return config.type === "weekly" ? config.dayOfWeek : "MON";
+                        })()}
+                        onChange={(event) =>
+                          updateAgentScheduleConfig(agent.agentId, (config) =>
+                            config.type === "weekly"
+                              ? { ...config, dayOfWeek: event.target.value as ScheduleDayOfWeek }
+                              : config,
+                          )
+                        }
+                        className="mt-1 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="MON">Monday</option>
+                        <option value="TUE">Tuesday</option>
+                        <option value="WED">Wednesday</option>
+                        <option value="THU">Thursday</option>
+                        <option value="FRI">Friday</option>
+                        <option value="SAT">Saturday</option>
+                        <option value="SUN">Sunday</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">

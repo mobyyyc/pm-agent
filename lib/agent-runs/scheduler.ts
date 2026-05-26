@@ -1,9 +1,9 @@
-import type { ProjectAgent } from "@/types/models";
 import { calculateNextRunAt } from "./schedule-config";
+import type { ProjectAgent } from "@/types/models";
 
 export { calculateNextRunAt } from "./schedule-config";
 
-const supportedAgentIds = new Set(["risk-watch", "github-task-review"]);
+const supportedAgentIds = new Set(["risk-watch"]);
 
 export type ScheduledAgentRunSummary = {
   checkedCount: number;
@@ -50,6 +50,10 @@ export type ScheduledAgentRunnerDependencies = {
   now(): string;
 };
 
+export type ScheduledAgentRunnerOptions = {
+  force?: boolean;
+};
+
 function toValidDate(value: string | null): Date | null {
   if (!value) return null;
   const date = new Date(value);
@@ -85,6 +89,22 @@ export function getDueProjectAgents(agents: ProjectAgent[], now: Date | string):
   return agents.filter((agent) => isProjectAgentDue(agent, now));
 }
 
+export function getRunnableProjectAgents(
+  agents: ProjectAgent[],
+  now: Date | string,
+  options: ScheduledAgentRunnerOptions = {},
+): ProjectAgent[] {
+  if (!options.force) {
+    return getDueProjectAgents(agents, now);
+  }
+
+  return agents.filter((agent) => {
+    if (agent.status !== "active") return false;
+    if (!agent.schedule?.trim()) return false;
+    return calculateNextRunAt(agent.schedule, now) !== null || Boolean(agent.nextRunAt);
+  });
+}
+
 async function getDefaultDependencies(): Promise<ScheduledAgentRunnerDependencies> {
   const [storage, runner] = await Promise.all([
     import("@/lib/storage"),
@@ -101,11 +121,12 @@ async function getDefaultDependencies(): Promise<ScheduledAgentRunnerDependencie
 
 export async function runScheduledProjectAgents(
   dependencies?: ScheduledAgentRunnerDependencies,
+  options: ScheduledAgentRunnerOptions = {},
 ): Promise<ScheduledAgentRunSummary> {
   const deps = dependencies || (await getDefaultDependencies());
   const now = deps.now();
   const agents = await deps.getActiveProjectAgents();
-  const dueAgents = getDueProjectAgents(agents, now);
+  const dueAgents = getRunnableProjectAgents(agents, now, options);
   const results: ScheduledAgentRunSummary["results"] = [];
 
   for (const agent of dueAgents) {

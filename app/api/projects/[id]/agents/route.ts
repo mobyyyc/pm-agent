@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import {
+  calculateNextRunAt,
   cronToScheduleConfig,
   getScheduleDisplayLabel,
   parseScheduleConfig,
@@ -144,10 +145,12 @@ export async function POST(request: Request, context: RouteContext) {
         : parsed.schedule !== undefined
           ? parsed.schedule
           : agentDefinition.recommendedSchedule;
+    const storedScheduleConfig = scheduleConfig || cronToScheduleConfig(schedule);
     const config = {
       ...(parsed.config || {}),
-      ...(scheduleConfig ? { scheduleConfig } : {}),
+      ...(storedScheduleConfig ? { scheduleConfig: storedScheduleConfig } : {}),
     };
+    const nextRunAt = calculateNextRunAt(schedule, timestamp);
     const projectAgent = await upsertProjectAgent({
       projectId: id,
       agentId: agentDefinition.id,
@@ -158,7 +161,7 @@ export async function POST(request: Request, context: RouteContext) {
       schedule,
       config,
       lastRunAt: null,
-      nextRunAt: null,
+      nextRunAt,
       createdByUserId: sessionUserId,
       timestamp,
     });

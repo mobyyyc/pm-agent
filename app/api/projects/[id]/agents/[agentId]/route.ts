@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { z } from "zod";
 
 import {
+  calculateNextRunAt,
   cronToScheduleConfig,
   getScheduleDisplayLabel,
   parseScheduleConfig,
@@ -18,6 +19,7 @@ import {
   isProjectMember,
   normalizeUserId,
   updateProjectAgent,
+  updateProjectAgentScheduleState,
   upsertAppUser,
 } from "@/lib/storage";
 import { isoNow } from "@/lib/utils";
@@ -128,6 +130,20 @@ export async function PATCH(request: Request, context: RouteContext) {
     const updated = await updateProjectAgent(id, agentId, updates, isoNow());
     if (!updated) {
       return NextResponse.json({ error: "Project agent not found." }, { status: 404 });
+    }
+
+    if (schedule !== undefined) {
+      const timestamp = isoNow();
+      const withScheduleState =
+        (await updateProjectAgentScheduleState({
+          projectId: id,
+          agentId,
+          lastRunAt: existing.lastRunAt,
+          nextRunAt: calculateNextRunAt(schedule, timestamp),
+          timestamp,
+        })) || updated;
+
+      return NextResponse.json({ agent: buildProjectAgentResponse(withScheduleState) });
     }
 
     return NextResponse.json({ agent: buildProjectAgentResponse(updated) });

@@ -26,10 +26,15 @@ async function handleScheduledAgentRuns(request: Request) {
   }
 
   try {
-    const summary = await runScheduledProjectAgents();
+    const url = new URL(request.url);
+    const forceRequested = url.searchParams.get("force") === "true";
+    const force = forceRequested && process.env.NODE_ENV !== "production";
+    const summary = await runScheduledProjectAgents(undefined, { force });
     return NextResponse.json({
       ok: summary.failedCount === 0,
       protected: Boolean(process.env.CRON_SECRET?.trim()),
+      force,
+      forceIgnored: forceRequested && !force,
       ...summary,
     });
   } catch (error) {

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 
+import { getScheduleDisplayLabel } from "@/lib/agent-runs/schedule-config";
+
 type AgentDefinition = {
   id: string;
   name: string;
@@ -109,7 +111,7 @@ export default function BrowseAgentsPage() {
         throw new Error(body.error || (Array.isArray(body.issues) ? body.issues.join(" ") : "Failed to add agent."));
       }
 
-      setFeedback({ message: "Agent added to your project.", tone: "success" });
+      setFeedback({ message: "Agent added or updated on your project.", tone: "success" });
     } catch (error) {
       setFeedback({ message: error instanceof Error ? error.message : "Failed to add agent.", tone: "error" });
     } finally {
@@ -201,7 +203,7 @@ export default function BrowseAgentsPage() {
             <p className="text-sm leading-relaxed text-neutral-300">{agent.description}</p>
 
             <p className="mt-3 text-xs text-neutral-400">
-              Recommended schedule: {agent.recommendedSchedule || "manual"}
+              Recommended schedule: {getScheduleDisplayLabel(agent.recommendedSchedule)}
             </p>
 
             <div className="mt-3 flex flex-wrap gap-2">

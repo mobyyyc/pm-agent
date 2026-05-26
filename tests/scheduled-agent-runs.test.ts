@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { runDeterministicProjectAgent, type DeterministicAgentRunDependencies } from "../lib/agent-runs/run-agent";
+import { findAgentDefinition } from "../lib/agents";
 import {
   calculateNextRunFromScheduleConfig,
   cronToScheduleConfig,
@@ -167,6 +168,19 @@ test("nextRunAt calculation supports current catalog cron formats", () => {
   assert.equal(
     calculateNextRunAt("0 9 * * MON-FRI", "2026-05-29T09:01:00.000Z"),
     "2026-06-01T09:00:00.000Z",
+  );
+});
+
+test("Risk Watch catalog definition installs with the scheduler-supported key and schedule", () => {
+  const riskWatch = findAgentDefinition("risk-watch");
+
+  assert.ok(riskWatch);
+  assert.equal(riskWatch.id, "risk-watch");
+  assert.equal(riskWatch.recommendedSchedule, "0 */6 * * *");
+  assert.equal(scheduleConfigToCron(cronToScheduleConfig(riskWatch.recommendedSchedule) || { type: "manual" }), "0 */6 * * *");
+  assert.equal(
+    calculateNextRunAt(riskWatch.recommendedSchedule, "2026-05-25T12:00:00.000Z"),
+    "2026-05-25T18:00:00.000Z",
   );
 });
 
@@ -339,18 +353,68 @@ test("scheduled runner skips unsupported due agents safely", async () => {
   assert.equal(updates[0].nextRunAt, "2026-06-01T09:00:00.000Z");
 });
 
+test("scheduled runner skips GitHub Task Review until scheduled support is implemented", async () => {
+  const dependencies: ScheduledAgentRunnerDependencies = {
+    getActiveProjectAgents: async () => [makeAgent({ agentId: "github-task-review", nextRunAt: "2026-05-25T11:00:00.000Z" })],
+    updateProjectAgentScheduleState: async (input) =>
+      makeAgent({ agentId: input.agentId, lastRunAt: input.lastRunAt, nextRunAt: input.nextRunAt }),
+    runAgent: async () => {
+      throw new Error("GitHub Task Review should not be run by the scheduler yet");
+    },
+    now: () => baseTime,
+  };
+
+  const summary = await runScheduledProjectAgents(dependencies);
+
+  assert.equal(summary.ranCount, 0);
+  assert.equal(summary.skippedCount, 1);
+  assert.equal(summary.results[0].agentId, "github-task-review");
+  assert.equal(summary.results[0].reason, "unsupported_agent");
+});
+
+test("scheduled runner runs due Risk Watch agents and reports pending proposals", async () => {
+  const runs: string[] = [];
+  const updates: Array<{ lastRunAt: string | null; nextRunAt: string | null }> = [];
+  const dependencies: ScheduledAgentRunnerDependencies = {
+    getActiveProjectAgents: async () => [makeAgent({ nextRunAt: "2026-05-25T11:00:00.000Z" })],
+    updateProjectAgentScheduleState: async (input) => {
+      updates.push({ lastRunAt: input.lastRunAt, nextRunAt: input.nextRunAt });
+      return makeAgent({ lastRunAt: input.lastRunAt, nextRunAt: input.nextRunAt });
+    },
+    runAgent: async (input) => {
+      runs.push(input.agentId);
+      return {
+        run: { id: "agent_run_risk_watch" },
+        createdProposalCount: 2,
+        skippedProposalCount: 1,
+      };
+    },
+    now: () => baseTime,
+  };
+
+  const summary = await runScheduledProjectAgents(dependencies);
+
+  assert.deepEqual(runs, ["risk-watch"]);
+  assert.equal(summary.ranCount, 1);
+  assert.equal(summary.proposedCount, 2);
+  assert.equal(summary.duplicateProposalCount, 1);
+  assert.equal(summary.results[0].status, "ran");
+  assert.equal(updates[0].lastRunAt, baseTime);
+  assert.equal(updates[0].nextRunAt, "2026-05-25T18:00:00.000Z");
+});
+
 test("scheduled runner continues when one due agent fails", async () => {
   const runOrder: string[] = [];
   const dependencies: ScheduledAgentRunnerDependencies = {
     getActiveProjectAgents: async () => [
       makeAgent({ projectId: "project_1", agentId: "risk-watch" }),
-      makeAgent({ projectId: "project_2", agentId: "github-task-review", schedule: "0 */6 * * *" }),
+      makeAgent({ projectId: "project_2", agentId: "risk-watch", nextRunAt: "2026-05-25T11:30:00.000Z" }),
     ],
     updateProjectAgentScheduleState: async (input) =>
       makeAgent({ projectId: input.projectId, agentId: input.agentId, lastRunAt: input.lastRunAt, nextRunAt: input.nextRunAt }),
     runAgent: async (input) => {
-      runOrder.push(input.agentId);
-      if (input.agentId === "risk-watch") {
+      runOrder.push(input.projectId);
+      if (input.projectId === "project_1") {
         throw new Error("Risk Watch failed");
       }
       return {
@@ -364,7 +428,7 @@ test("scheduled runner continues when one due agent fails", async () => {
 
   const summary = await runScheduledProjectAgents(dependencies);
 
-  assert.deepEqual(runOrder, ["risk-watch", "github-task-review"]);
+  assert.deepEqual(runOrder, ["project_1", "project_2"]);
   assert.equal(summary.failedCount, 1);
   assert.equal(summary.ranCount, 1);
   assert.equal(summary.proposedCount, 2);
